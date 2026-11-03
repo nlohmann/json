@@ -16,7 +16,6 @@ USE_CASES = [("validate", "validate"), ("sum", "sum"), ("select", "select"), ("e
              ("write", "write")]
 NAMES = {"nlohmann json_document": "nlohmann/json `json_document`", "nlohmann json": "nlohmann/json `json`",
          "sonic-rs": "sonic-rs (Rust)", "simd-json": "simd-json (Rust)", "serde_json": "serde_json (Rust)"}
-MARK = {"no UTF-8": "U", "partial": "P"}
 
 
 def fmt(us):
@@ -37,12 +36,12 @@ def table(data, uc, indent):
     for lib in libs:
         best = [data[uc][f][lib]["best"] for f in files]
         anyv = [data[uc][f][lib]["best_any"] for f in files]
-        names = sorted({b["variant"] for b in best if b} | {a["variant"] + " [%s]" % MARK[a["level"]] for b, a in zip(best, anyv) if a["level"] in MARK and (not b or a["us"] < b["us"])})
+        names = sorted({b["variant"] for b in best if b} | {a["variant"] + " [%s]" % a["mark"] for b, a in zip(best, anyv) if a["mark"] and (not b or a["us"] < b["us"])})
         cells = []
         for b, a in zip(best, anyv):
             c = fmt(b["us"]) if b else "–"
-            if a["level"] in MARK and (not b or a["us"] < b["us"] * 0.97):
-                c += " (%s %s)" % (MARK[a["level"]], fmt(a["us"]))
+            if a["mark"] and (not b or a["us"] < b["us"] * 0.97):
+                c += " (%s %s)" % (a["mark"], fmt(a["us"]))
             cells.append(c)
         bold = "**%s**" if lib == "nlohmann json_document" else "%s"
         rows.append("| %s | %s | %s |" % (bold % NAMES.get(lib, lib), ", ".join(names), " | ".join(cells)))

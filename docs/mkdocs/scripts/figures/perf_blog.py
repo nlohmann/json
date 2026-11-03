@@ -201,24 +201,24 @@ def digits():
 # ---------- overview: speedup per workload (Google Benchmark rows, 3.12.0 time / 3.13.0 time) ----------
 # (group, label, speedup), copied from the table "The short version"
 OVERVIEW = [
-    ("Parsing", "twitter.json", 3.02),
-    ("Parsing", "citm_catalog.json", 4.11),
-    ("Parsing", "canada.json", 3.41),
-    ("Parsing", "canada.json, indented", 6.59),
-    ("Parsing", "citm, ordered_json", 6.71),
-    ("Parsing", "twitter, std::ifstream", 2.44),
-    ("Parsing", "citm, FILE*", 4.71),
-    ("Parsing", "citm, accept()", 7.04),
-    ("Writing", "dump() twitter", 6.66),
-    ("Writing", "dump() canada", 2.93),
-    ("Writing", "dump(4) citm", 4.63),
-    ("Writing", "to_cbor() twitter", 4.48),
-    ("Reading CBOR", "twitter, memory", 3.18),
-    ("Reading CBOR", "twitter, FILE*", 6.41),
-    ("Values", "diff() canada", 10.34),
-    ("Values", "iterate canada", 2.71),
-    ("Values", "copy + destroy citm", 1.11),
-    ("Values", "== citm", 1.04),
+    ("Parsing", "twitter.json", 3.14),
+    ("Parsing", "citm_catalog.json", 4.25),
+    ("Parsing", "canada.json", 3.35),
+    ("Parsing", "canada.json, indented", 6.51),
+    ("Parsing", "citm, ordered_json", 6.85),
+    ("Parsing", "twitter, std::ifstream", 2.50),
+    ("Parsing", "citm, FILE*", 4.74),
+    ("Parsing", "citm, accept()", 7.07),
+    ("Writing", "dump() twitter", 6.70),
+    ("Writing", "dump() canada", 2.98),
+    ("Writing", "dump(4) citm", 4.70),
+    ("Writing", "to_cbor() twitter", 4.59),
+    ("Reading CBOR", "twitter, memory", 3.39),
+    ("Reading CBOR", "twitter, FILE*", 6.59),
+    ("Values", "diff() canada", 10.46),
+    ("Values", "iterate canada", 2.73),
+    ("Values", "copy + destroy citm", 1.13),
+    ("Values", "== citm", 1.06),
 ]
 
 
@@ -396,15 +396,15 @@ def timeline():
 # ---------- cliffs: 3.12.0 and 3.13.0 times on a log axis ----------
 # (operation, 3.12.0 ms, 3.13.0 ms), copied from the table in "Fix the algorithm first"
 CLIFFS = [
-    ("diff() 64k numbers vs []", 4140, 10.5),
-    ("diff() 20k objects vs half", 119, 3.99),
-    ("parse() callback, 32k objects", 1361, 12.1),
-    ("operator< nested 24 deep", 64.0, 0.002),
-    ("operator< citm, 10x", 278, 3.86),
-    ("flatten() citm, ordered_json", 251, 1.39),
-    ("to_bson() 200 deep, 100x", 19.9, 0.349),
-    ("push_back() 100k, diagnostics", 1532, 5.04),
-    ("at(i) 10k, diagnostics", 43.6, 0.081),
+    ("diff() 64k numbers vs []", 4237, 10.8),
+    ("diff() 20k objects vs half", 122, 4.13),
+    ("parse() callback, 32k objects", 1398, 12.1),
+    ("operator< nested 24 deep", 64.4, 0.002),
+    ("operator< citm, 10x", 284, 3.94),
+    ("flatten() citm, ordered_json", 271, 1.45),
+    ("to_bson() 200 deep, 100x", 20.3, 0.352),
+    ("push_back() 100k, diagnostics", 1589, 5.32),
+    ("at(i) 10k, diagnostics", 45.9, 0.088),
 ]
 
 
@@ -495,13 +495,13 @@ def heldout():
 
 
 # ---------- the price: compile time of two programs against 3.12.0 ----------
-# CPU time of the compiler in ms, median of 9 interleaved rounds, C++20, M1 Max (the post's appendix G)
+# CPU time of the compiler in ms, median of 5 interleaved rounds, C++20, M1 Max (the post's appendix G)
 # (3.12.0, 3.13.0, 3.13.0 with a precompiled header, 3.13.0 as a module)
 PRICE = [
-    ("Apple clang 21, -O0 (debug)", [("count_numbers", 959.1, 1155.3, 679.1, 803.9), ("server_config", 1108.2, 1445.1, 763.1, 1057.0)]),
-    ("Apple clang 21, -O2", [("count_numbers", 1268.8, 1867.7, 1364.3, 1512.9), ("server_config", 1576.9, 2353.6, 1749.4, 2141.4)]),
-    ("GCC 16, -O0 (debug)", [("count_numbers", 1443.7, 2346.4, 1579.2, 1662.5), ("server_config", 1984.8, 2781.7, 2113.3, 2181.1)]),
-    ("GCC 16, -O2", [("count_numbers", 2326.9, 3453.3, 2972.4, 2895.3), ("server_config", 2888.7, 4388.6, 3941.8, 3825.5)]),
+    ("Apple clang 21, -O0 (debug)", [("count_numbers", 955.0, 1320.5, 688.5, 917.5), ("server_config", 1113.2, 1496.4, 862.6, 1135.5)]),
+    ("Apple clang 21, -O2", [("count_numbers", 1393.2, 2081.0, 1458.4, 1684.6), ("server_config", 1753.5, 2545.6, 1925.3, 2168.6)]),
+    ("GCC 16, -O0 (debug)", [("count_numbers", 1569.4, 2548.4, 1725.0, 1699.8), ("server_config", 2025.4, 2985.1, 2301.6, 2325.8)]),
+    ("GCC 16, -O2", [("count_numbers", 2336.0, 3701.5, 2986.8, 2913.4), ("server_config", 3121.5, 4714.2, 4006.2, 4054.9)]),
 ]
 PRICE_SERIES = [("3.13.0", "nj-charts-c2"), ("3.13.0, precompiled header", "nj-charts-c1"), ("3.13.0, module", "nj-charts-c3")]
 
@@ -579,22 +579,25 @@ def geomean(xs):
 
 
 WRITING = ("edit", "minify", "write")   # the use cases that write numbers
+NUMBER_TEXT = ("source numbers", "raw numbers")   # variants that write each number by copying its text
 
 
 def normalize_usecases(data):
     """Chooses each library's best variants again with the rules of the post: variants that reuse a parser or document
-    across calls are measured but not chosen, and neither are variants that write each number by copying its text
-    instead of formatting it (json_document's number_format::source, yyjson's and RapidJSON's raw numbers in edit,
-    minify and write). Skipping the number conversion while reading is allowed"""
+    across calls are measured but not chosen. Variants that write each number by copying its text instead of formatting
+    it (json_document's number_format::source, yyjson's and RapidJSON's raw numbers in edit, minify and write) are not
+    chosen as the fully validating way, but as a way that does less, marked "N" like "U" and "P". Skipping the number
+    conversion while reading is allowed. Each pick has a "mark": "", or the letters of what it skips"""
     data = json.loads(json.dumps(data))
     rank = {"full": 0, "n/a": 0, "no UTF-8": 1, "partial": 2}
     for uc, files in data.items():
-        banned = ("reused",) + (("source numbers", "raw numbers") if uc in WRITING else ())
+        numtext = lambda k: uc in WRITING and any(w in k for w in NUMBER_TEXT)
         for cell in files.values():
             for e in cell.values():
-                vs = [(v["us"], k, v["level"]) for k, v in e["variants"].items() if not any(w in k for w in banned)]
-                full = [v for v in vs if rank[v[2]] == 0]
-                pick = lambda v: {"us": v[0], "variant": v[1], "level": "full" if rank[v[2]] == 0 else v[2]}
+                vs = [(v["us"], k, v["level"]) for k, v in e["variants"].items() if "reused" not in k]
+                full = [v for v in vs if rank[v[2]] == 0 and not numtext(v[1])]
+                pick = lambda v: {"us": v[0], "variant": v[1], "level": "full" if rank[v[2]] == 0 else v[2],
+                                  "mark": " ".join(m for m in (LEVEL_MARK.get(v[2], ""), "N" if numtext(v[1]) else "") if m)}
                 e["best"] = pick(min(full)) if full else None
                 e["best_any"] = pick(min(vs))
     return data
@@ -615,6 +618,12 @@ CHECKS_LESS = [
     ("sonic-cpp", "", "trusts UTF-8: sonic-cpp 1.0.2 doesn't check it"),
     ("serde_json", "", "trusts UTF-8 in the strings it skips (from_slice); strings it reads are checked"),
 ]
+# what a variant that copies number text does (the "N" half of edit, minify and write)
+NUMBER_TEXT_TIPS = {
+    "nlohmann json_document": "copies each number's text instead of formatting it (number_format::source)",
+    "yyjson": "copies each number's text instead of formatting it (YYJSON_READ_NUMBER_AS_RAW)",
+    "RapidJSON": "copies each number's text instead of formatting it (kParseNumbersAsStringsFlag)",
+}
 
 
 def checks_less(lib, variant):
@@ -651,7 +660,9 @@ def usecase_table(data):
                 alt = None
             levels = {a["level"] for _, _, a in c["files"]} if alt is not None else set()
             level = "partial" if "partial" in levels else "no UTF-8" if "no UTF-8" in levels else "full"
-            out.setdefault(lib, {})[uc] = {"full": full, "alt": alt, "level": level, "files": c["files"]}
+            numtext = alt is not None and any("N" in a["mark"].split() for _, _, a in c["files"])
+            marks = " ".join(m for m in (LEVEL_MARK[level], "N" if numtext else "") if m)
+            out.setdefault(lib, {})[uc] = {"full": full, "alt": alt, "level": level, "marks": marks, "files": c["files"]}
     return out
 
 
@@ -691,8 +702,9 @@ def tip(lib, uc_label, c, half):
     if half == "alt":
         seen = []
         for _, e in picks:
-            if e["level"] != "full":
-                t = checks_less(lib, e["variant"])
+            ts = ([checks_less(lib, e["variant"])] if e["level"] != "full" else []) + \
+                 ([NUMBER_TEXT_TIPS.get(lib, "copies each number's text instead of formatting it")] if "N" in e["mark"].split() else [])
+            for t in ts:
                 if t not in seen:
                     seen.append(t)
         lines += seen
@@ -741,14 +753,14 @@ def heatmap(platform, title):
                 if half == "alt":
                     b.append('<text class="nj-charts-cell" x="%g" y="%g" text-anchor="middle">%s</text>' % (cx, y + 16, fr(r)))
                     b.append('<text class="nj-charts-cell nj-charts-cell--small" x="%g" y="%g" text-anchor="middle">%s</text>'
-                             % (cx, y + 29, LEVEL_MARK[c["level"]]))
+                             % (cx, y + 29, c["marks"]))
                 else:
                     b.append('<text class="nj-charts-cell" x="%g" y="%g" text-anchor="middle">%s</text>' % (cx, y + ch / 2 + 4, fr(r)))
                 b.append('</g>')
             if c["full"] is None:   # no fully validating way: the left half stays empty
                 pass
             desc.append("%s %s: %s%s" % (UC_LIBS[lib], label, fr(c["full"]) if c["full"] else "no fully validating way",
-                                         (" (%s checking less, %s)" % (fr(c["alt"]), c["level"])) if c["alt"] else ""))
+                                         (" (%s doing less, %s)" % (fr(c["alt"]), c["marks"])) if c["alt"] else ""))
     # the key, set apart from the grid and narrower than its columns, so that it doesn't read as a row of it
     yb = top + len(libs) * ch + 28
     b.append('<text class="nj-charts-tick nj-charts-tick--l" x="8" y="%g">time relative to the fastest fully validating library, less is better</text>' % (yb + 4))

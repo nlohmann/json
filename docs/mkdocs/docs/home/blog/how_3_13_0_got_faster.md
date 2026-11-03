@@ -4,13 +4,14 @@
 
 <!-- Before publishing: set the date to the release date, and measure every number of this post again with the
      v3.13.0 tag (Appendix G describes the setup; tests/benchmarks/json_view/others/README.md has the commands of the
-     comparison). Also refresh the line counts and the compile times in "The price". The numbers below are from
-     develop b2674a4a2f with the open non-draft pull requests #5990-#5992, #5996-#6006 and #6008 merged (local branch
-     local/all-prs-1102 at f970185114): suite, timeline endpoint, Appendix D and the scalar runs 11-02 (afternoon). The
-     comparison with other libraries is from 10-31 (develop 9c349b1d7c with the then open pull requests); json_document
-     parse, accept, dump and compare run the same instructions (within 1 %) with the headers of 11-02. The compile
-     times in "The price" were measured 10-29 with an older 3.13.0 header, and the timeline's commits end with develop
-     78a0687147 (10-27): measure both again. Merge tests/benchmarks/json_view/others before publishing (the links 404). -->
+     comparison), including the line counts in "The price". The numbers below are from develop baba5db36f with the
+     open non-draft pull requests #5998, #6001, #6002 and #6017-#6019 merged (local branch local/all-prs-1103 at
+     5c8ccf2f38), all measured 11-03: suite (rounds 2 and 3; round 1 ran under load), timeline (the commits after
+     10-27 and 3.13.0; the older points are from 10-27, checked with 12 of them), Appendix D, compile times (5
+     rounds), the stream gap, the comparison on the Mac and on x86-64, and the suite on the Intel MacBook Pro. The Mac's
+     Rust times are from 10-29 and the x86-64 conformance run from 10-30. The x86-64 server now runs Ubuntu 26.04, so
+     "GCC 13" is 13.4 (10-31: 13.3 on Ubuntu 24.04). Merge tests/benchmarks/json_view/others before publishing (the
+     links 404). -->
 
 Since 2016, the [README](https://github.com/nlohmann/json#readme) of this library has said this about speed:
 
@@ -18,22 +19,23 @@ Since 2016, the [README](https://github.com/nlohmann/json#readme) of this librar
 > JSON support with a single header, then this library is the way to go.
 
 That sentence is still true, but the gap is a lot smaller now. Swap the 3.12.0 header for the 3.13.0 one and
-recompile, and the 182 benchmarks of the library's own suite run 3.0× as fast on an Apple M1 Max (geometric mean),
-without a line of your code changing. Parsing typical documents got three to four times as fast, and writing them
-three to seven times. 3.13.0 also adds [`json_document`](../../features/json_view.md), a second way to
+recompile, and the 182 benchmarks of the library's own suite run 3.0× as fast on an Apple M1 Max (geometric mean; 3.1× on an Intel MacBook Pro from 2016),
+without a line of your code changing. Parsing typical documents got 3.1–4.3× as fast, and writing them
+3.0–6.7×. The new version also adds [`json_document`](../../features/json_view.md), a second way to
 hold a parsed document, which competes with the fastest C++ and Rust JSON libraries; [How it
 compares](#how-it-compares) has the numbers, including where it loses. The price is compile time: two small
-example programs take 20 to 63 % longer to compile. A precompiled header or a C++20 module wins back most or all of
-that in debug builds, and a quarter to four fifths of it in optimized builds ([The price](#the-price)).
+example programs take 34–62 % longer to compile. A precompiled header or a C++20 module wins back most or all of
+that in debug builds, and 41–91 % of it in optimized builds ([The price](#the-price)).
 
-This post is about *how*. None of the techniques is new: almost every one of them is borrowed from
+This post is about *how*. Hardly any of the techniques is new: we borrowed them from
 [simdjson](https://github.com/simdjson/simdjson), [yyjson](https://github.com/ibireme/yyjson),
 [fast_float](https://github.com/fastfloat/fast_float), [Żmij](https://github.com/vitaut/zmij),
 [serde_json](https://github.com/serde-rs/json), [Glaze](https://github.com/stephenberry/glaze),
-[SQLite](https://sqlite.org), [Boost.JSON](https://github.com/boostorg/json) or a textbook, and we name the source at each step. What we think is
-worth writing about is the combination, and the conditions it had to work under: a C++11 header-only library with a
-value type that is a template over its string, number, object and allocator types; input from strings, streams,
-`FILE*`, iterator pairs, wide strings and user-defined adapters; output that had to stay the same byte for byte; and
+[SQLite](https://sqlite.org), [Boost.JSON](https://github.com/boostorg/json), or a textbook, and we name the source at each step. What we think is
+worth writing about is the *combination*, and the conditions it had to work under: a C++11 header-only library whose
+3.x API has been stable for almost nine years, with a value type that is a template over its string, number, object,
+array, and allocator types; input from strings, streams,
+`FILE*`, iterator pairs, wide strings, and user-defined adapters; output that had to stay the same byte for byte; and
 error messages that had to keep pointing at the same byte. The few deliberate changes of output are listed in
 [Appendix F](#f-behavior-changes).
 
@@ -41,9 +43,10 @@ Every number comes from a benchmark we ran for this post or from the pull reques
 [appendix](#appendix) describes the test files and the setup, has the full tables behind every chart, and lists the
 pull requests behind each theme.
 
-Fast paths are where the bugs are: they read 8 or 16 bytes at a time, skip work the slow path did, and are taken only
-for some inputs. So each of them was checked against the slow path it replaces, down to the same error message at the
-same byte, on millions of generated and fuzzed inputs. [Appendix J](#j-validation) lists the checks.
+Fast paths are where bugs hide: they run only for some inputs, so a mistake in one can go unnoticed until the right
+input comes along. So every fast path was tested against the slow path it replaces, on millions of generated and
+fuzzed inputs. Both had to return the same value, or fail with the same error message at the same byte.
+[Appendix J](#j-validation) lists the checks.
 
 ## The short version
 
@@ -64,22 +67,24 @@ The rows above are chosen to show the range. All 182 benchmarks of the suite:
 --8<-- "images/perf_blog_distribution.svg"
 </div>
 
-<p class="nj-caption" markdown>How many of the suite's 182 benchmarks got how much faster. The two below 1× are copying `citm_catalog.json` and `twitter.json` without destroying the copy. Every row is in [Appendix B](#b-3120-against-3130).</p>
+<p class="nj-caption" markdown>How many of the suite's 182 benchmarks got how much faster. The one below 1× is copying `citm_catalog.json` without destroying the copy. Every row is in [Appendix B](#b-3120-against-3130).</p>
 
-The median benchmark got 3.0× as fast. Copying and comparing values gained the least, and the largest
+The median benchmark got 2.9× as fast. On an Intel MacBook Pro (Skylake), the median is 2.9× as well, but parsing floating-point
+numbers gained more (`canada.json` 6.1× instead of 3.4×) and writing integers less (`dump()` 1.4–2.3× instead of
+2.2–3.8×); [Appendix B](#b-3120-against-3130) has both columns. Copying and comparing values gained the least, and the largest
 gains come from fixing algorithms rather than tuning them (theme <a class="nj-theme" href="#theme-7" title="theme 7">7</a>).
 
 Eight themes did most of the work:
 
 <div class="nj-theme-list" markdown>
 
-- <a class="nj-theme" href="#theme-1" title="theme 1">1</a> [Specialize for each input](#theme-1): a dedicated reader for strings, streams and `FILE*`, instead of one
+- <a class="nj-theme" href="#theme-1" title="theme 1">1</a> [Specialize for each input](#theme-1): a dedicated reader for strings, streams, and `FILE*`, instead of one
   character at a time for all of them.
 - <a class="nj-theme" href="#theme-2" title="theme 2">2</a> [Work on words, not bytes](#theme-2): 8 bytes per step with plain integer arithmetic, 16 with SSE2 and NEON.
-- <a class="nj-theme" href="#theme-3" title="theme 3">3</a> [Own the number conversions](#theme-3): no `strtod`, no locale, no `snprintf`.
-- <a class="nj-theme" href="#theme-4" title="theme 4">4</a> [Don't do unnecessary work](#theme-4): positions, copies and conversions that only matter on an error or for a
+- <a class="nj-theme" href="#theme-3" title="theme 3">3</a> [Own the number conversions](#theme-3): no `strtod`, no locale.
+- <a class="nj-theme" href="#theme-4" title="theme 4">4</a> [Don't do unnecessary work](#theme-4): positions, copies, and conversions that only matter on an error or for a
   rare caller.
-- <a class="nj-theme" href="#theme-5" title="theme 5">5</a> [Read the assembly](#theme-5): stack canaries, missed inlining, aliasing and branches the compiler chose.
+- <a class="nj-theme" href="#theme-5" title="theme 5">5</a> [Read the assembly](#theme-5): stack canaries, missed inlining, aliasing, and branches the compiler chose.
 - <a class="nj-theme" href="#theme-6" title="theme 6">6</a> [Write through a cursor](#theme-6): no virtual call per character, no allocation per call, no branch per
   integer.
 - <a class="nj-theme" href="#theme-7" title="theme 7">7</a> [Fix the algorithm first](#theme-7): seven operations were quadratic or worse.
@@ -90,7 +95,7 @@ Eight themes did most of the work:
 ## Where the time went: a timeline
 
 The suite compares two points. To see which change did what, we compiled one small benchmark against the header of
-each of the 315 commits on `develop` that changed `json.hpp` or `json_view.hpp` from 3.12.0 to October 27, and of
+each of the 351 commits on `develop` that changed `json.hpp` or `json_view.hpp` from 3.12.0 to November 3, and of
 3.13.0, and ran all of them
 interleaved. Four of the eight workloads we followed:
 
@@ -99,8 +104,7 @@ interleaved. Four of the eight workloads we followed:
 - `dump()` of `twitter.json`: writing strings;
 - `from_cbor()` of `twitter.json`: reading a binary format.
 
-Each panel shows the speedup over 3.12.0 after each commit, on a logarithmic scale so that a step of 2× has the same
-height everywhere. The badges above the steps name the theme below that explains them. Moving code around changes a
+Each panel shows the speedup over 3.12.0 after each commit, on a logarithmic scale. The badges above the steps name the theme below that explains them. Moving code around changes a
 build's speed by a few percent on its own, so only the larger steps mean something.
 
 <div class="nj-charts-grid-wrap" markdown>
@@ -118,13 +122,13 @@ build's speed by a few percent on its own, so only the larger steps mean somethi
 </div>
 </div>
 
-<p class="nj-caption" markdown>Speedup over 3.12.0 after each of the 315 commits that changed the headers up to October 27, from 3.12.0 (left) to 3.13.0 (right), whose step also holds 21 later commits. More is better; each point is the median of 4 interleaved runs of one build. The badges are theme numbers; "U" is a UTF-8 check that came and went. The other four workloads, and every labeled step with its pull request and size, are in [Appendix C](#c-the-timeline).</p>
+<p class="nj-caption" markdown>Speedup over 3.12.0 after each of the 351 commits that changed the headers up to November 3, from 3.12.0 (left) to 3.13.0 (right). More is better; each point is the median of 4 interleaved runs of one build. The badges are theme numbers; "U" is a UTF-8 check that came and went. The other four workloads, and every labeled step with its pull request and size, are in [Appendix C](#c-the-timeline).</p>
 
 A few things stand out:
 
-- **There is no single big step.** Parsing `citm_catalog.json` got faster in about half a dozen visible steps. The largest
-  removed a buffer that only error messages read, which alone saved a third of the time. The next ones added the fast
-  paths for contiguous input, derived positions only on error and skipped indentation eight bytes at a time; most
+- **There is no single big step.** Parsing `citm_catalog.json` got faster in about six visible steps. The largest
+  removed a buffer that only error messages read, which alone saved 35 % of the time. The next ones added the fast
+  paths for contiguous input, derived positions only on error, and skipped indentation eight bytes at a time; most
   other changes moved it by a few percent.
 - **Writing had a few large steps.** `dump()` of `twitter.json` lost 70 % of its time in one change (a write buffer
   and bulk string copies), and `dump()` of `canada.json` 65 % in another (Żmij).
@@ -175,8 +179,8 @@ char_int_type get()
 
 Two counters in memory, a branch for a pending `unget()`, a call into the input adapter, a `push_back()` into a
 buffer that only an error message reads, and a branch for line breaks. The counters are members of the lexer, so the
-compiler has to load, add and store them for every byte. A string or a number then copied each byte a second time into
-the token buffer. That is a clean design: one interface works for a `std::string`, an `std::istream`, a `FILE*`, a
+compiler has to load, add, and store them for every byte. A string or a number then copied each byte a second time into
+their token buffer. That is a clean design: one interface works for a `std::string`, an `std::istream`, a `FILE*`, a
 pair of iterators over a `std::list<char>`, or a user's own adapter. But it makes every input pay for the most limited
 one.
 
@@ -253,14 +257,15 @@ name is used, not when the pointer is called, so it works on any `std::streambuf
 Before the stream refills its get area, the adapter appends the part of the current token that is in it to a carry
 buffer; only an error message ever reads the token text back. Nothing is read ahead: the adapter advances `gptr()`
 by exactly what the lexer consumes, so the stream is left where it was before. On an M1 Max, parsing from an
-`std::ifstream` used to take 1.8 to 2.5 times as long as reading the file into a string and parsing that; after this change it took 11 to 18 % longer, and a later one cut another 5 to 10 % off the stream path.
+`std::ifstream` took 1.8–2.5× as long as reading the file into a string and parsing that, in the pull
+request's measurement before the change; now it takes just 9–16 % longer.
 
 ### `FILE*`
 
 `std::fgetc` locks the `FILE` on every call. 3.13.0 locks it once per parse (`flockfile`, then
 `getc_unlocked`; `_lock_file` and `_fgetc_nolock` with the Microsoft runtime). `flockfile` is recursive, so the binary
 readers' `fread()` and a SAX handler's own `ftell()` keep working. On macOS, parsing `citm_catalog.json` from a
-`FILE*` got 4.4 times as fast in the pull request's measurement; with glibc only 1.1 to 1.3 times,
+`FILE*` got 4.4× as fast in the pull request's measurement; with glibc only 1.1–1.3×,
 because glibc's per-call locking is already cheap. Two details: MemorySanitizer builds keep `fgetc`, because glibc's inline `getc_unlocked`
 reads a buffer that uninstrumented glibc filled; and a SAX handler that waits for another thread using the same
 `FILE` now deadlocks, which the documentation says. Both paths can be switched off, with
@@ -320,14 +325,14 @@ The same kind of word test now runs in several places:
 - **Indentation.** After a newline, `word ^ 0x2020…20` is zero for eight spaces; the first non-zero byte ends the
   indentation, and its trailing-zero count says how many spaces of the last word to skip as well. The idea is from
   [Glaze](https://github.com/stephenberry/glaze)'s `skip_matching_ws`, which compares with the previous line's indentation; comparing with spaces needs no
-  state and works for any indentation width. A version that skipped only whole words validated 5 to 12 % slower and gave
+  state and works for any indentation width. A version that skipped only whole words validated 5–12 % slower and gave
   nothing on two-space indentation, where the runs are often shorter than a word. With four-space indentation,
-  validating `citm_catalog.json` got 22 to 30 % faster.
+  validating `citm_catalog.json` got 22–30 % faster.
 - **[`dump()`](../../api/basic_json/dump.md),** for runs of characters that need no escaping, with and without
   [`ensure_ascii`](../../api/basic_json/dump.md#parameters).
 - **The binary formats,** for the zero byte that ends a BSON key, and for the UTF-8 check of strings with
   `error_handler_t::strict`. On the M1, reading `canada.json` from BSON got 14 % faster, and writing `twitter.json` as
-  checked CBOR 14 %.
+  UTF-8-checked CBOR 14 %.
 
 ### 16 bytes with SSE2 and NEON
 
@@ -341,31 +346,37 @@ shifts each 16-bit lane right by four
 and narrows it to eight bits, which leaves four bits per input byte in a 64-bit integer:
 
 ```cpp
-const uint8x16_t in = vld1q_u8(p);
-const uint8x16_t quote_or_backslash = vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')),
-                                               vceqq_u8(in, vdupq_n_u8('\\')));
-const uint8x16_t special = vorrq_u8(quote_or_backslash,
-                                    vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20)));
-const uint8x8_t nibbles = vshrn_n_u16(vreinterpretq_u16_u8(special), 4);
-const std::uint64_t bits = vget_lane_u64(vreinterpret_u64_u8(nibbles), 0);
-if (bits != 0)
+while (e - p >= 16)
 {
-    return p + (count_trailing_zeros(bits) >> 2u);   // four bits per byte
+    const uint8x16_t in = vld1q_u8(p);
+    const uint8x16_t quote_or_backslash = vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')),
+                                                   vceqq_u8(in, vdupq_n_u8('\\')));
+    const uint8x16_t special = vorrq_u8(quote_or_backslash,
+                                        vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20)));
+    // each byte of special is 0x00 or 0xFF; shifting each 16-bit lane right by 4 and
+    // keeping its low byte leaves 4 bits per input byte
+    const uint8x8_t nibbles = vshrn_n_u16(vreinterpretq_u16_u8(special), 4);
+    const std::uint64_t bits = vget_lane_u64(vreinterpret_u64_u8(nibbles), 0);
+    if (bits != 0)
+    {
+        return p + (count_trailing_zeros(bits) >> 2u);   // four bits per byte
+    }
+    p += 16;
 }
 ```
 
 <p class="nj-code-caption" markdown>The NEON string scan: three comparisons for four classes of bytes, and a narrowing shift in place of `pmovmskb`.</p>
 
 On `twitter.json`, the vector scan made `json::parse()` 5 % faster with Clang and 9 % with GCC on an M1 Max; on long
-strings, 19 to 24 %. It did not win from the first byte. On the M1, starting with NEON made short strings 3 to 4 %
+strings, 19–24 %. It did not win from the first byte. On the M1, starting with NEON made short strings 3–4 %
 slower and the rest of the lexer bigger, so ARM runs four 8-byte words first and keeps the vector loop out of line;
 x86-64 runs one word first. Inlining the vector code into the lexer cost 5 % of validating `jeopardy.json` on the M1,
 although no string of that file is long enough to reach it: the scan function, which runs once per token, saved more
 registers and needed a stack slot.
 
 `json_document` also skips the digits after a decimal point 16 bytes at a time with SSE2: a compare and a bit mask
-instead of a branch per digit, about a third of the instructions for a 12-digit fraction. Parsing `canada.json` got
-22 % faster on x86-64, a file of 10,000 floats 28 to 32 %. One row got slower: with GCC 16, `citm_catalog.json` took
+instead of a branch per digit, about 33 % of the instructions for a 12-digit fraction. Parsing `canada.json` got
+22 % faster on x86-64, a file of 10,000 floats 28–32 %. One row got slower: with GCC 16, `citm_catalog.json` took
 8 % longer with the same number of instructions. More of its hot jumps now crossed a 32-byte boundary, which the
 microcode fix for Intel's JCC erratum makes slow on our server; assembling with
 `-Wa,-mbranches-within-32B-boundaries` shrinks the loss to about 4 %. We left the code as it is.
@@ -404,7 +415,7 @@ vst1q_u8(d, a);
 vst1q_u8(d + n - 16, b);   // the two stores overlap too, with the same bytes
 ```
 
-<p class="nj-code-caption" markdown>Writing a string of 16 to 32 bytes with two overlapping loads and stores (NEON).</p>
+<p class="nj-code-caption" markdown>Writing a string of 16–32 bytes with two overlapping loads and stores (NEON).</p>
 
 <div class="nj-fig-wrap" markdown>
 --8<-- "images/perf_blog_overlap.svg"
@@ -413,11 +424,11 @@ vst1q_u8(d + n - 16, b);   // the two stores overlap too, with the same bytes
 <p class="nj-caption" markdown>The code above on `profile_link_color`, a key of `twitter.json`.</p>
 
 On `twitter.json`, this cut the instructions of `dump()` by 21 %. Shorter strings use the same trick with two
-overlapping 8-, 4- or 2-byte loads, so no `memcpy` with a length known only at run time is left.
+overlapping 8-, 4-, or 2-byte loads, so no `memcpy` with a length known only at run time is left.
 
 ### Escapes from a table
 
-When the scanner stops at a quote, a backslash or a control character, the
+When the scanner stops at a quote, a backslash, or a control character, the
 writer copies its escape sequence from a table of 8-byte rows, padded with zeros, with the length in the last byte:
 
 ```cpp
@@ -433,17 +444,9 @@ write_buffer_pos += escape[7];                                         // keep o
 
 One 8-byte store and one add, with no branch on the length; the padding lies behind the write position and is
 overwritten by the next write. The writer makes sure that 8 bytes are free before it copies. The idea is from [orjson](https://github.com/ijl/orjson)'s
-`QUOTE_TAB`, which orjson took from [sonic-rs](https://github.com/cloudwego/sonic-rs). Dumping 100,000 log lines full of `\n`, `\t` and quotes got 23 % faster
+`QUOTE_TAB`, which orjson took from [sonic-rs](https://github.com/cloudwego/sonic-rs). Dumping 100,000 log lines full of `\n`, `\t`, and quotes got 23 % faster
 on an M1 Max, but most of that came from writing straight into the write buffer instead of an intermediate one; the
-table alone gained 2 to 7 %.
-
-!!! note "Loop shape beats branch count"
-
-    Not every change in this direction worked the first time. A change that removed one branch per whitespace byte
-    made scanning long runs of indentation 1.75 to 3.2 times *slower* with Clang and GCC. It had rewritten
-    `do { get(); } while (is_whitespace());` into `get(); while (is_whitespace()) { get_ignoring_pending_unget(); }`,
-    and after that, neither Clang nor GCC kept the input's read and end pointers in registers: they reloaded them from
-    memory on every character. `get(); if (is_whitespace()) { do { ... } while (is_whitespace()); }` fixed it.
+table alone gained 2–7 %.
 
 ## <span class="nj-theme">3</span> Own the number conversions { #theme-3 }
 
@@ -502,8 +505,11 @@ std::uint32_t parse_eight_digits(std::uint64_t v) noexcept
 
 <p class="nj-caption" markdown>`parse_eight_digits()` on `"12345678"`: multiplying by `10·2⁸ + 1` adds ten times each byte to the byte above it, and the shift and the next mask keep every second lane.</p>
 
-Whether all eight bytes are digits is one more expression: a digit is 0x30 to 0x39, so its high nibble must be 3, and
-adding 6 must keep it 3. Integers of up to 18 digits and floats of up to 19 then need no overflow check at all.
+Checking that all eight bytes are digits takes one more expression. A digit is a byte from 0x30 to 0x39. In
+hexadecimal, its upper half is 3 and its lower half is at most 9. Adding 6 tests the lower half: 0x39 + 6 = 0x3F still
+has the upper half 3, but 0x3A + 6 = 0x40 carries into it. So a byte is a digit exactly if its upper half is 3 both
+before and after adding 6, and with masks, that is one comparison for all eight bytes. An integer of up to 18 digits
+always fits into an `int64_t`, and 19 digits into a `uint64_t`, so they need no overflow check.
 
 ### Clinger's fast path
 
@@ -546,14 +552,15 @@ the parser's divide-by-multiplying idea run backwards on all lanes of a word at 
 I](#i-details-of-the-themes) shows it), and with SSE2 or NEON, Żmij's vector code (the NEON version by Dougall Johnson, the SSE version by
 Tobias Schlüter) converts all 16 digits in one vector register.
 
-One stall turned up on the way. The straightforward way to insert the decimal point stores the digits, loads them
-back starting one byte further, and stores them shifted. That load overlaps two earlier, smaller stores, and an x86
-core cannot forward such a load from its store buffer: it waits until the stores have reached the cache. The commit
-measured that as about 25 % of the time to write a `double`. The vector version never goes through memory: it compares
-a vector of positions 0 to 15 with the position of the point, keeps the digits before it, shifts the rest up one byte
-in the register, puts `'.'` into the gap, and stores 16 bytes once.
+One stall turned up on the way. To make room for the decimal point, the code first wrote all 16 digits, as two 8-byte
+stores, and then moved the digits after the point one byte to the right: it loaded them and stored them one byte
+further. That load came right after the two stores and read part of each. A CPU can hand a load the data of one store
+that hasn't reached the cache yet, but it can't combine two, so the load had to wait until both stores were written.
+The commit measured that wait as about 25 % of the time to write a `double`. The vector version avoids memory: it
+keeps the digits in a register, moves the ones after the point up by one byte there, puts `'.'` into the gap, and
+stores all 16 bytes once.
 
-In the pull request's measurement, `dump()` of `canada.json` got about three times as fast, on an M1 Max as well as
+In the pull request's measurement, `dump()` of `canada.json` got about 3× as fast, on an M1 Max as well as
 on an x86-64 server with GCC and Clang. The changed output is listed in [Appendix F](#f-behavior-changes): 0.14 % of random
 `double`s are written differently, all of them with the same or fewer digits, and all of them read back as the same
 value.
@@ -573,7 +580,7 @@ copy had been about 20 % of what was left of a stream parse.
 
 [`accept()`](../../api/basic_json/accept.md) went one step further: it doesn't copy strings and keys at all. The
 lexer and the parser take a template parameter that drops values, so `accept()` gets its own instantiation without the
-copies. That made validating `twitter.json` 11 to 13 % faster on x86-64, and 19 files of simdjson's examples 12 %
+copies. That made validating `twitter.json` 11–13 % faster on x86-64, and 19 files of simdjson's examples 12 %
 by geometric mean.
 
 ### Positions only on error
@@ -626,8 +633,8 @@ A class derived from `json_sax_dom_parser` does not match the specialization, so
 every other handler, the lexer only records a pointer to the token and its length, and copies on the first
 `get_string()`. That is safe for contiguous input, which has to outlive the parse anyway; in a stream's window, the
 next refill could overwrite the text, so there the copy is made at once. The first version put the "is there pending
-text?" check into the `get_string()` that keys and strings use too, and lost 2 to 3 % on string-heavy input; they now
-call a separate function without the check. Parsing `canada.json` got 9 to 11 % faster.
+text?" check into the `get_string()` that keys and strings use too, and lost 2–3 % on string-heavy input; they now
+call a separate function without the check. Parsing `canada.json` got 9–11 % faster.
 
 ### A copy that should have been a move
 
@@ -671,8 +678,8 @@ Container::swap(tmp);
 
 The new element is constructed before any value is moved, so `j.emplace("new", std::move(j["old"]))` still works, and
 the strong guarantee holds without a `try`, which matters because the library also builds with `-fno-exceptions`.
-Parsing `twitter.json` into `ordered_json` needs a third of the allocations and, in the pull request's
-measurement, about half the time. A trap on the way: compilers with the EDG front end (Intel's icpc, NVIDIA's nvc++)
+Parsing `twitter.json` into `ordered_json` needs 33 % of the allocations and, in the pull request's
+measurement, about 50 % of the time. A trap on the way: compilers with the EDG front end (Intel's icpc, NVIDIA's nvc++)
 consider that pair's move constructor
 `noexcept`, so there the vector already "moves", the new path is not taken, and a key copy that throws during growth
 calls `std::terminate`.
@@ -684,16 +691,16 @@ insert every member into its object as soon as it was parsed. Now all open array
 an array of up to 16 elements ends, it is constructed at its exact size from a range of move iterators, one
 allocation. `ordered_json` objects collect up to 32 members the same way, with a linear duplicate-key check over that
 short slice, and larger objects get a side table of hashes for that check from 64 members on. An `ordered_json` object
-with very many members went from 43 million instructions to 1.9 million, and `ordered_json` now parses 1 to 15 %
+with very many members went from 43 million instructions to 1.9 million, and `ordered_json` now parses 1–15 %
 *faster* than `json` in our suite, since `json`'s `std::map` still allocates a node per member. The binary readers
-know their sizes up front and use a separate handler without the stack; sharing it had made them 5 to 12 % slower
+know their sizes up front and use a separate handler without the stack; sharing it had made them 5–12 % slower
 with GCC.
 
 The binary readers also stopped taking every element through their general dispatch. When an array opens, the
-CBOR and MessagePack readers read the numbers, booleans and nulls that follow in one loop, and the UBJSON and BJData
+CBOR and MessagePack readers read the numbers, booleans, and nulls that follow in one loop, and the UBJSON and BJData
 readers do the same for arrays with a type marker. Reading an array of a million integers from CBOR or MessagePack
-got 42 to 47 % faster, and `canada.json` 10 %. Arrays of one element skip the loop: in 1,000 arrays nested in each
-other, each entered it only to find another array, which cost 6 to 8 %. Now the loop costs nested arrays nothing
+got 42–47 % faster, and `canada.json` 10 %. Arrays of one element skip the loop: in 1,000 arrays nested in each
+other, each entered it only to find another array, which cost 6–8 %. Now the loop costs nested arrays nothing
 measurable, and 100,000 arrays `[1,2]` up to 1.5 %.
 
 ### Smaller ones
@@ -708,7 +715,7 @@ creates a temporary `basic_json` for every object key it writes (−55 % on `twi
 
     The SAX interface hands the lexer's buffer to the handler as `string_t&` and allows it to be moved from; the lexer
     starts each token with an empty buffer anyway. In September, moving string values instead of copying them saved
-    2 to 3 %. Moving keys too was measured and dropped: the buffer is sized for the longest token so far, keys are
+    2–3 %. Moving keys too was measured and dropped: the buffer is sized for the longest token so far, keys are
     short and values long, so moving a key hands a large buffer to a short string and the next value has to grow a
     new one, 11.9 % slower on 40,000 short strings. In October, with much of the lexer around it rewritten, keys were
     measured again: `parse()` of `twitter.json` got 3.3 % faster with Clang and 5.0 % with GCC, so keys are moved
@@ -722,7 +729,7 @@ profiles, and instruction counts. None of the following shows up in the source a
 ### A stack canary on every token
 
 The function that dispatches on the first byte of a token built the expected text
-of `true`, `false` and `null` in local arrays:
+of `true`, `false`, and `null` in local arrays:
 
 ```cpp
 case 't':   // 3.12.0
@@ -781,9 +788,9 @@ throw_incompatible_reference_type(obj);   // JSON_HEDLEY_NO_RETURN JSON_HEDLEY_N
 
 <p class="nj-code-caption" markdown>The same function in 3.13.0: a test and a call of a helper that is never inlined.</p>
 
-That fixed 27 throw sites, and the ones that build a message got helpers that are never inlined; iterator arithmetic got six times as fast with Clang, and `std::sort` over a `json` array of
-10,000 integers in user code 6 to 9 % faster. The value's own lifecycle had the same problem: the destructor, the copy
-constructor and [`operator==`](../../api/basic_json/operator_eq.md) contained the code for every type, so they were too big to inline even for a number. Clang
+That fixed 27 throw sites, and the ones that build a message got helpers that are never inlined; iterator arithmetic got 6× as fast with Clang, and `std::sort` over a `json` array of
+10,000 integers in user code 6–9 % faster. The value's own lifecycle had the same problem: the destructor, the copy
+constructor, and [`operator==`](../../api/basic_json/operator_eq.md) contained the code for every type, so they were too big to inline even for a number. Clang
 reported about 380 call sites where they were not inlined. Now the destructor and the copy constructor start with an
 inline test whether the value owns memory, which Clang compiles to one bit test (`1 << type & 0x10E`), `operator==`
 with one for two scalars of the same type, and the rest is out of line. `j == 5` went from 3.55 ns to
@@ -792,11 +799,11 @@ large documents got about 7 % slower.
 
 ### Aliasing
 
-C++'s aliasing rules let a `char` lvalue access any object, so a store through a `char` pointer may
-modify any object whose address the compiler can't rule out. In a writer that keeps both its buffer and its write
-position in members, the compiler must assume that `buffer[pos++] = c` can change `pos` itself,
-and stores and reloads it around every byte. Keeping the position in a
-local variable whose address never escapes puts it in a register:
+C++ allows a `char` to access any object, so a store through a `char` pointer may change any object whose address the
+compiler can't rule out. In a writer that keeps its write position `pos` in a member, `buffer[pos++] = c` therefore
+costs more than it looks: the compiler can't prove that the store of `c` didn't overwrite `pos` itself, so it writes
+`pos` to memory before every character and loads it again after. A local variable whose address never escapes can't
+be reached by any store, and stays in a register:
 
 ```cpp
 std::size_t pos = write_buffer_pos;   // a local: no char store can reach it
@@ -809,6 +816,14 @@ write_buffer_pos = pos;               // published once at the end
 On a 4 MiB binary value, [`dump()`](../../api/basic_json/dump.md) went from 18.0 ms to 7.4 ms with this change alone. `json_document`'s writer and
 the binary writers keep their cursors in locals for the same reason, and publish them before any call that could see
 them.
+
+### Loop shape beats branch count
+
+A change that removed one branch per whitespace byte made scanning long runs of indentation 1.75–3.2× *slower* with Clang and GCC. It had rewritten `do { get(); } while (is_whitespace());` into
+`get(); while (is_whitespace()) { get_ignoring_pending_unget(); }`, and the assembly showed why it lost: neither
+compiler kept the input's read and end pointers in registers any more, and both reloaded them from memory on every
+character. Restoring the do-while shape, `get(); if (is_whitespace()) { do { ... } while (is_whitespace()); }`, fixed
+it. We don't know why the while loop lost the registers, only that the do-while shape gets them back.
 
 ### Inlining that disappears
 
@@ -929,7 +944,7 @@ on a byte array: compilers can recognize the reversal as a byte swap in a small 
 Clang emitted no `bswap` at all. Writing into a vector also allows [`to_bson()`](../../api/basic_json/to_bson.md) to
 make one pass instead of two: BSON puts the size of every document in front of it, so the writer used to walk the
 value once for the sizes and once to write. It now writes a placeholder and fills in the size when the document is
-complete, 12 to 20 % faster on the M1.
+complete, 12–20 % faster on the M1.
 
 ### A cursor instead of `vector::insert()`
 
@@ -954,7 +969,7 @@ oa.commit(out - start);
 ### Integers without branches
 
 The last step also took the branches out of encoding an integer. After the bounds checks, mispredicted branches
-accounted for about 40 % of the remaining time: the type, the sign and the 1-, 2-, 4- or 8-byte size class of each integer in a stream are
+accounted for about 40 % of the remaining time: the type, the sign, and the 1-, 2-, 4-, or 8-byte size class of each integer in a stream are
 hard to predict. The encoder reads signed and unsigned integers through one masked path, looks the size class up from
 the number of leading zero bits, and stores the head as one byte plus one 8-byte word, of which the caller keeps only
 as many bytes as the class needs:
@@ -984,7 +999,7 @@ std::size_t encode_first_byte_and_tail(CharType* out, std::uint8_t first_byte,
 
 The table is a table because Clang vectorized the equivalent comparisons into slower code, and the unconditional
 8-byte store is why `reserve()` asks for 9 bytes per integer. Writing an array of small signed integers as CBOR,
-which had not got faster before, is now 4.2 times as fast as with 3.12.0 with Clang on an M1 Max, and was 2.8 times as fast
+which had not got faster before, is now 4.2× as fast as with 3.12.0 with Clang on an M1 Max, and was 2.8× as fast
 with GCC 13 on x86-64 when the change was made. One more
 lesson from these changes: the loop over an array is a separate function that is never inlined. Inlined into the
 function that writes any value, its register needs made every call of that function save more registers, once per
@@ -1064,7 +1079,7 @@ loop). The walk allocates nothing and calls nothing that can throw, which fixed 
 destructor flattened children into a `std::vector`, which ignored the allocator type and could let `std::bad_alloc`
 escape from a `noexcept` destructor. A test checks with a counting allocator that destroying any value allocates
 nothing. Against 3.12.0, destroying a parsed document is
-1.24 to 1.55 times as fast in our suite, and destroying an array of one million small objects 1.39 times.
+1.24–1.55× as fast in our suite, and destroying an array of one million small objects 1.39×.
 
 ## <span class="nj-theme">8</span> Build a different data structure { #theme-8 }
 
@@ -1084,7 +1099,7 @@ figures below show what each parser makes of this 54-byte text:
 --8<-- "images/json_view_layout_tree.svg"
 </div>
 
-<p class="nj-caption" markdown>What `json::parse()` builds: a tree in which every object, array and string is a separate heap allocation (dashed). The float is converted to the nearest `double` while parsing, so the original text `19.90` is gone: the stored value is 19.899999999999998578…, which `dump()` writes as `19.9`, the shortest text that reads back as the same `double`.</p>
+<p class="nj-caption" markdown>What `json::parse()` builds: a tree in which every object, array, and string is a separate heap allocation (dashed). The float is converted to the nearest `double` while parsing, so the original text `19.90` is gone: the stored value is 19.899999999999998578…, which `dump()` writes as `19.9`, the shortest text that reads back as the same `double`.</p>
 
 <div class="nj-fig-wrap" markdown>
 --8<-- "images/json_view_layout_index.svg"
@@ -1124,7 +1139,7 @@ static_assert(sizeof(node) == 16, "node must stay 16 bytes");
 - **Integers are converted while their digits are in the cache,** into the last 8 bytes of their node.
 - **Floats stay text until you read them.** The node records the number of digits before and after the point, and
   reading converts with the same Clinger/Eisel-Lemire code as `json::parse`. Converting them during the parse was
-  tried and dropped: parsing `canada.json` and reading every number got 4 to 7 % faster, but parsing alone 36 to 90 %
+  tried and dropped: parsing `canada.json` and reading every number got 4–7 % faster, but parsing alone 36–90 %
   slower. A
   default `dump()` writes the shortest form of a float, as `json` does; [`number_format::source`](../../api/basic_json_view/number_format.md) copies the source
   text of every number instead.
@@ -1136,10 +1151,10 @@ static_assert(sizeof(node) == 16, "node must stay 16 bytes");
   and a lookup is never slower than the linear search of a small object.
 - **Validating writes no index.** [`json_document::accept()`](../../api/basic_json_document/accept.md) runs a second
   instantiation of the same builder with a template parameter that turns every store off, so the checks are the
-  same code, but no node is written and no escaped string is decoded. On x86-64 that made it 17 to 31 % faster on
+  same code, but no node is written and no escaped string is decoded. On x86-64 that made it 17–31 % faster on
   `twitter.json`, `citm_catalog.json` and `canada.json`, and the 56 MB `jeopardy.json` no longer needs 52 MB of fresh memory just to be validated.
 - **First duplicate wins.** Lookups return the first of duplicate keys, as yyjson and simdjson do, because returning
-  the last one meant scanning every object to its end and made lookups in small objects 1.6 to 3.4 times slower.
+  the last one meant scanning every object to its end and made lookups in small objects 1.6–3.4× slower.
   `json::parse()` keeps the last one, so for a text with duplicate keys, the two can disagree; the documentation
   says so.
 
@@ -1169,10 +1184,7 @@ is quadratic, as with `ordered_json`, and an object that was edited loses its ha
 ## How it compares
 
 "Which JSON library parses fastest?" has no answer, because "parsing" means different things in different libraries.
-Some build a tree you can change, some a read-only index, some nothing at all. So we compare **use cases** instead:
-tasks a program actually has, each of which every library may solve in whatever way it does best.
-
-### Four ways to hold a JSON text
+They hold a parsed JSON text in four different ways:
 
 | approach | what you get | what it costs | libraries we measured |
 | --- | --- | --- | --- |
@@ -1183,13 +1195,10 @@ tasks a program actually has, each of which every library may solve in whatever 
 
 <p class="nj-table-caption" markdown>The kinds of representation the libraries in this comparison offer. Most libraries offer more than one.</p>
 
-Which approach wins depends on the task, and a comparison of "parse" times across the rows of this table compares
-different amounts of work. In nlohmann/json, `json` is the mutable tree and `json_document` the flat document, so we
-show the library twice: its best way *with* `json_document` and its best way *without* it.
-
-A word on who set the rules: we wrote every library's benchmark code, chose the files and the rules, and tuned
-3.13.0 on the same machines and files. No maintainer of the other libraries has reviewed their code. To check
-ourselves, we also ran files and a conformance suite we never tuned on ([below](#files-and-checks-we-didnt-choose)).
+So a comparison of parse times across the rows of this table compares different amounts of work. Instead, we
+compare **use cases**: tasks a program actually has, each of which every library may solve in whatever way it does
+best. In nlohmann/json, `json` is the mutable tree and `json_document` the flat document, so we show the library
+twice: its best way *with* `json_document` and its best way *without* it.
 
 ### Six use cases
 
@@ -1200,9 +1209,9 @@ built freed again:
   checks a request before it passes it on.
 - **sum:** visit every value in document order, convert every number, and add them up. This measures walking a whole
   document and converting all of its numbers.
-- **select:** read a few fields of every record, such as the id, the user name and the retweet count of every tweet,
+- **select:** read a few fields of every record, such as the id, the user name, and the retweet count of every tweet,
   as a program does that needs only part of a response. A library that reads lazily can skip the rest.
-- **edit:** change a value, remove a member and add a member in every record, then write the result as compact JSON:
+- **edit:** change a value, remove a member, and add a member in every record, then write the result as compact JSON:
   the round trip of a program that patches a message or a configuration.
 - **minify:** read the text and write it as compact JSON, without whitespace. This measures reading and writing
   together, without changes in between.
@@ -1222,12 +1231,24 @@ or the operating system. It is not neutral in every detail, though:
 
 - The string has 64 bytes of spare capacity, so simdjson, which reads up to 64 bytes past the end, can use it without
   a copy. A program would load the file into such a buffer in the first place.
-- yyjson, RapidJSON and simd-json can parse in place, which needs a buffer they may change. They get a copy, and the
-  copy is part of their time: about 30 µs for `twitter.json` on the Mac. Even so, yyjson's in-place parse is about
+- yyjson, RapidJSON, and simd-json can parse in place, which needs a buffer they may change. So they first copy the
+  string, inside the timed call, and the copy counts towards their time: about 30 µs for `twitter.json` on the Mac. Even so, yyjson's in-place parse is about
   as fast as its parse without a copy, which is measured too.
 - `json_document` reads the string in place and keeps pointing into it. A document that owns its text
   ([`parse_copy()`](../../api/basic_json_document/parse_copy.md)) costs one copy more.
 - Reading from files and streams is not part of the comparison.
+
+```mermaid
+flowchart TB
+    f[/"test file"/] -->|"read once, untimed"| s["std::string with 64 spare bytes"]
+    s --> timed
+    subgraph timed ["timed, every call"]
+        direction LR
+        c["copy<br>(in-place ways)"] --> p["parse"] --> u["use case"] --> d["free<br>everything"]
+    end
+```
+
+<p class="nj-caption" markdown>What one timed call of a use case contains. For *write*, the document is parsed before the timer starts, so only the writing is timed. Every way's result is checked before anything is timed.</p>
 
 ### Checking less, on purpose
 
@@ -1238,14 +1259,20 @@ finding them. A minifier only needs to find whitespace, not understand the value
 RapidJSON's default and sonic-cpp's too. Each is a good choice for input that is known to be valid, for example text
 your own program wrote a moment ago. To tell these ways apart, every way is also fed four broken inputs: the file cut
 short by one byte, a stray comma, an invalid UTF-8 byte in a string, and garbage after the value. A way that rejects all four validates fully,
-and each cell shows the fastest such way. If a way that checks less is faster, it is shown in the right half of the
-cell: "U" trusts UTF-8, "P" reads lazily, only removes whitespace or, in one Glaze cell on x86-64, doesn't check what follows the value.
+and each cell shows the fastest such way. If a way that checks or does less is faster, it is shown in the right half
+of the cell: "U" trusts UTF-8, "P" reads lazily, only removes whitespace or, in one Glaze cell on x86-64, doesn't check
+what follows the value, and "N" writes each number by copying its text instead of formatting it, which `json_document`,
+yyjson, and RapidJSON can do.
+
+A word on who set the rules: we wrote every library's benchmark code, chose the files and the rules, and tuned
+3.13.0 on the same machines and files. No maintainer of the other libraries has reviewed their code. To check
+ourselves, we also ran files and a conformance suite we never tuned on ([below](#files-and-checks-we-didnt-choose)).
 
 <div class="nj-fig-wrap" markdown>
 --8<-- "images/perf_blog_usecases_mac.svg"
 </div>
 
-<p class="nj-caption" markdown>Time per library and use case on an Apple M1 Max: each library's fastest fully validating way, as the geometric mean over `twitter.json`, `citm_catalog.json`, `canada.json` and `jeopardy.json`, relative to the fastest library, so that every file counts equally. Less is better. Where a way that checks less is at least 3 % faster, it is shown in the right half of the cell: "U" trusts UTF-8, "P" reads lazily, only removes whitespace or, in one Glaze cell on x86-64, doesn't check what follows the value. "n/a" means the library has no API for the use case. Hover over or tap a cell for the times per file and the way; the tables are in [Appendix E](#e-comparison-with-other-libraries). sonic-cpp's README lists only x86-64 Linux; we show it on the Mac anyway.</p>
+<p class="nj-caption" markdown>Time per library and use case on an Apple M1 Max: each library's fastest fully validating way, as the geometric mean over `twitter.json`, `citm_catalog.json`, `canada.json` and `jeopardy.json`, relative to the fastest library, so that every file counts equally. Less is better. Where a way that checks or does less is at least 3 % faster, it is shown in the right half of the cell: "U" trusts UTF-8, "P" reads lazily, only removes whitespace or, in one Glaze cell on x86-64, doesn't check what follows the value, and "N" copies number text instead of formatting it. "n/a" means the library has no API for the use case. Hover over or tap a cell for the times per file and the way; the tables are in [Appendix E](#e-comparison-with-other-libraries). sonic-cpp's README lists only x86-64 Linux; we show it on the Mac anyway.</p>
 
 ### Results on the Mac
 
@@ -1255,51 +1282,51 @@ the speed doesn't depend on being read-only.
 
 Some caveats belong next to that:
 
-- **The lead is not the same on every file.** On `twitter.json`, yyjson is within 1 to 7 % in *validate*, *sum*
+- **The lead is not the same on every file.** On `twitter.json`, yyjson is within 1–5 % in *validate*, *sum*,
   and *select*. Most of the lead comes from the indentation of `citm_catalog.json`, the floats of `canada.json` (next
   point) and the size of `jeopardy.json`.
 - **Floats are converted only when read.** That helps `json_document` in *validate* and *select* on `canada.json`,
   where most others convert 111,080 floats nobody looks at. Libraries that can skip the conversion use that mode
-  there, but only Boost.JSON gains much: it validates `canada.json` in half the time. *sum* reads every number, so it
-  is the fair comparison for floats; there, `json_document` is still slightly ahead of yyjson. Deferring integers
-  too saved `json_document` another 2 % on the Mac and 5 to 7 % on x86-64 in an experiment; that is not in 3.13.0.
+  there, but only Boost.JSON gains much: it validates `canada.json` in 48 % of the time. *sum* reads every number, so it
+  is the fair comparison for floats; there, `json_document` is still slightly ahead of yyjson.
 - **Checking less pays in *select*.** If the input needn't be checked fully, simdjson's On-Demand API and Glaze
-  reading into structs select in 0.74 and 0.81 of `json_document`'s time, and in 0.56 to 0.62 on x86-64: the right
+  reading into structs select in 0.75× and 0.82× `json_document`'s time, and in 0.56–0.61× on x86-64: the right
   halves of the *select* column.
 - **Indentation.** Two of the four files are indented, which theme <a class="nj-theme" href="#theme-2" title="theme 2">2</a> helps. On minified copies of
-  `twitter.json` and `citm_catalog.json`, yyjson comes closer (*validate* 1.27 → 1.25, *sum* 1.09 → 1.02), but
+  `twitter.json` and `citm_catalog.json`, yyjson comes closer (*validate* 1.26 → 1.25, *sum* 1.10 → 1.03), but
   `json_document` stays first.
 - **Number text can be copied.** With [`number_format::source`](../../api/basic_json_view/number_format.md), `json_document` writes each number by copying its text
-  instead of formatting it, and RapidJSON can read numbers as strings and write them back unchanged. That would make
-  writing `canada.json` with `json_document` four times as fast. The figures use neither: every library formats the
-  numbers it converted.
-- **Small documents.** On a 2.5 KB message, the fastest libraries take about a microsecond on the Mac and 1.2 to 2
-  on x86-64. yyjson validates it as fast as `json_document` and sums it slightly faster on the Mac, and with GCC on
-  x86-64, yyjson sums it slightly faster (with GCC 13, simdjson too).
+  instead of formatting it, and yyjson and RapidJSON can read numbers as text and write them back unchanged. The
+  output keeps the source's spelling of each number, which is all a minifier needs. It makes writing `canada.json`
+  with `json_document` 4.1× as fast and minifying it 1.9× as fast; the "N" halves of *edit*, *minify*, and
+  *write* show it.
+- **Small documents.** On a 2.5 KB message, the fastest libraries take about a microsecond on the Mac and 1.2–2
+  on x86-64. yyjson validates and sums it as fast as `json_document` on the Mac, and with GCC 16 on x86-64,
+  simdjson and yyjson sum it slightly faster.
 
 ### Reading into structs
 
 A view converts into your own types with the same [`from_json()`](../../features/arbitrary_types.md) as `json`, including the
 ones the [`NLOHMANN_DEFINE_TYPE_*`](../../api/macros/nlohmann_define_type_non_intrusive.md) macros generate. That is as fast as picking the fields by hand from the view; only
-for the many small records of `jeopardy.json` does it take about a quarter longer. On the Mac, Glaze, serde_json and
-Boost.JSON's `parse_into`, reading into the same structs and checking everything, take 1.7, 2.3 and 3.1 times as long
+for the many small records of `jeopardy.json` does it take 23 % longer. On the Mac, Glaze, serde_json, and
+Boost.JSON's `parse_into`, reading into the same structs and checking everything, take 1.7×, 2.2×, and 3.1× as long
 (geometric mean over the four files). On a `json` value, reading into the structs takes about as
 long as `json::parse()` alone.
 
 ### nlohmann/json without `json_document`
 
 And nlohmann/json without `json_document`? `json` builds a tree of separate allocations, and it shows: for
-*select*, *edit* and *minify* it takes several times as long as `json_document`, like Boost.JSON and RapidJSON. Where
+*select*, *edit*, and *minify* it takes several times as long as `json_document`, like Boost.JSON and RapidJSON. Where
 no tree is needed, it is closer: on the Mac, a SAX handler is on par with Boost.JSON's, and
 [`json::accept()`](../../api/basic_json/accept.md) takes 6 % longer than Boost.JSON without number conversion (on
-x86-64, Boost.JSON validates in 0.65 to 0.69 and sums in 0.73 to 0.77 of the time). `dump()` writes faster than Boost.JSON,
+x86-64, Boost.JSON validates in 0.67–0.70× and sums in 0.76–0.81× the time). `dump()` writes faster than Boost.JSON,
 RapidJSON and serde_json, and about as fast as Glaze.
 
 ### Results on x86-64
 
 On x86-64, the same programs ran on a virtual server whose CPU presents itself as Haswell, pinned to one core and built with `-march=haswell`: with the
-newest GCC, 16.2 (the figure below), and with GCC 13, the default of Ubuntu 24.04, and Clang 23 (both in
-[Appendix E](#e-comparison-with-other-libraries)). The compiler matters less than one might think. On the Mac, GCC 16
+newest GCC, 16.2 (the figure below), and with GCC 13.4 and Clang 23 (both in
+[Appendix E](#e-comparison-with-other-libraries)), on Ubuntu 26.04. The compiler matters less than one might think. On the Mac, GCC 16
 and Clang 23 put the same library first in every column as Apple clang, and on x86-64, the three compilers disagree
 only about *sum*.
 
@@ -1310,34 +1337,33 @@ only about *sum*.
 <p class="nj-caption" markdown>The same comparison on the x86-64 server with GCC 16.2, with the same cells and halves as the figure above. Less is better; hover over or tap a cell for the times and the way. The figures for GCC 13 and Clang 23 are in [Appendix E](#e-comparison-with-other-libraries).</p>
 
 `json_document` is the fastest in five of the six columns with GCC and in all six with Clang, where its lead in
-*sum* (6 % over sonic-rs) is within the noise of this machine. In *validate*, the next library takes 1.7 to 2 times
-as long, because validating no longer builds an index (theme <a class="nj-theme" href="#theme-8" title="theme 8">8</a>). Behind those means, it loses on single files:
+*sum* (7 % over sonic-rs) is within the noise of this machine. In *validate*, the next library takes 1.8–2× as long, because validating no longer builds an index (theme <a class="nj-theme" href="#theme-8" title="theme 8">8</a>). Behind those means, it loses on single files:
 
 - **One pass over every value, with GCC.** simdjson's On-Demand API sums all numbers of `twitter.json`,
-  `citm_catalog.json` and `canada.json` in 0.85 to 0.94 of `json_document`'s time with GCC 16 (0.84 to 0.92 with
+  `citm_catalog.json`, and `canada.json` in 0.83–0.95× `json_document`'s time with GCC 16 (0.88–0.91× with
   GCC 13). With Clang, `json_document` is ahead there, except on `canada.json`, where yyjson, which converts the
   floats during the parse, is faster than converting them on access.
 - **Fresh large documents.** For the 56 MB `jeopardy.json`, a fresh document needs a fresh 52 MB index, and on Linux
   the page faults of that much new memory are a large part of the time: copying the file into fresh memory alone
-  takes about half as long as `json_document`'s parse. Boost.JSON's SAX parser and sonic-rs, which build nothing,
-  sum it in 0.62 to 0.71 of the time. Reusing the document cuts `json_document`'s time by 39 to 42 %, to 55 to 60 ms,
-  about what sonic-rs takes. Validating needs no index: `json_document::accept()` takes 35 to 38 ms, and no library
-  validates `jeopardy.json` faster, even reused (the next is simdjson's reused parser at 50 to 53 ms). On the Mac, a
+  takes about 50 % as long as `json_document`'s parse. Boost.JSON's SAX parser and sonic-rs, which build nothing,
+  sum it in 0.65–0.74× the time. Reusing the document cuts `json_document`'s time by 37–43 %, to 52–54 ms,
+  a little less than sonic-rs takes. Validating needs no index: `json_document::accept()` takes 34–35 ms, and no
+  library validates `jeopardy.json` faster, even reused (the next is simdjson's reused parser at 47–54 ms). On the Mac, a
   fresh document costs hardly more than a reused one.
-- **Writing floats.** yyjson writes `canada.json` in 0.85 (GCC 16) to 0.92 (GCC 13) of the time, because
+- **Writing floats.** yyjson writes `canada.json` in 0.87× (GCC 16) to 0.93× (Clang 23) the time, because
   `json_document` first converts most floats from their text. Writing the source text instead
-  (`number_format::source`) avoids that.
-- **simdjson's DOM, with GCC.** It selects from `citm_catalog.json` 5 to 14 % faster; with Clang, `json_document`
-  is 2 % ahead.
+  (`number_format::source`, the "N" half) avoids that.
+- **simdjson's DOM.** It selects from `citm_catalog.json` 10 % faster with GCC 16 and 5 % faster with Clang 23;
+  with GCC 13, `json_document` is 2 % ahead.
 
 The full tables, with each library's variants, are in [Appendix E](#e-comparison-with-other-libraries).
 
 ### Files and checks we didn't choose { #files-and-checks-we-didnt-choose }
 
-The four files are the ones 3.13.0 was tuned on, so we also ran *validate*, *sum*, *minify* and *write* on the 19
+The four files are the ones 3.13.0 was tuned on, so we also ran *validate*, *sum*, *minify*, and *write* on the 19
 other files of simdjson's [`jsonexamples`](https://github.com/simdjson/simdjson-data/tree/master/jsonexamples). By
-geometric mean, `json_document` stays the fastest in *validate*, *minify* and *write* on every compiler, and in *sum*
-with Clang and on the Mac; with GCC, simdjson sums in 0.84 to 0.89 of its time. File by file, for *validate*:
+geometric mean, `json_document` stays the fastest in *validate*, *minify*, and *write* on every compiler, and in *sum*
+with Clang and on the Mac; with GCC, simdjson sums in 0.87–0.88× its time. File by file, for *validate*:
 
 <div class="nj-fig-wrap" markdown>
 --8<-- "images/perf_blog_heldout.svg"
@@ -1345,17 +1371,16 @@ with Clang and on the Mac; with GCC, simdjson sums in 0.84 to 0.89 of its time. 
 
 <p class="nj-caption" markdown>*validate* on the 19 files: `json_document`'s fastest fully validating way against the fastest other library's, per file; below 1.0× it is the fastest. Less is better. The right column names the next library on x86-64 (GCC 16.2).</p>
 
-`json_document` validates all 19 files fastest with GCC 16 and Clang 23, 17 with GCC 13 and 18 on the Mac. simdjson
-validates `apache_builds` 11 % faster on the Mac and `google_maps_api_response` 9 % faster with GCC 13, and
-Boost.JSON, without number conversion, `mesh.pretty` 5 % faster with GCC 13. Before validating without an index
-(theme <a class="nj-theme" href="#theme-8" title="theme 8">8</a>) and skipping fraction digits 16 bytes at a time (theme <a class="nj-theme" href="#theme-2" title="theme 2">2</a>), Boost.JSON validated the number-heavy files up to 1.5
-times as fast on x86-64.
+`json_document` validates all 19 files fastest with GCC 16 and Clang 23, 17 with GCC 13, and 18 on the Mac. simdjson
+validates `apache_builds` 10 % faster on the Mac and `google_maps_api_response` 1 % faster with GCC 13, and
+Boost.JSON, without number conversion, `mesh.pretty` 2 % faster with GCC 13. Before validating without an index
+(theme <a class="nj-theme" href="#theme-8" title="theme 8">8</a>) and skipping fraction digits 16 bytes at a time (theme <a class="nj-theme" href="#theme-2" title="theme 2">2</a>), Boost.JSON validated the number-heavy files up to 1.5×
+as fast on x86-64.
 
-Every *validate* way also ran the 318 files of [JSONTestSuite](https://github.com/nst/JSONTestSuite). The fully
-validating ways pass, with a few exceptions listed in [Appendix E](#e-comparison-with-other-libraries), one of them
-ours: nlohmann/json accepts `123` followed by a NUL byte, which it treats as the end of the input. The suite also
-showed that Glaze's generic reader accepts garbage after the value by default, which our probes had missed; the
-figures use its strict option.
+As a check of the four probes, every *validate* way also ran the 318 files of
+[JSONTestSuite](https://github.com/nst/JSONTestSuite). [Appendix E](#e-comparison-with-other-libraries) lists the
+exceptions, one of them ours: nlohmann/json treats a NUL byte as the end of the input. The suite also found that
+Glaze's generic reader accepts garbage after the value by default, so the figures use its strict option.
 
 We did not measure memory use, a CPU with AVX-512, MSVC, writing from structs, streaming input, or link-time
 optimization.
@@ -1381,8 +1406,8 @@ The pull requests record the ideas that measured worse, which is as useful as th
 
 ## The price
 
-None of this is free at compile time. `json.hpp` grew from 25,526 to 46,633 lines (`json_view.hpp` is a separate
-header of 11,894 lines that you only pay for if you include it). To see what that means for a program, we compiled two
+None of this is free at compile time. `json.hpp` grew from 25,526 to 46,630 lines (`json_view.hpp` is a separate
+header of 11,898 lines that you only pay for if you include it). To see what that means for a program, we compiled two
 small ones with both versions:
 
 - `count_numbers` reads `twitter.json` and adds up all of its numbers, like the *sum* use case in
@@ -1397,17 +1422,18 @@ precompiled header and as a C++20 module, in a debug build (`-O0`) and an optimi
 --8<-- "images/perf_blog_price.svg"
 </div>
 
-<p class="nj-caption" markdown>How much longer or shorter each program takes to compile than with 3.12.0, less is better: Apple clang 21 and GCC 16.2, CPU time of the compiler, median of 9 interleaved runs, C++20, Apple M1 Max. The one-off cost of building the precompiled header or the module is not included. Hover over a bar for the time in milliseconds; [Appendix G](#g-how-we-measured) has all times, the programs and the commands.</p>
+<p class="nj-caption" markdown>How much longer or shorter each program takes to compile than with 3.12.0, less is better: Apple clang 21 and GCC 16.2, CPU time of the compiler, median of 5 interleaved runs, C++20, Apple M1 Max. The one-off cost of building the precompiled header or the module is not included. Hover over a bar for the time in milliseconds; [Appendix G](#g-how-we-measured) has all times, the programs, and the commands.</p>
 
-3.13.0 takes 20 to 63 % longer to compile these programs. A good part of that is reading the header, and a
+3.13.0 takes 34–62 % longer to compile these programs. A good part of that is reading the header, and a
 precompiled header or a module does that once instead of in every translation unit:
 
 - **In debug builds,** which are what you wait for while you edit, a precompiled 3.13.0 compiles faster than 3.12.0
-  with Apple clang, and within 10 % of it with GCC.
+  with Apple clang, and within 8–15 % of it with GCC.
 - **In optimized builds,** less of the increase goes away, because the optimizer still works through all the code a
-  program instantiates. A precompiled header or a module wins back between a quarter and four fifths of it.
-- **The one-off cost** is 0.9 s (Apple clang) or 2.3 s (GCC) to build the precompiled header, and 1.4 to 1.5 s or
-  2.4 s to build the module, once per set of compiler flags. A precompiled header pays for itself after two to six translation units, a module after four to eight.
+  program instantiates. A precompiled header or a module wins back 41–91 % of it.
+- **The one-off cost** is 1.0 s (Apple clang) or 2.6 s (GCC) to build the precompiled header, and 1.6 s or 2.5 s
+  to build the module, once per set of compiler flags. A precompiled header pays for itself after two to four
+  translation units, a module after three to five.
 - **Modules have caveats.** Apple clang needs `-fcxx-modules`, [module support](../../features/modules.md) still
   depends heavily on the compiler version, and macros don't cross a module boundary: with `import nlohmann.json;`,
   the `NLOHMANN_DEFINE_TYPE_*` macros aren't available, which is why `server_config` writes `to_json()` and
@@ -1426,14 +1452,14 @@ Most of what is in this post was invented by other people.
 and the source files that contain it carry the authors' copyright lines and say what was taken; the
 [README](https://github.com/nlohmann/json#license) lists them too.
 
-- [fast_float](https://github.com/fastfloat/fast_float) (Apache-2.0, MIT or BSL-1.0) by Daniel Lemire and
+- [fast_float](https://github.com/fastfloat/fast_float) (Apache-2.0, MIT, or BSL-1.0) by Daniel Lemire and
   contributors: the Eisel-Lemire algorithm, its table of powers of five, its digit comparison for long numbers, and
   its parsing of eight digits at a time (N. Mushtak and D. Lemire,
   ["Fast number parsing without fallback"](https://arxiv.org/abs/2212.06644), 2023).
   W. D. Clinger for the [fast path](https://doi.org/10.1145/93542.93557), M. Eisel for the algorithm.
-- [Żmij](https://github.com/vitaut/zmij) (MIT) by Victor Zverovich, with the digit conversion of Xiang JunBo and the
-  NEON sequence and compressed powers of ten of Dougall Johnson and the SSE support of Tobias Schlüter: ported to C++11.
-- [simdjson](https://github.com/simdjson/simdjson) (Apache-2.0 or MIT) by Daniel Lemire, Geoff Langdale, John Keiser
+- [Żmij](https://github.com/vitaut/zmij) (MIT) by Victor Zverovich, with the digit conversion of Xiang JunBo, the
+  NEON sequence and compressed powers of ten of Dougall Johnson, and the SSE support of Tobias Schlüter: ported to C++11.
+- [simdjson](https://github.com/simdjson/simdjson) (Apache-2.0 or MIT) by Daniel Lemire, Geoff Langdale, John Keiser,
   and contributors: the "lookup4" UTF-8 check and its tables (J. Keiser and D. Lemire,
   ["Validating UTF-8 In Less Than One Instruction Per Byte"](https://arxiv.org/abs/2010.03090), 2021), in `json.hpp`'s
   lexer and in `json_view.hpp`.
@@ -1488,221 +1514,221 @@ And the people who sent or shaped pull requests:
 | `canada.json` | 2.3 MB | the outline of Canada in GeoJSON | numbers: 111,080 floating-point coordinates, most with 16 or 17 significant digits, in 56,045 arrays, and almost no whitespace |
 | `jeopardy.json` | 56 MB | 216,930 Jeopardy! questions as one array of objects | size: 1.5 million short strings in objects of 7 members; far larger than the CPU caches |
 
-<p class="nj-table-caption" markdown>The test files. The first three are from Milo Yip's [nativejson-benchmark](https://github.com/miloyip/nativejson-benchmark). The counts are of the parsed values; the share of whitespace, string and non-ASCII bytes is of the file as distributed. Several changes target the indentation of `citm_catalog.json`: in the timeline benchmark, a minified copy of it parses 1.9× as fast as with 3.12.0, against 3.4× for the file as distributed.</p>
+<p class="nj-table-caption" markdown>The test files. The first three are from Milo Yip's [nativejson-benchmark](https://github.com/miloyip/nativejson-benchmark). The counts are of the parsed values; the share of whitespace, string, and non-ASCII bytes is of the file as distributed. Several changes target the indentation of `citm_catalog.json`: in the timeline benchmark, a minified copy of it parses 1.9× as fast as with 3.12.0, against 3.4× for the file as distributed.</p>
 
 ### B. 3.12.0 against 3.13.0
 
 The rows of the first chart:
 
-| workload | 3.12.0 | 3.13.0 | speedup |
-| --- | --: | --: | --: |
-| `json::parse()` of `twitter.json` | 3.18 ms | 1.05 ms | 3.0× |
-| `json::parse()` of `citm_catalog.json` | 7.30 ms | 1.78 ms | 4.1× |
-| `json::parse()` of `canada.json` | 15.1 ms | 4.42 ms | 3.4× |
-| `json::parse()` of `canada.json`, indented by 4 spaces | 33.9 ms | 5.15 ms | 6.6× |
-| `ordered_json::parse()` of `citm_catalog.json` | 10.9 ms | 1.62 ms | 6.7× |
-| `json::parse()` of `twitter.json` from an `std::ifstream` | 3.32 ms | 1.36 ms | 2.4× |
-| `json::parse()` of `citm_catalog.json` from a `FILE*` | 34.6 ms | 7.35 ms | 4.7× |
-| `json::accept()` of `citm_catalog.json` | 6.38 ms | 0.907 ms | 7.0× |
-| `dump()` of `twitter.json` | 1.39 ms | 0.209 ms | 6.7× |
-| `dump()` of `canada.json` | 6.69 ms | 2.29 ms | 2.9× |
-| `dump(4)` of `citm_catalog.json` | 1.92 ms | 0.415 ms | 4.6× |
-| `to_cbor()` of `twitter.json` | 0.634 ms | 0.142 ms | 4.5× |
-| `from_cbor()` of `twitter.json` from memory | 3.04 ms | 0.954 ms | 3.2× |
-| `from_cbor()` of `twitter.json` from a `FILE*` | 9.82 ms | 1.53 ms | 6.4× |
-| `diff()` of `canada.json` with every eighth scalar changed | 38.1 ms | 3.69 ms | 10.3× |
-| iterating over every value of `canada.json` | 0.868 ms | 0.321 ms | 2.7× |
-| copying `citm_catalog.json` and destroying the copy | 1.62 ms | 1.46 ms | 1.11× |
-| `==` of `citm_catalog.json` and a copy | 0.265 ms | 0.255 ms | 1.04× |
+| workload | 3.12.0 | 3.13.0 | speedup | Intel |
+| --- | --: | --: | --: | --: |
+| `json::parse()` of `twitter.json` | 3.30 ms | 1.05 ms | 3.1× | 2.6× |
+| `json::parse()` of `citm_catalog.json` | 7.56 ms | 1.78 ms | 4.3× | 3.5× |
+| `json::parse()` of `canada.json` | 15.5 ms | 4.63 ms | 3.4× | 6.1× |
+| `json::parse()` of `canada.json`, indented by 4 spaces | 35.0 ms | 5.37 ms | 6.5× | 8.0× |
+| `ordered_json::parse()` of `citm_catalog.json` | 11.5 ms | 1.68 ms | 6.9× | 6.6× |
+| `json::parse()` of `twitter.json` from an `std::ifstream` | 3.43 ms | 1.37 ms | 2.5× | 2.3× |
+| `json::parse()` of `citm_catalog.json` from a `FILE*` | 36.0 ms | 7.58 ms | 4.7× | 5.7× |
+| `json::accept()` of `citm_catalog.json` | 6.53 ms | 0.923 ms | 7.1× | 8.4× |
+| `dump()` of `twitter.json` | 1.44 ms | 0.214 ms | 6.7× | 5.7× |
+| `dump()` of `canada.json` | 6.95 ms | 2.34 ms | 3.0× | 3.3× |
+| `dump(4)` of `citm_catalog.json` | 1.99 ms | 0.423 ms | 4.7× | 4.1× |
+| `to_cbor()` of `twitter.json` | 0.659 ms | 0.143 ms | 4.6× | 6.7× |
+| `from_cbor()` of `twitter.json` from memory | 3.23 ms | 0.953 ms | 3.4× | 2.8× |
+| `from_cbor()` of `twitter.json` from a `FILE*` | 10.4 ms | 1.57 ms | 6.6× | 6.5× |
+| `diff()` of `canada.json` with every eighth scalar changed | 39.8 ms | 3.80 ms | 10.5× | 11.2× |
+| iterating over every value of `canada.json` | 0.897 ms | 0.328 ms | 2.7× | 2.0× |
+| copying `citm_catalog.json` and destroying the copy | 1.70 ms | 1.51 ms | 1.13× | 1.12× |
+| `==` of `citm_catalog.json` and a copy | 0.280 ms | 0.263 ms | 1.06× | 0.95× |
 
-<p class="nj-table-caption" markdown>Time per call with 3.12.0 and 3.13.0, Google Benchmark suite on an Apple M1 Max, median of 8 runs; the speedup is the old time divided by the new one. The parse rows do not include destroying the result (the suite pauses the timer for that).</p>
+<p class="nj-table-caption" markdown>Time per call with 3.12.0 and 3.13.0, Google Benchmark suite on an Apple M1 Max, median of 8 runs; the speedup is the old time divided by the new one. The Intel column is the speedup on the Intel MacBook Pro of [Appendix G](#g-how-we-measured). The parse rows do not include destroying the result (the suite pauses the timer for that).</p>
 
 ??? info "All 182 benchmarks of the suite"
 
-    | benchmark | 3.12.0 | 3.13.0 | speedup |
-    | --- | --: | --: | --: |
-    | `Accept/canada` | 12.7 ms | 2.32 ms | 5.47× |
-    | `Accept/citm_catalog` | 6.38 ms | 907 µs | 7.04× |
-    | `Accept/floats` | 113 ms | 22.3 ms | 5.07× |
-    | `Accept/jeopardy` | 219 ms | 57.5 ms | 3.81× |
-    | `Accept/signed_ints` | 115 ms | 27.7 ms | 4.16× |
-    | `Accept/small_signed_ints` | 55.9 ms | 17.7 ms | 3.16× |
-    | `Accept/twitter` | 2.46 ms | 475 µs | 5.18× |
-    | `Accept/unsigned_ints` | 114 ms | 29.1 ms | 3.91× |
-    | `BinaryToCbor/1024` | 303 ns | 102 ns | 2.98× |
-    | `BinaryToCbor/128` | 247 ns | 115 ns | 2.14× |
-    | `BinaryToCbor/16384` | 949 ns | 408 ns | 2.33× |
-    | `BinaryToCbor/16` | 240 ns | 48.7 ns | 4.92× |
-    | `BinaryToCbor/2048` | 320 ns | 119 ns | 2.68× |
-    | `BinaryToCbor/256` | 265 ns | 88.1 ns | 3.01× |
-    | `BinaryToCbor/32768` | 1.53 µs | 801 ns | 1.91× |
-    | `BinaryToCbor/32` | 249 ns | 48.5 ns | 5.14× |
-    | `BinaryToCbor/4096` | 412 ns | 169 ns | 2.43× |
-    | `BinaryToCbor/512` | 289 ns | 97.3 ns | 2.97× |
-    | `BinaryToCbor/64` | 249 ns | 83.9 ns | 2.97× |
-    | `BinaryToCbor/8192` | 511 ns | 248 ns | 2.07× |
-    | `BinaryToCbor/8` | 243 ns | 48.5 ns | 5.01× |
-    | `Copy/canada` | 3.65 ms | 2.87 ms | 1.27× |
-    | `Copy/citm_catalog` | 1.62 ms | 1.46 ms | 1.11× |
-    | `Copy/twitter` | 799 µs | 726 µs | 1.10× |
-    | `CopyAssign/canada` | 3.67 ms | 2.88 ms | 1.27× |
-    | `CopyAssign/citm_catalog` | 1.65 ms | 1.49 ms | 1.11× |
-    | `CopyAssign/twitter` | 808 µs | 739 µs | 1.09× |
-    | `CopyOnly/canada` | 1.52 ms | 1.5 ms | 1.01× |
-    | `CopyOnly/citm_catalog` | 743 µs | 782 µs | 0.95× |
-    | `CopyOnly/twitter` | 400 µs | 403 µs | 0.99× |
-    | `CopyRing/canada` | 3.68 ms | 2.89 ms | 1.28× |
-    | `CopyRing/citm_catalog` | 1.69 ms | 1.51 ms | 1.12× |
-    | `CopyRing/twitter` | 850 µs | 770 µs | 1.10× |
-    | `DestroyOnly/canada` | 2.13 ms | 1.37 ms | 1.55× |
-    | `DestroyOnly/citm_catalog` | 876 µs | 674 µs | 1.30× |
-    | `DestroyOnly/twitter` | 401 µs | 323 µs | 1.24× |
-    | `Diff/canada` | 38.1 ms | 3.69 ms | 10.3× |
-    | `Diff/citm_catalog` | 6.78 ms | 1.07 ms | 6.34× |
-    | `Diff/twitter` | 4.83 ms | 639 µs | 7.55× |
-    | `Dump/canada / -` | 6.69 ms | 2.29 ms | 2.93× |
-    | `Dump/canada / 4` | 8.91 ms | 3.01 ms | 2.96× |
-    | `Dump/citm_catalog / -` | 1.39 ms | 291 µs | 4.78× |
-    | `Dump/citm_catalog / 4` | 1.92 ms | 415 µs | 4.63× |
-    | `Dump/floats / -` | 63.2 ms | 23.6 ms | 2.68× |
-    | `Dump/floats / 4` | 71.1 ms | 24.4 ms | 2.91× |
-    | `Dump/jeopardy / -` | 203 ms | 30.7 ms | 6.62× |
-    | `Dump/jeopardy / 4` | 219 ms | 34.6 ms | 6.32× |
-    | `Dump/signed_ints / -` | 23.7 ms | 10.6 ms | 2.24× |
-    | `Dump/signed_ints / 4` | 32 ms | 11.2 ms | 2.85× |
-    | `Dump/small_signed_ints / -` | 17.8 ms | 7.92 ms | 2.25× |
-    | `Dump/small_signed_ints / 4` | 25 ms | 8.76 ms | 2.85× |
-    | `Dump/twitter / -` | 1.39 ms | 209 µs | 6.66× |
-    | `Dump/twitter / 4` | 1.58 ms | 246 µs | 6.43× |
-    | `Dump/unsigned_ints / -` | 23.6 ms | 8 ms | 2.95× |
-    | `Dump/unsigned_ints / 4` | 31.9 ms | 8.42 ms | 3.79× |
-    | `Equal/canada` | 454 µs | 336 µs | 1.35× |
-    | `Equal/citm_catalog` | 265 µs | 255 µs | 1.04× |
-    | `Equal/twitter` | 140 µs | 128 µs | 1.10× |
-    | `Flatten/canada` | 28.4 ms | 11.1 ms | 2.57× |
-    | `Flatten/citm_catalog` | 6.37 ms | 3 ms | 2.12× |
-    | `Flatten/twitter` | 3.48 ms | 2.04 ms | 1.70× |
-    | `FlattenOrdered/citm_catalog` | 251 ms | 1.39 ms | 181× |
-    | `FlattenOrdered/twitter` | 48.9 ms | 860 µs | 56.9× |
-    | `FromBinaryBuffer/bjdata / canada` | 8.22 ms | 4.07 ms | 2.02× |
-    | `FromBinaryBuffer/bjdata / twitter` | 3.11 ms | 958 µs | 3.25× |
-    | `FromBinaryBuffer/bjdata_optimized / canada` | 8.68 ms | 2.4 ms | 3.62× |
-    | `FromBinaryBuffer/bjdata_optimized / twitter` | 3.12 ms | 952 µs | 3.28× |
-    | `FromBinaryBuffer/bson / canada` | 9.43 ms | 4.2 ms | 2.24× |
-    | `FromBinaryBuffer/bson / citm_catalog` | 3.86 ms | 1.56 ms | 2.47× |
-    | `FromBinaryBuffer/bson / twitter` | 3.07 ms | 924 µs | 3.32× |
-    | `FromBinaryBuffer/cbor / canada` | 8.34 ms | 2.06 ms | 4.05× |
-    | `FromBinaryBuffer/cbor / citm_catalog` | 3.68 ms | 1.44 ms | 2.56× |
-    | `FromBinaryBuffer/cbor / floats` | 29 ms | 5.43 ms | 5.33× |
-    | `FromBinaryBuffer/cbor / jeopardy` | 357 ms | 113 ms | 3.17× |
-    | `FromBinaryBuffer/cbor / signed_ints` | 35.6 ms | 9.69 ms | 3.68× |
-    | `FromBinaryBuffer/cbor / twitter` | 3.04 ms | 954 µs | 3.18× |
-    | `FromBinaryBuffer/msgpack / canada` | 8.33 ms | 2.06 ms | 4.03× |
-    | `FromBinaryBuffer/msgpack / citm_catalog` | 3.68 ms | 1.41 ms | 2.61× |
-    | `FromBinaryBuffer/msgpack / jeopardy` | 355 ms | 109 ms | 3.25× |
-    | `FromBinaryBuffer/msgpack / twitter` | 3.03 ms | 935 µs | 3.24× |
-    | `FromBinaryBuffer/ubjson / canada` | 8.24 ms | 4.08 ms | 2.02× |
-    | `FromBinaryBuffer/ubjson / citm_catalog` | 3.81 ms | 1.72 ms | 2.21× |
-    | `FromBinaryBuffer/ubjson / jeopardy` | 364 ms | 113 ms | 3.21× |
-    | `FromBinaryBuffer/ubjson / twitter` | 3.11 ms | 957 µs | 3.25× |
-    | `FromBinaryBuffer/ubjson_optimized / canada` | 8.48 ms | 2.37 ms | 3.58× |
-    | `FromBinaryBuffer/ubjson_optimized / twitter` | 3.11 ms | 952 µs | 3.26× |
-    | `FromBinaryFile/bjdata / twitter` | 10.4 ms | 1.9 ms | 5.46× |
-    | `FromBinaryFile/bson / twitter` | 10.1 ms | 1.8 ms | 5.62× |
-    | `FromBinaryFile/cbor / canada` | 14.2 ms | 4.41 ms | 3.21× |
-    | `FromBinaryFile/cbor / twitter` | 9.82 ms | 1.53 ms | 6.41× |
-    | `FromBinaryFile/ubjson / canada` | 13.7 ms | 6.31 ms | 2.16× |
-    | `FromBinaryFile/ubjson / twitter` | 10.4 ms | 1.9 ms | 5.45× |
-    | `FromBinaryShape/containers / bjdata` | 14.2 ms | 7.17 ms | 1.98× |
-    | `FromBinaryShape/containers / bson` | 17 ms | 7.73 ms | 2.20× |
-    | `FromBinaryShape/containers / cbor` | 13.7 ms | 3.89 ms | 3.53× |
-    | `FromBinaryShape/containers / msgpack` | 13.7 ms | 3.84 ms | 3.56× |
-    | `FromBinaryShape/containers / ubjson_optimized` | 14.8 ms | 4.42 ms | 3.33× |
-    | `FromBinaryShape/containers / ubjson` | 14.2 ms | 7.17 ms | 1.98× |
-    | `FromBinaryShape/nested / bjdata` | 93.4 µs | 38 µs | 2.46× |
-    | `FromBinaryShape/nested / bson` | 99.8 µs | 42 µs | 2.38× |
-    | `FromBinaryShape/nested / cbor` | 92.9 µs | 35.1 µs | 2.64× |
-    | `FromBinaryShape/nested / msgpack` | 90.7 µs | 34.6 µs | 2.62× |
-    | `FromBinaryShape/nested / ubjson` | 93.9 µs | 38.1 µs | 2.47× |
-    | `FromBinaryShape/scalars / bjdata` | 24.4 ms | 11.4 ms | 2.15× |
-    | `FromBinaryShape/scalars / cbor` | 25.4 ms | 5.63 ms | 4.52× |
-    | `FromBinaryShape/scalars / msgpack` | 24.3 ms | 5.53 ms | 4.40× |
-    | `FromBinaryShape/scalars / ubjson` | 24.7 ms | 11.4 ms | 2.16× |
-    | `FromCborChunkedString/10000 chunks` | 89.8 µs | 81.4 µs | 1.10× |
-    | `FromMsgpack/canada` | 14.1 ms | 4.42 ms | 3.20× |
-    | `FromMsgpack/citm_catalog` | 8.88 ms | 2.25 ms | 3.94× |
-    | `FromMsgpack/floats` | 59.3 ms | 27.7 ms | 2.14× |
-    | `FromMsgpack/jeopardy` | 1,130 ms | 182 ms | 6.21× |
-    | `FromMsgpack/signed_ints` | 62.2 ms | 32.8 ms | 1.90× |
-    | `FromMsgpack/small_signed_ints` | 62.6 ms | 33.7 ms | 1.86× |
-    | `FromMsgpack/twitter` | 9.78 ms | 1.47 ms | 6.64× |
-    | `FromMsgpack/unsigned_ints` | 55.5 ms | 27.7 ms | 2.01× |
-    | `GetArray<std::array<int, 1000>>` | 2.23 µs | 640 ns | 3.49× |
-    | `GetArray<std::deque<int>>` | 8.13 µs | 1.16 µs | 7.00× |
-    | `GetArray<std::set<int>>` | 58.4 µs | 41.8 µs | 1.40× |
-    | `GetArray<std::vector<int>>` | 6.66 µs | 666 ns | 9.99× |
-    | `GetMap/citm_catalog` | 3.41 ms | 2.4 ms | 1.42× |
-    | `GetVectorDouble/floats` | 6.68 ms | 642 µs | 10.4× |
-    | `GetVectorInt/signed_ints` | 8.04 ms | 3.35 ms | 2.40× |
-    | `Iterate/canada` | 868 µs | 321 µs | 2.71× |
-    | `Iterate/citm_catalog` | 298 µs | 168 µs | 1.78× |
-    | `Iterate/twitter` | 87 µs | 62.1 µs | 1.40× |
-    | `JsonPointerAt/citm_catalog` | 1.83 ms | 1.14 ms | 1.60× |
-    | `JsonPointerAt/twitter` | 788 µs | 594 µs | 1.33× |
-    | `JsonPointerContains/citm_catalog` | 2.71 ms | 1.23 ms | 2.20× |
-    | `JsonPointerContains/twitter` | 1.29 ms | 609 µs | 2.13× |
-    | `JsonPointerParse/citm_catalog` | 5.67 ms | 2.17 ms | 2.61× |
-    | `JsonPointerParse/twitter` | 2.41 ms | 1 ms | 2.41× |
-    | `JsonPointerToString/citm_catalog` | 6.62 ms | 1.88 ms | 3.53× |
-    | `JsonPointerToString/twitter` | 2.18 ms | 806 µs | 2.70× |
-    | `ParseFILE/canada` | 52.3 ms | 13.9 ms | 3.77× |
-    | `ParseFILE/citm_catalog` | 34.6 ms | 7.35 ms | 4.71× |
-    | `ParseFILE/twitter` | 13.6 ms | 3.31 ms | 4.11× |
-    | `ParseFile/canada` | 17.4 ms | 6.14 ms | 2.84× |
-    | `ParseFile/citm_catalog` | 7.67 ms | 2.42 ms | 3.16× |
-    | `ParseFile/floats` | 127 ms | 47.2 ms | 2.70× |
-    | `ParseFile/jeopardy` | 328 ms | 155 ms | 2.12× |
-    | `ParseFile/signed_ints` | 125 ms | 45.4 ms | 2.75× |
-    | `ParseFile/small_signed_ints` | 63 ms | 32.6 ms | 1.93× |
-    | `ParseFile/twitter` | 3.32 ms | 1.36 ms | 2.44× |
-    | `ParseFile/unsigned_ints` | 121 ms | 46.6 ms | 2.59× |
-    | `ParseIndented/canada / 4` | 33.9 ms | 5.15 ms | 6.59× |
-    | `ParseIndented/citm_catalog / 4` | 7.23 ms | 1.78 ms | 4.05× |
-    | `ParseIndented/jeopardy / 4` | 335 ms | 131 ms | 2.55× |
-    | `ParseIndented/twitter / 4` | 3.59 ms | 1.12 ms | 3.20× |
-    | `ParseStreamValues/ndjson` | 7.01 ms | 3.71 ms | 1.89× |
-    | `ParseStreamValues/numbers` | 1.89 ms | 381 µs | 4.98× |
-    | `ParseString/canada` | 15.1 ms | 4.42 ms | 3.41× |
-    | `ParseString/citm_catalog` | 7.3 ms | 1.78 ms | 4.11× |
-    | `ParseString/floats` | 119 ms | 27.6 ms | 4.30× |
-    | `ParseString/jeopardy` | 303 ms | 128 ms | 2.36× |
-    | `ParseString/signed_ints` | 120 ms | 31.2 ms | 3.84× |
-    | `ParseString/small_signed_ints` | 60.6 ms | 24.1 ms | 2.52× |
-    | `ParseString/twitter` | 3.18 ms | 1.05 ms | 3.02× |
-    | `ParseString/unsigned_ints` | 119 ms | 32.2 ms | 3.69× |
-    | `ParseStringOrdered/canada` | 15.1 ms | 4.37 ms | 3.45× |
-    | `ParseStringOrdered/citm_catalog` | 10.9 ms | 1.62 ms | 6.71× |
-    | `ParseStringOrdered/jeopardy` | 361 ms | 110 ms | 3.29× |
-    | `ParseStringOrdered/twitter` | 4.36 ms | 906 µs | 4.81× |
-    | `Patch/canada` | 9.98 ms | 3.37 ms | 2.96× |
-    | `Patch/citm_catalog` | 2.53 ms | 1.61 ms | 1.57× |
-    | `Patch/twitter` | 1.46 ms | 851 µs | 1.71× |
-    | `SaxParse/canada` | 12.8 ms | 3.22 ms | 3.97× |
-    | `SaxParse/citm_catalog` | 6.41 ms | 983 µs | 6.52× |
-    | `SaxParse/twitter` | 2.48 ms | 478 µs | 5.19× |
-    | `ToCbor/canada` | 1.37 ms | 545 µs | 2.51× |
-    | `ToCbor/citm_catalog` | 1.02 ms | 257 µs | 3.99× |
-    | `ToCbor/floats` | 8.91 ms | 1.89 ms | 4.71× |
-    | `ToCbor/jeopardy` | 72 ms | 21.3 ms | 3.37× |
-    | `ToCbor/signed_ints` | 11.3 ms | 2.76 ms | 4.10× |
-    | `ToCbor/small_signed_ints` | 10.2 ms | 2.4 ms | 4.25× |
-    | `ToCbor/twitter` | 634 µs | 142 µs | 4.48× |
-    | `ToCbor/unsigned_ints` | 8 ms | 2.79 ms | 2.87× |
-    | `ToJsonStrings/copy` | 5.82 ms | 5.54 ms | 1.05× |
-    | `ToJsonStrings/move` | 5.82 ms | 3.02 ms | 1.92× |
-    | `Unflatten/canada` | 41.1 ms | 10.8 ms | 3.80× |
-    | `Unflatten/citm_catalog` | 9.7 ms | 3.46 ms | 2.80× |
-    | `Unflatten/twitter` | 4.52 ms | 2.11 ms | 2.14× |
+    | benchmark | 3.12.0 | 3.13.0 | speedup | Intel |
+    | --- | --: | --: | --: | --: |
+    | `Accept/canada` | 12.9 ms | 2.35 ms | 5.51× | 13× |
+    | `Accept/citm_catalog` | 6.53 ms | 923 µs | 7.07× | 8.45× |
+    | `Accept/floats` | 116 ms | 22.7 ms | 5.10× | 12.2× |
+    | `Accept/jeopardy` | 221 ms | 59.3 ms | 3.72× | 6.64× |
+    | `Accept/signed_ints` | 117 ms | 28.3 ms | 4.15× | 4.99× |
+    | `Accept/small_signed_ints` | 57.5 ms | 18 ms | 3.19× | 3.90× |
+    | `Accept/twitter` | 2.51 ms | 484 µs | 5.20× | 6.89× |
+    | `Accept/unsigned_ints` | 116 ms | 29.7 ms | 3.91× | 4.95× |
+    | `BinaryToCbor/1024` | 298 ns | 107 ns | 2.79× | 3.67× |
+    | `BinaryToCbor/128` | 249 ns | 117 ns | 2.13× | 2.27× |
+    | `BinaryToCbor/16384` | 952 ns | 414 ns | 2.30× | 3.46× |
+    | `BinaryToCbor/16` | 245 ns | 49.6 ns | 4.93× | 6.33× |
+    | `BinaryToCbor/2048` | 328 ns | 125 ns | 2.62× | 3.74× |
+    | `BinaryToCbor/256` | 265 ns | 90.9 ns | 2.91× | 3.33× |
+    | `BinaryToCbor/32768` | 1.54 µs | 803 ns | 1.92× | 2.11× |
+    | `BinaryToCbor/32` | 252 ns | 50.4 ns | 4.99× | 6.24× |
+    | `BinaryToCbor/4096` | 407 ns | 177 ns | 2.29× | 3.48× |
+    | `BinaryToCbor/512` | 290 ns | 102 ns | 2.84× | 3.02× |
+    | `BinaryToCbor/64` | 255 ns | 84.6 ns | 3.01× | 3.78× |
+    | `BinaryToCbor/8192` | 514 ns | 256 ns | 2.01× | 3.30× |
+    | `BinaryToCbor/8` | 248 ns | 49.4 ns | 5.01× | 6.18× |
+    | `Copy/canada` | 3.78 ms | 2.93 ms | 1.29× | 1.17× |
+    | `Copy/citm_catalog` | 1.7 ms | 1.51 ms | 1.13× | 1.12× |
+    | `Copy/twitter` | 840 µs | 767 µs | 1.09× | 1.14× |
+    | `CopyAssign/canada` | 3.86 ms | 2.94 ms | 1.31× | 1.19× |
+    | `CopyAssign/citm_catalog` | 1.77 ms | 1.59 ms | 1.11× | 1.12× |
+    | `CopyAssign/twitter` | 885 µs | 791 µs | 1.12× | 1.07× |
+    | `CopyOnly/canada` | 1.6 ms | 1.58 ms | 1.02× | 1.00× |
+    | `CopyOnly/citm_catalog` | 786 µs | 817 µs | 0.96× | 0.93× |
+    | `CopyOnly/twitter` | 424 µs | 421 µs | 1.01× | 1.02× |
+    | `CopyRing/canada` | 3.86 ms | 3 ms | 1.29× | 1.20× |
+    | `CopyRing/citm_catalog` | 1.84 ms | 1.61 ms | 1.15× | 1.20× |
+    | `CopyRing/twitter` | 952 µs | 818 µs | 1.16× | 1.15× |
+    | `DestroyOnly/canada` | 2.22 ms | 1.4 ms | 1.58× | 1.32× |
+    | `DestroyOnly/citm_catalog` | 926 µs | 711 µs | 1.30× | 1.20× |
+    | `DestroyOnly/twitter` | 416 µs | 336 µs | 1.24× | 1.15× |
+    | `Diff/canada` | 39.8 ms | 3.8 ms | 10.5× | 11.2× |
+    | `Diff/citm_catalog` | 7.19 ms | 1.12 ms | 6.40× | 7.78× |
+    | `Diff/twitter` | 5.11 ms | 661 µs | 7.73× | 8.79× |
+    | `Dump/canada / -` | 6.95 ms | 2.34 ms | 2.98× | 3.34× |
+    | `Dump/canada / 4` | 9.1 ms | 3.1 ms | 2.93× | 2.82× |
+    | `Dump/citm_catalog / -` | 1.42 ms | 296 µs | 4.81× | 3.93× |
+    | `Dump/citm_catalog / 4` | 1.99 ms | 423 µs | 4.70× | 4.09× |
+    | `Dump/floats / -` | 64.3 ms | 23.8 ms | 2.71× | 2.50× |
+    | `Dump/floats / 4` | 72.6 ms | 24.6 ms | 2.95× | 2.71× |
+    | `Dump/jeopardy / -` | 207 ms | 31.7 ms | 6.51× | 3.75× |
+    | `Dump/jeopardy / 4` | 228 ms | 35.4 ms | 6.45× | 2.61× |
+    | `Dump/signed_ints / -` | 24.1 ms | 10.7 ms | 2.24× | 1.44× |
+    | `Dump/signed_ints / 4` | 32.5 ms | 11.3 ms | 2.87× | 2.01× |
+    | `Dump/small_signed_ints / -` | 18.1 ms | 8.12 ms | 2.23× | 1.81× |
+    | `Dump/small_signed_ints / 4` | 25.5 ms | 8.81 ms | 2.90× | 2.21× |
+    | `Dump/twitter / -` | 1.44 ms | 214 µs | 6.70× | 5.75× |
+    | `Dump/twitter / 4` | 1.63 ms | 253 µs | 6.45× | 5.18× |
+    | `Dump/unsigned_ints / -` | 24 ms | 8.12 ms | 2.95× | 1.58× |
+    | `Dump/unsigned_ints / 4` | 32.3 ms | 8.59 ms | 3.76× | 2.30× |
+    | `Equal/canada` | 474 µs | 349 µs | 1.36× | 1.38× |
+    | `Equal/citm_catalog` | 280 µs | 263 µs | 1.06× | 0.95× |
+    | `Equal/twitter` | 146 µs | 131 µs | 1.11× | 1.02× |
+    | `Flatten/canada` | 29.4 ms | 11.1 ms | 2.65× | 2.68× |
+    | `Flatten/citm_catalog` | 6.72 ms | 3.07 ms | 2.19× | 2.45× |
+    | `Flatten/twitter` | 3.66 ms | 2.11 ms | 1.74× | 2.19× |
+    | `FlattenOrdered/citm_catalog` | 262 ms | 1.43 ms | 184× | 185× |
+    | `FlattenOrdered/twitter` | 51.3 ms | 890 µs | 57.6× | 46.1× |
+    | `FromBinaryBuffer/bjdata / canada` | 8.82 ms | 4.17 ms | 2.12× | 2.02× |
+    | `FromBinaryBuffer/bjdata / twitter` | 3.32 ms | 976 µs | 3.40× | 2.87× |
+    | `FromBinaryBuffer/bjdata_optimized / canada` | 9.24 ms | 2.48 ms | 3.73× | 3.51× |
+    | `FromBinaryBuffer/bjdata_optimized / twitter` | 3.31 ms | 986 µs | 3.35× | 2.86× |
+    | `FromBinaryBuffer/bson / canada` | 10 ms | 4.32 ms | 2.33× | 2.20× |
+    | `FromBinaryBuffer/bson / citm_catalog` | 4.08 ms | 1.61 ms | 2.54× | 2.59× |
+    | `FromBinaryBuffer/bson / twitter` | 3.26 ms | 937 µs | 3.48× | 3.08× |
+    | `FromBinaryBuffer/cbor / canada` | 8.9 ms | 2.12 ms | 4.21× | 3.86× |
+    | `FromBinaryBuffer/cbor / citm_catalog` | 3.94 ms | 1.45 ms | 2.71× | 2.81× |
+    | `FromBinaryBuffer/cbor / floats` | 30.5 ms | 5.48 ms | 5.56× | 3.64× |
+    | `FromBinaryBuffer/cbor / jeopardy` | 373 ms | 115 ms | 3.25× | 3.43× |
+    | `FromBinaryBuffer/cbor / signed_ints` | 36.7 ms | 9.89 ms | 3.71× | 2.37× |
+    | `FromBinaryBuffer/cbor / twitter` | 3.23 ms | 953 µs | 3.39× | 2.83× |
+    | `FromBinaryBuffer/msgpack / canada` | 8.86 ms | 2.12 ms | 4.17× | 3.92× |
+    | `FromBinaryBuffer/msgpack / citm_catalog` | 3.85 ms | 1.45 ms | 2.65× | 2.94× |
+    | `FromBinaryBuffer/msgpack / jeopardy` | 373 ms | 111 ms | 3.36× | 3.51× |
+    | `FromBinaryBuffer/msgpack / twitter` | 3.24 ms | 955 µs | 3.39× | 3.02× |
+    | `FromBinaryBuffer/ubjson / canada` | 8.84 ms | 4.2 ms | 2.10× | 2.13× |
+    | `FromBinaryBuffer/ubjson / citm_catalog` | 4.07 ms | 1.79 ms | 2.28× | 2.44× |
+    | `FromBinaryBuffer/ubjson / jeopardy` | 379 ms | 117 ms | 3.24× | 3.40× |
+    | `FromBinaryBuffer/ubjson / twitter` | 3.3 ms | 981 µs | 3.36× | 2.90× |
+    | `FromBinaryBuffer/ubjson_optimized / canada` | 8.89 ms | 2.43 ms | 3.66× | 3.67× |
+    | `FromBinaryBuffer/ubjson_optimized / twitter` | 3.3 ms | 975 µs | 3.38× | 2.88× |
+    | `FromBinaryFile/bjdata / twitter` | 10.9 ms | 1.95 ms | 5.61× | 5.89× |
+    | `FromBinaryFile/bson / twitter` | 10.7 ms | 1.85 ms | 5.80× | 6.21× |
+    | `FromBinaryFile/cbor / canada` | 14.9 ms | 4.49 ms | 3.32× | 3.68× |
+    | `FromBinaryFile/cbor / twitter` | 10.4 ms | 1.57 ms | 6.59× | 6.46× |
+    | `FromBinaryFile/ubjson / canada` | 14.3 ms | 6.43 ms | 2.23× | 2.50× |
+    | `FromBinaryFile/ubjson / twitter` | 10.9 ms | 1.97 ms | 5.54× | 5.90× |
+    | `FromBinaryShape/containers / bjdata` | 14.7 ms | 7.23 ms | 2.03× | 2.05× |
+    | `FromBinaryShape/containers / bson` | 17.6 ms | 7.89 ms | 2.23× | 2.20× |
+    | `FromBinaryShape/containers / cbor` | 14.6 ms | 4.16 ms | 3.52× | 3.49× |
+    | `FromBinaryShape/containers / msgpack` | 14.6 ms | 3.89 ms | 3.75× | 3.52× |
+    | `FromBinaryShape/containers / ubjson_optimized` | 15.5 ms | 4.56 ms | 3.40× | 3.34× |
+    | `FromBinaryShape/containers / ubjson` | 15 ms | 7.24 ms | 2.07× | 2.03× |
+    | `FromBinaryShape/nested / bjdata` | 96.8 µs | 38.3 µs | 2.53× | 2.50× |
+    | `FromBinaryShape/nested / bson` | 101 µs | 42.6 µs | 2.38× | 2.42× |
+    | `FromBinaryShape/nested / cbor` | 94.9 µs | 35.8 µs | 2.65× | 2.57× |
+    | `FromBinaryShape/nested / msgpack` | 92.6 µs | 35.1 µs | 2.64× | 2.60× |
+    | `FromBinaryShape/nested / ubjson` | 96.1 µs | 38.3 µs | 2.51× | 2.50× |
+    | `FromBinaryShape/scalars / bjdata` | 25.3 ms | 11.6 ms | 2.18× | 2.22× |
+    | `FromBinaryShape/scalars / cbor` | 26.2 ms | 5.89 ms | 4.45× | 3.56× |
+    | `FromBinaryShape/scalars / msgpack` | 25.1 ms | 5.65 ms | 4.44× | 3.69× |
+    | `FromBinaryShape/scalars / ubjson` | 25.3 ms | 11.6 ms | 2.18× | 2.03× |
+    | `FromCborChunkedString/10000 chunks` | 91.8 µs | 82.9 µs | 1.11× | 1.09× |
+    | `FromMsgpack/canada` | 14.9 ms | 4.56 ms | 3.26× | 3.63× |
+    | `FromMsgpack/citm_catalog` | 9.36 ms | 2.26 ms | 4.14× | 4.60× |
+    | `FromMsgpack/floats` | 61.3 ms | 28.7 ms | 2.14× | 2.89× |
+    | `FromMsgpack/jeopardy` | 1,170 ms | 190 ms | 6.14× | 6.80× |
+    | `FromMsgpack/signed_ints` | 63.9 ms | 32.9 ms | 1.94× | 2.44× |
+    | `FromMsgpack/small_signed_ints` | 64.5 ms | 34.4 ms | 1.87× | 2.33× |
+    | `FromMsgpack/twitter` | 10.3 ms | 1.49 ms | 6.92× | 6.76× |
+    | `FromMsgpack/unsigned_ints` | 57.8 ms | 28.3 ms | 2.04× | 2.77× |
+    | `GetArray<std::array<int, 1000>>` | 2.27 µs | 654 ns | 3.48× | 5.38× |
+    | `GetArray<std::deque<int>>` | 8.29 µs | 1.18 µs | 7.05× | 4.75× |
+    | `GetArray<std::set<int>>` | 60 µs | 42.5 µs | 1.41× | 1.30× |
+    | `GetArray<std::vector<int>>` | 6.79 µs | 682 ns | 9.95× | 4.10× |
+    | `GetMap/citm_catalog` | 3.6 ms | 2.49 ms | 1.45× | 1.48× |
+    | `GetVectorDouble/floats` | 6.84 ms | 656 µs | 10.4× | 2.98× |
+    | `GetVectorInt/signed_ints` | 8.22 ms | 3.46 ms | 2.37× | 2.02× |
+    | `Iterate/canada` | 897 µs | 328 µs | 2.73× | 2.02× |
+    | `Iterate/citm_catalog` | 305 µs | 171 µs | 1.78× | 1.53× |
+    | `Iterate/twitter` | 90 µs | 62 µs | 1.45× | 1.20× |
+    | `JsonPointerAt/citm_catalog` | 1.9 ms | 1.18 ms | 1.61× | 1.47× |
+    | `JsonPointerAt/twitter` | 818 µs | 612 µs | 1.34× | 1.14× |
+    | `JsonPointerContains/citm_catalog` | 2.82 ms | 1.27 ms | 2.22× | 2.51× |
+    | `JsonPointerContains/twitter` | 1.34 ms | 629 µs | 2.12× | 2.16× |
+    | `JsonPointerParse/citm_catalog` | 5.81 ms | 2.25 ms | 2.59× | 3.74× |
+    | `JsonPointerParse/twitter` | 2.48 ms | 1.02 ms | 2.43× | 3.18× |
+    | `JsonPointerToString/citm_catalog` | 6.79 ms | 1.94 ms | 3.50× | 4.61× |
+    | `JsonPointerToString/twitter` | 2.23 ms | 834 µs | 2.67× | 2.66× |
+    | `ParseFILE/canada` | 54.2 ms | 14.7 ms | 3.69× | 5.46× |
+    | `ParseFILE/citm_catalog` | 36 ms | 7.58 ms | 4.74× | 5.73× |
+    | `ParseFILE/twitter` | 14.1 ms | 3.45 ms | 4.08× | 4.24× |
+    | `ParseFile/canada` | 18.3 ms | 6.47 ms | 2.83× | 4.67× |
+    | `ParseFile/citm_catalog` | 8.13 ms | 2.52 ms | 3.22× | 2.98× |
+    | `ParseFile/floats` | 131 ms | 48.1 ms | 2.73× | 5.68× |
+    | `ParseFile/jeopardy` | 338 ms | 162 ms | 2.09× | 2.23× |
+    | `ParseFile/signed_ints` | 129 ms | 46.2 ms | 2.78× | 3.41× |
+    | `ParseFile/small_signed_ints` | 64.7 ms | 33.4 ms | 1.94× | 2.57× |
+    | `ParseFile/twitter` | 3.43 ms | 1.37 ms | 2.49× | 2.33× |
+    | `ParseFile/unsigned_ints` | 124 ms | 47.4 ms | 2.61× | 3.52× |
+    | `ParseIndented/canada / 4` | 35 ms | 5.37 ms | 6.51× | 8.02× |
+    | `ParseIndented/citm_catalog / 4` | 7.52 ms | 1.81 ms | 4.15× | 3.49× |
+    | `ParseIndented/jeopardy / 4` | 345 ms | 133 ms | 2.59× | 2.46× |
+    | `ParseIndented/twitter / 4` | 3.72 ms | 1.13 ms | 3.30× | 2.60× |
+    | `ParseStreamValues/ndjson` | 7.16 ms | 3.77 ms | 1.90× | 2.06× |
+    | `ParseStreamValues/numbers` | 1.93 ms | 383 µs | 5.03× | 6.06× |
+    | `ParseString/canada` | 15.5 ms | 4.63 ms | 3.35× | 6.13× |
+    | `ParseString/citm_catalog` | 7.56 ms | 1.78 ms | 4.25× | 3.46× |
+    | `ParseString/floats` | 122 ms | 28.3 ms | 4.30× | 8.68× |
+    | `ParseString/jeopardy` | 317 ms | 131 ms | 2.42× | 2.32× |
+    | `ParseString/signed_ints` | 123 ms | 32 ms | 3.84× | 4.29× |
+    | `ParseString/small_signed_ints` | 62.7 ms | 25 ms | 2.51× | 3.38× |
+    | `ParseString/twitter` | 3.3 ms | 1.05 ms | 3.14× | 2.60× |
+    | `ParseString/unsigned_ints` | 121 ms | 32.9 ms | 3.68× | 4.23× |
+    | `ParseStringOrdered/canada` | 15.4 ms | 4.53 ms | 3.40× | 6.21× |
+    | `ParseStringOrdered/citm_catalog` | 11.5 ms | 1.68 ms | 6.85× | 6.59× |
+    | `ParseStringOrdered/jeopardy` | 374 ms | 113 ms | 3.29× | 3.38× |
+    | `ParseStringOrdered/twitter` | 4.6 ms | 949 µs | 4.85× | 4.93× |
+    | `Patch/canada` | 10.4 ms | 3.48 ms | 2.98× | 2.46× |
+    | `Patch/citm_catalog` | 2.75 ms | 1.74 ms | 1.58× | 1.38× |
+    | `Patch/twitter` | 1.58 ms | 889 µs | 1.78× | 1.45× |
+    | `SaxParse/canada` | 13.1 ms | 3.27 ms | 4.01× | 8.84× |
+    | `SaxParse/citm_catalog` | 6.55 ms | 967 µs | 6.77× | 6.85× |
+    | `SaxParse/twitter` | 2.53 ms | 483 µs | 5.24× | 5.91× |
+    | `ToCbor/canada` | 1.41 ms | 557 µs | 2.54× | 2.27× |
+    | `ToCbor/citm_catalog` | 1.05 ms | 259 µs | 4.04× | 5.60× |
+    | `ToCbor/floats` | 9.05 ms | 1.9 ms | 4.76× | 1.94× |
+    | `ToCbor/jeopardy` | 73.9 ms | 22.1 ms | 3.35× | 2.87× |
+    | `ToCbor/signed_ints` | 11.5 ms | 2.83 ms | 4.08× | 1.83× |
+    | `ToCbor/small_signed_ints` | 10.4 ms | 2.48 ms | 4.19× | 2.78× |
+    | `ToCbor/twitter` | 659 µs | 143 µs | 4.59× | 6.67× |
+    | `ToCbor/unsigned_ints` | 8.18 ms | 2.82 ms | 2.90× | 1.48× |
+    | `ToJsonStrings/copy` | 6.12 ms | 5.65 ms | 1.08× | 1.05× |
+    | `ToJsonStrings/move` | 6.13 ms | 3.13 ms | 1.96× | 1.78× |
+    | `Unflatten/canada` | 42.5 ms | 11.1 ms | 3.83× | 4.32× |
+    | `Unflatten/citm_catalog` | 10.2 ms | 3.62 ms | 2.81× | 3.32× |
+    | `Unflatten/twitter` | 4.75 ms | 2.21 ms | 2.15× | 2.42× |
 
 ### C. The timeline
 
@@ -1760,7 +1786,7 @@ one binary with six code layouts: they were equal within 0.2 %.
 | `dump()` `twitter.json` | <span class="nj-theme">6</span> | [#5285][5285] | a write buffer and bulk copies of strings | −70 % |
 | | <span class="nj-theme">2</span> | [#5738][5738] | own float parser, string scan, `\u` table | −19 % |
 | | <span class="nj-theme">2</span> | [#5878][5878] | short strings checked with a table | −6 % |
-| | <span class="nj-theme">2</span> | [#5883][5883] | strings of 16 to 32 bytes as two overlapping vectors | −34 % |
+| | <span class="nj-theme">2</span> | [#5883][5883] | strings of 16–32 bytes as two overlapping vectors | −34 % |
 | `dump()` `canada.json` | <span class="nj-theme">6</span> | [#5285][5285] | a write buffer and bulk copies of strings | −8 % |
 | | <span class="nj-theme">3</span> | [#5634][5634] | Żmij instead of Grisu2 | −65 % |
 | `from_cbor()` `twitter.json` | <span class="nj-theme">1</span> | [#5233][5233] | binary strings read in bulk | −32 % |
@@ -1777,15 +1803,15 @@ one binary with six code layouts: they were equal within 0.2 %.
 
 | operation | 3.12.0 | 3.13.0 | speedup | cause | PR |
 | --- | --: | --: | --: | --- | --- |
-| `diff()` of an array of 64,000 numbers against an empty array | 4,140 ms | 10.5 ms | 396× | each `remove` was inserted at the front of the patch | [#5461][5461] |
-| `diff()` of an array of 20,000 objects against every second one of them | 119 ms | 3.99 ms | 30× | the same | [#5461][5461] |
-| `parse()` with a callback that rejects half of 32,000 objects | 1,361 ms | 12.1 ms | 113× | each rejected value was searched for from the start of its parent | [#5457][5457] |
-| `<` on two equal values nested 24 levels deep (C++11 to C++17) | 64.0 ms | 0.002 ms | exponential | `std::vector`'s `<` asks `a < b` and `b < a`, and both recurse | [#5390][5390] |
-| `<` on `citm_catalog.json` and a copy, 10× (C++11 to C++17) | 278 ms | 3.86 ms | 72× | the same | [#5390][5390] |
-| `flatten()` of `citm_catalog.json` as `ordered_json` | 251 ms | 1.39 ms | 181× | every new key was looked up linearly | [#5834][5834] |
-| `to_bson()` of a value nested 200 levels deep, 100× | 19.9 ms | 0.349 ms | 57× | each document's size was computed by walking everything below it again | [#5553][5553], [#5979][5979] |
-| 100,000 × `push_back()` on an `ordered_json` with [`JSON_DIAGNOSTICS`](../../api/macros/json_diagnostics.md) | 1,532 ms | 5.04 ms | 304× | every insert re-pointed the parent pointers of all elements | [#5832][5832] |
-| 10,000 × `at(i)` on an `ordered_json` array with `JSON_DIAGNOSTICS` | 43.6 ms | 0.081 ms | 539× | the same | [#5832][5832] |
+| `diff()` of an array of 64,000 numbers against an empty array | 4,237 ms | 10.8 ms | 394× | each `remove` was inserted at the front of the patch | [#5461][5461] |
+| `diff()` of an array of 20,000 objects against every second one of them | 122 ms | 4.13 ms | 29× | the same | [#5461][5461] |
+| `parse()` with a callback that rejects half of 32,000 objects | 1,398 ms | 12.1 ms | 116× | each rejected value was searched for from the start of its parent | [#5457][5457] |
+| `<` on two equal values nested 24 levels deep (C++11 to C++17) | 64.4 ms | 0.002 ms | exponential | `std::vector`'s `<` asks `a < b` and `b < a`, and both recurse | [#5390][5390] |
+| `<` on `citm_catalog.json` and a copy, 10× (C++11 to C++17) | 284 ms | 3.94 ms | 72× | the same | [#5390][5390] |
+| `flatten()` of `citm_catalog.json` as `ordered_json` | 271 ms | 1.45 ms | 187× | every new key was looked up linearly | [#5834][5834] |
+| `to_bson()` of a value nested 200 levels deep, 100× | 20.3 ms | 0.352 ms | 58× | each document's size was computed by walking everything below it again | [#5553][5553], [#5979][5979] |
+| 100,000 × `push_back()` on an `ordered_json` with [`JSON_DIAGNOSTICS`](../../api/macros/json_diagnostics.md) | 1,589 ms | 5.32 ms | 299× | every insert re-pointed the parent pointers of all elements | [#5832][5832] |
+| 10,000 × `at(i)` on an `ordered_json` array with `JSON_DIAGNOSTICS` | 45.9 ms | 0.088 ms | 522× | the same | [#5832][5832] |
 
 <p class="nj-table-caption" markdown>Operations that were quadratic or worse in 3.12.0, timed with both versions (C++17, `-O3`, median of 3 interleaved runs).</p>
 
@@ -1800,8 +1826,9 @@ libraries: [yyjson](https://github.com/ibireme/yyjson) 0.13.0, [simdjson](https:
 1.92, and in Rust [sonic-rs](https://github.com/cloudwego/sonic-rs) 0.5.10,
 [simd-json](https://github.com/simd-lite/simd-json) 0.19.0 and [serde_json](https://github.com/serde-rs/json)
 1.0.154. C++23 with
-`-O3`; on the Mac Apple clang 21 (the compiler of the current Xcode), on x86-64 GCC 16.2, GCC 13 (Ubuntu 24.04's
-default) and Clang 23 with `-march=haswell`, pinned to one core; Rust 1.99 with `-C target-cpu=haswell` on x86-64. Every
+`-O3`; on the Mac Apple clang 21 (the compiler of the current Xcode), on x86-64 GCC 16.2, GCC 13.4 and Clang 23
+with `-march=haswell` on Ubuntu 26.04, pinned to one core; Rust 1.99 with `-C target-cpu=haswell` on x86-64. The Rust times on the Mac are from
+October 29; the Rust programs haven't changed since. Every
 variant runs in every round, in a different order each round (a shuffle with a fixed seed), each timed call after an untimed one; the time is the
 best of 2 × 30 rounds (2 × 6 for `jeopardy.json`). Boost.JSON uses a monotonic resource and precise number parsing,
 RapidJSON `kParseFullPrecisionFlag`, serde_json `float_roundtrip`: every number a library converts has to be exact.
@@ -1818,7 +1845,8 @@ checked with `std::str::from_utf8` first; both are shown both ways. simdjson's O
 `validate_trailing_whitespace` (its strict variants also set `escape_control_characters`, without which it writes
 control characters unescaped).
 
-**Conformance.** Every *validate* way ran the 318 files of [JSONTestSuite](https://github.com/nst/JSONTestSuite). No
+**Conformance.** Every *validate* way ran the 318 files of [JSONTestSuite](https://github.com/nst/JSONTestSuite), on the
+Mac with the headers of November 3 and on x86-64 with those of October 30 (the Mac's results didn't change). No
 way rejected a file that must be accepted. Of those that must be rejected, a few got through: `123` followed by a NUL
 byte in nlohmann/json and RapidJSON (nlohmann/json treats NUL as the end of the input;
 [`JSON_STRICT_NUL_HANDLING`](../../api/macros/json_strict_nul_handling.md) changes that for `json` and `json_document`), an incomplete UTF-8
@@ -1828,17 +1856,16 @@ value in Glaze's generic reader without `validate_trailing_whitespace`. sonic-rs
 kernel never ran, and yyjson and simdjson are compiled as separate files without link-time optimization, while the
 header-only libraries inline into the benchmark.
 
-**Choices.** A library's time is its fastest fully validating way per file; "(U …)" and "(P …)" give a faster
-way that checks less. A cell of the figures is the geometric mean of a library's four times, divided by the smallest
+**Choices.** A library's time is its fastest fully validating way per file; "(U …)", "(P …)" and "(N …)" give a
+faster way that checks or does less. A cell of the figures is the geometric mean of a library's four times, divided by the smallest
 such mean in its column. Variants that keep a parser or document across calls are measured but not chosen; with
 every library reused, the first place in each column stays the same. Variants that leave numbers
 unconverted while reading are chosen where they pass the checks (yyjson's and RapidJSON's raw numbers, Boost.JSON's
-`number_precision::none`). Variants that write each number by copying its text instead of formatting it are not
-(`json_document` with `number_format::source`, yyjson's and RapidJSON's raw numbers); they matter most for
-`canada.json` (`json_document`'s *write*: 399 µs instead of 1,618 µs on the Mac) and make `json_document`'s write
-4 to 10 % faster on `twitter.json` and `citm_catalog.json` on some platforms. Glaze's `generic` with `double`
+`number_precision::none`). Variants that write each number by copying its text instead of formatting it
+(`json_document` with `number_format::source`, yyjson's and RapidJSON's raw numbers) count as doing less, "N": their
+output keeps the source's spelling of each number. They matter most for `canada.json`. Glaze's `generic` with `double`
 numbers fails the checks wherever it has to write the 64-bit ids of `twitter.json`. The struct variants of
-nlohmann/json, Glaze, simdjson and serde read into the same types; Boost.JSON's `parse_into` has no type that skips a
+nlohmann/json, Glaze, simdjson, and serde read into the same types; Boost.JSON's `parse_into` has no type that skips a
 value, so it holds a little more.
 
 <div class="nj-fig-wrap" markdown>
@@ -1851,7 +1878,7 @@ value, so it holds a little more.
 --8<-- "images/perf_blog_usecases_x86-gcc13.svg"
 </div>
 
-<p class="nj-caption" markdown>The use cases on the x86-64 server with GCC 13, the default compiler of Ubuntu 24.04. Less is better; hover over or tap a cell for the times and the way.</p>
+<p class="nj-caption" markdown>The use cases on the x86-64 server with GCC 13.4. Less is better; hover over or tap a cell for the times and the way.</p>
 
 ??? info "Times in µs on the Apple M1 Max"
 
@@ -1859,96 +1886,96 @@ value, so it holds a little more.
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | accept | 170 | 313 | 881 | 20,764 | 0.9 |
-    | yyjson | insitu (copy), read | 181 | 474 | 1,484 | 30,583 | 0.9 |
-    | simdjson | DOM | 202 | 444 | 1,883 | 28,317 | 1.0 |
+    | **nlohmann/json `json_document`** | accept | 169 | 313 | 868 | 20,764 | 0.9 |
+    | yyjson | insitu (copy), read, read (raw numbers) | 178 | 475 | 1,496 | 30,679 | 0.9 |
+    | simdjson | DOM | 205 | 459 | 1,890 | 28,911 | 1.1 |
     | sonic-rs (Rust) | Value | 326 | 681 | 1,939 | 31,450 | 1.4 |
-    | Glaze | validate_json | 328 | 864 | 1,304 | 45,000 | 1.4 |
+    | Glaze | validate_json | 330 | 854 | 1,302 | 46,181 | 1.4 |
     | simd-json (Rust) | tape (copy) | 289 | 698 | 2,278 | 38,874 | 1.7 |
-    | sonic-cpp | Document [U] | – (U 380) | – (U 981) | – (U 2,577) | – (U 40,694) | – (U 1.6) |
+    | sonic-cpp | Document [U] | – (U 381) | – (U 994) | – (U 2,579) | – (U 41,429) | – (U 1.6) |
     | serde_json (Rust) | IgnoredAny [U], from_utf8 + IgnoredAny | 452 (U 354) | 1,103 (U 1,047) | 1,556 (U 1,451) | 46,517 (U 44,984) | 2.0 (U 1.7) |
-    | Boost.JSON | SAX, SAX (numbers: none) | 529 | 992 | 1,466 | 53,794 | 2.3 |
-    | nlohmann/json `json` | accept | 451 | 854 | 2,395 | 56,129 | 2.4 |
-    | RapidJSON | SAX, insitu (copy), insitu (copy) (no encoding check) [U] | 1,310 (U 694) | 1,570 (U 1,144) | 6,748 | 139,647 (U 63,372) | 6.1 (U 2.6) |
+    | Boost.JSON | SAX, SAX (numbers: none) | 536 | 995 | 1,467 | 54,696 | 2.4 |
+    | nlohmann/json `json` | accept | 462 | 905 | 2,340 | 54,684 | 2.5 |
+    | RapidJSON | SAX, insitu (copy), insitu (copy) (no encoding check) [U] | 1,311 (U 700) | 1,585 (U 1,178) | 6,862 | 141,752 (U 63,673) | 6.2 (U 2.7) |
 
     **sum**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse | 226 | 482 | 1,818 | 28,732 | 1.2 |
-    | yyjson | insitu (copy), read | 229 | 570 | 1,867 | 37,323 | 1.1 |
-    | simdjson | DOM, On-Demand | 239 | 563 | 2,372 | 34,486 | 1.3 |
+    | **nlohmann/json `json_document`** | parse | 227 | 482 | 1,790 | 29,450 | 1.2 |
+    | yyjson | insitu (copy), read | 229 | 576 | 1,941 | 37,855 | 1.2 |
+    | simdjson | DOM, On-Demand | 244 | 588 | 2,387 | 35,389 | 1.3 |
     | sonic-rs (Rust) | visitor | 364 | 778 | 2,703 | 41,361 | 1.7 |
     | simd-json (Rust) | visitor (copy) | 354 | 866 | 2,717 | 47,518 | 2.0 |
-    | sonic-cpp | Document [U] | – (U 427) | – (U 1,084) | – (U 2,955) | – (U 48,014) | – (U 1.9) |
-    | Boost.JSON | SAX | 529 | 1,006 | 3,028 | 53,687 | 2.3 |
-    | nlohmann/json `json` | sax | 462 | 931 | 3,065 | 62,740 | 2.5 |
+    | sonic-cpp | Document [U] | – (U 428) | – (U 1,088) | – (U 2,972) | – (U 48,845) | – (U 1.9) |
+    | Boost.JSON | SAX | 529 | 1,008 | 3,042 | 55,145 | 2.3 |
+    | nlohmann/json `json` | sax | 466 | 932 | 3,075 | 64,003 | 2.5 |
     | serde_json (Rust) | visitor | 652 | 1,242 | 4,772 | 66,568 | 2.5 |
-    | Glaze | generic (double) [P], generic (double, strict), lazy_json [P] | 976 | 2,058 | 6,228 | 99,307 | 4.8 (P 3.4) |
-    | RapidJSON | SAX, insitu (copy), insitu (copy) (no encoding check) [U] | 1,330 (U 743) | 1,638 (U 1,246) | 6,895 | 146,234 (U 70,310) | 6.2 (U 2.9) |
+    | Glaze | generic (double) [P], generic (double, strict), lazy_json [P] | 985 | 2,057 | 6,272 | 100,545 | 4.9 (P 3.5) |
+    | RapidJSON | SAX, insitu (copy), insitu (copy) (no encoding check) [U] | 1,331 (U 748) | 1,655 (U 1,276) | 6,938 | 149,509 (U 71,697) | 6.2 (U 2.9) |
 
     **select**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse | 180 | 363 | 959 | 24,367 | 1.0 |
-    | yyjson | insitu (copy), read (raw numbers) | 188 | 475 | 1,488 | 32,022 | 1.1 |
-    | simdjson | DOM, On-Demand (key selectors) [P], On-Demand [P], On-Demand structs [P] | 196 (P 125) | 441 (P 346) | 1,883 (P 564) | 30,127 (P 19,234) | 1.1 (P 0.7) |
-    | Glaze | structs (validate_skipped), structs [P] | 310 (P 238) | 846 (P 252) | 1,304 (P 310) | 46,082 (P 36,025) | 1.4 (P 1.1) |
+    | **nlohmann/json `json_document`** | parse | 186 | 363 | 928 | 25,032 | 1.0 |
+    | yyjson | insitu (copy), read, read (raw numbers) | 191 | 476 | 1,490 | 33,078 | 1.1 |
+    | simdjson | DOM, On-Demand (key selectors) [P], On-Demand [P], On-Demand structs [P] | 202 (P 128) | 454 (P 353) | 1,886 (P 566) | 30,892 (P 19,832) | 1.2 (P 0.8) |
+    | Glaze | structs (validate_skipped), structs [P] | 313 (P 239) | 849 (P 258) | 1,302 (P 310) | 47,315 (P 37,143) | 1.4 (P 1.2) |
     | sonic-rs (Rust) | Value | 333 | 691 | 1,936 | 40,660 | 1.7 |
-    | sonic-cpp | Document [U] | – (U 384) | – (U 990) | – (U 2,576) | – (U 45,060) | – (U 1.7) |
+    | sonic-cpp | Document [U] | – (U 385) | – (U 991) | – (U 2,585) | – (U 46,396) | – (U 1.7) |
     | simd-json (Rust) | structs (copy) | 364 | 914 | 2,657 | 57,697 | 2.1 |
     | serde_json (Rust) | from_utf8 + structs, structs [U] | 480 (U 410) | 1,125 (U 1,084) | 1,560 (U 1,455) | 62,378 | 2.3 (U 1.9) |
-    | Boost.JSON | parse, parse_into structs | 622 | 1,204 | 3,621 | 66,725 | 2.7 |
-    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 1,314 (U 698) | 1,566 (U 1,141) | 6,754 | 142,108 (U 66,120) | 6.4 (U 2.6) |
-    | nlohmann/json `json` | parse, structs (from_json) | 1,358 | 2,414 | 5,876 | 176,914 | 7.5 |
+    | Boost.JSON | parse, parse_into structs | 620 | 1,205 | 3,634 | 67,861 | 2.7 |
+    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 1,316 (U 702) | 1,569 (U 1,169) | 6,800 | 145,958 (U 68,045) | 6.5 (U 2.7) |
+    | nlohmann/json `json` | parse, structs (from_json) | 1,360 | 2,407 | 6,041 | 180,705 | 7.7 |
 
     **edit**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | editable | 284 | 560 | 2,762 | 57,380 | 1.9 |
-    | yyjson | insitu (copy) + mut copy, mut copy | 446 | 924 | 3,685 | 83,706 | 2.5 |
-    | sonic-cpp | Document [U] | – (U 476) | – (U 1,218) | – (U 5,620) | – (U 61,631) | – (U 2.5) |
+    | **nlohmann/json `json_document`** | editable, editable (source numbers) [N] | 283 | 563 | 2,741 (N 1,448) | 58,470 | 1.9 |
+    | yyjson | insitu (copy) + mut copy, mut copy | 441 | 904 | 3,700 | 85,478 | 2.5 |
+    | sonic-cpp | Document [U] | – (U 490) | – (U 1,229) | – (U 5,653) | – (U 63,914) | – (U 2.6) |
     | sonic-rs (Rust) | Value | 634 | 1,257 | 4,396 | 140,936 | 3.8 |
     | simd-json (Rust) | borrowed (copy) | 948 | 2,102 | 7,654 | 110,693 | 5.4 |
-    | Boost.JSON | parse | 1,364 | 1,989 | 6,492 | 154,518 | 6.5 |
-    | nlohmann/json `json` | ordered_json, parse | 1,281 | 2,335 | 8,140 | 170,559 | 7.1 |
-    | Glaze | generic (strict), generic [P] | 1,529 | 3,234 | 10,939 | 178,986 | 8.2 |
-    | RapidJSON | Document, insitu (copy), insitu (copy) (no encoding check) [U] | 1,916 (U 1,352) | 2,397 (U 1,969) | 13,720 | 220,366 (U 144,422) | 10.2 (U 6.4) |
+    | Boost.JSON | parse | 1,367 | 2,000 | 6,558 | 159,053 | 6.6 |
+    | nlohmann/json `json` | ordered_json, parse | 1,266 | 2,329 | 8,305 | 199,819 | 7.1 |
+    | Glaze | generic (strict), generic [P] | 1,529 | 3,231 | 10,938 | 180,098 | 8.4 |
+    | RapidJSON | Document, insitu (copy), insitu (copy) (no encoding check) [U] | 1,924 (U 1,354) | 2,404 (U 2,001) | 13,830 | 226,139 (U 148,686) | 10.4 (U 6.6) |
     | serde_json (Rust) | Value | 2,009 | 3,316 | 9,666 | 251,931 | 9.6 |
 
     **minify**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse + dump | 258 | 496 | 2,577 | 37,294 | 1.5 |
-    | yyjson | insitu (copy) + write, read + write | 291 | 635 | 3,209 | 49,919 | 1.6 |
-    | sonic-cpp | Document + Serialize [U] | – (U 490) | – (U 1,212) | – (U 5,620) | – (U 59,715) | – (U 2.5) |
+    | **nlohmann/json `json_document`** | parse + dump, parse + dump (source numbers) [N] | 261 | 493 | 2,550 (N 1,328) | 37,888 | 1.5 |
+    | yyjson | insitu (copy) + write, read (raw numbers) + write [N], read + write | 298 | 641 | 3,219 (N 2,527) | 51,099 | 1.6 |
     | sonic-rs (Rust) | Value | 535 | 1,134 | 4,377 | 64,832 | 3.0 |
-    | simdjson | DOM + to_string, minify [P] | 566 (P 61.3) | 906 (P 168) | 5,026 (P 228) | 81,426 (P 5,653) | 3.5 (P 0.3) |
+    | sonic-cpp | Document + Serialize [U] | – (U 505) | – (U 1,224) | – (U 5,661) | – (U 61,985) | – (U 2.5) |
+    | simdjson | DOM + to_string, minify [P] | 574 (P 61.5) | 928 (P 168) | 5,038 (P 227) | 82,978 (P 5,755) | 3.6 (P 0.3) |
     | simd-json (Rust) | borrowed (copy) | 952 | 2,111 | 7,658 | 108,130 | 5.5 |
-    | Boost.JSON | parse + serialize | 1,378 | 1,979 | 6,494 | 151,389 | 6.6 |
-    | RapidJSON | Document + Writer, Document + Writer (no encoding check) [U], SAX to Writer, SAX to Writer (no encoding check) [U] | 1,500 (U 1,300) | 1,807 (U 1,705) | 14,222 | 176,922 (U 164,205) | 7.9 (U 7.3) |
-    | nlohmann/json `json` | parse + dump | 1,592 | 2,692 | 8,135 | 195,657 | 8.6 |
-    | Glaze | generic (strict), minify_json [P] | 1,500 (P 280) | 3,192 (P 726) | 10,949 (P 1,705) | 168,670 (P 39,266) | 7.9 (P 1.3) |
+    | Boost.JSON | parse + serialize | 1,384 | 1,990 | 6,554 | 155,141 | 6.8 |
+    | RapidJSON | Document + Writer, SAX to Writer, SAX to Writer (no encoding check) [U], SAX to Writer (raw numbers) (no encoding check) [U N], SAX to Writer (raw numbers) [N] | 1,512 (U 1,328) | 1,816 (U 1,714) | 14,281 (N 10,904) | 180,596 (U N 167,694) | 8.1 (U 7.5) |
+    | nlohmann/json `json` | parse + dump | 1,616 | 2,688 | 8,318 | 199,579 | 8.7 |
+    | Glaze | generic (strict), minify_json [P] | 1,517 (P 285) | 3,220 (P 796) | 10,920 (P 1,705) | 168,662 (P 40,374) | 8.0 (P 1.3) |
     | serde_json (Rust) | Value | 2,004 | 3,290 | 9,792 | 227,369 | 9.5 |
 
     **write**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | dump | 75.6 | 136 | 1,618 | 14,609 | 0.5 |
-    | yyjson | write | 101 | 164 | 1,715 | 19,621 | 0.7 |
-    | sonic-cpp | Serialize | 104 | 229 | 3,040 | 18,906 | 0.8 |
-    | nlohmann/json `json` | dump | 214 | 285 | 2,234 | 30,902 | 1.2 |
-    | Glaze | generic | 210 | 468 | 1,694 | 33,394 | 1.3 |
+    | **nlohmann/json `json_document`** | dump, dump (source numbers) [N] | 72.9 | 133 | 1,622 (N 400) | 14,735 | 0.5 |
+    | yyjson | write | 103 | 165 | 1,719 | 19,993 | 0.7 |
+    | sonic-cpp | Serialize | 113 | 236 | 3,046 | 19,953 | 0.9 |
+    | nlohmann/json `json` | dump | 216 | 286 | 2,250 | 31,183 | 1.2 |
+    | Glaze | generic, generic (strict) | 213 | 470 | 1,705 | 34,047 | 1.3 |
     | sonic-rs (Rust) | Value | 212 | 446 | 2,419 | 33,366 | 1.5 |
     | serde_json (Rust) | Value | 322 | 490 | 2,286 | 49,967 | 2.0 |
     | simd-json (Rust) | borrowed | 355 | 478 | 2,728 | 47,412 | 1.8 |
-    | simdjson | to_string | 342 | 451 | 3,159 | 52,849 | 2.4 |
-    | Boost.JSON | serialize | 497 | 501 | 2,874 | 62,488 | 2.8 |
-    | RapidJSON | Writer | 592 | 820 | 6,864 | 79,510 | 3.8 |
+    | simdjson | to_string | 342 | 448 | 3,196 | 53,776 | 2.5 |
+    | Boost.JSON | serialize | 499 | 504 | 2,891 | 63,231 | 2.9 |
+    | RapidJSON | Writer | 598 | 822 | 6,889 | 81,406 | 3.9 |
 
 ??? info "Times in µs on x86-64 with GCC 16.2"
 
@@ -1956,193 +1983,193 @@ value, so it holds a little more.
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | accept | 256 | 504 | 880 | 35,446 | 1.3 |
-    | sonic-rs (Rust) | IgnoredAny | 482 | 969 | 2,489 | 55,486 | 1.8 |
-    | Boost.JSON | SAX, SAX (numbers: none) | 688 | 920 | 1,643 | 61,295 | 3.1 |
-    | simdjson | DOM | 302 | 680 | 3,167 | 117,836 | 1.9 |
-    | yyjson | insitu (copy), read, read (raw numbers) | 397 | 939 | 2,138 | 133,549 | 1.7 |
-    | sonic-cpp | Document [U] | – (U 401) | – (U 929) | – (U 3,258) | – (U 98,231) | – (U 1.9) |
-    | serde_json (Rust) | IgnoredAny [U], from_utf8 + IgnoredAny | 622 (U 480) | 1,440 (U 1,371) | 2,621 (U 2,538) | 65,602 (U 60,154) | 2.5 (U 1.9) |
-    | Glaze | validate_json | 718 | 1,972 | 2,550 | 80,290 | 2.8 |
-    | nlohmann/json `json` | accept | 691 | 1,471 | 4,540 | 76,340 | 3.4 |
-    | simd-json (Rust) | tape (copy) | 563 | 1,403 | 4,630 | 212,467 | 2.9 |
-    | RapidJSON | SAX (no encoding check) [U], SAX (raw numbers), insitu (copy), insitu (copy) (no encoding check) [U] | 1,254 (U 1,132) | 1,862 (U 1,587) | 10,322 | 164,951 (U 152,267) | 5.5 (U 3.9) |
+    | **nlohmann/json `json_document`** | accept | 254 | 510 | 862 | 34,543 | 1.2 |
+    | sonic-rs (Rust) | IgnoredAny | 501 | 970 | 2,249 | 54,369 | 1.8 |
+    | Boost.JSON | SAX, SAX (numbers: none) | 687 | 912 | 1,637 | 59,426 | 2.9 |
+    | yyjson | insitu (copy), read (raw numbers) | 389 | 946 | 2,133 | 127,616 | 1.6 |
+    | simdjson | DOM | 298 | 690 | 3,166 | 116,296 | 1.7 |
+    | sonic-cpp | Document [U] | – (U 403) | – (U 931) | – (U 3,170) | – (U 96,915) | – (U 1.7) |
+    | serde_json (Rust) | IgnoredAny [U], from_utf8 + IgnoredAny | 624 (U 484) | 1,440 (U 1,370) | 2,406 (U 2,314) | 64,720 (U 58,247) | 2.4 (U 1.9) |
+    | Glaze | validate_json | 714 | 1,974 | 2,521 | 76,716 | 2.5 |
+    | nlohmann/json `json` | accept | 667 | 1,426 | 4,398 | 71,489 | 3.1 |
+    | simd-json (Rust) | tape (copy) | 567 | 1,430 | 4,359 | 207,551 | 2.9 |
+    | RapidJSON | SAX (no encoding check) [U], SAX (raw numbers), insitu (copy), insitu (copy) (no encoding check) [U] | 1,250 (U 1,089) | 1,893 (U 1,590) | 10,133 | 157,360 (U 145,703) | 5.2 (U 3.5) |
 
     **sum**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | simdjson | On-Demand | 349 | 846 | 3,443 | 98,772 | 2.1 |
-    | **nlohmann/json `json_document`** | parse | 387 | 996 | 3,670 | 93,686 | 2.0 |
-    | sonic-rs (Rust) | visitor | 503 | 1,123 | 4,418 | 59,993 | 2.8 |
-    | sonic-cpp | Document [U] | – (U 471) | – (U 1,209) | – (U 3,945) | – (U 113,162) | – (U 2.2) |
-    | yyjson | insitu (copy), read | 452 | 1,162 | 4,138 | 142,713 | 1.9 |
-    | Boost.JSON | SAX | 689 | 1,000 | 5,784 | 62,713 | 3.0 |
-    | nlohmann/json `json` | sax | 807 | 1,802 | 5,884 | 100,220 | 4.3 |
-    | simd-json (Rust) | visitor (copy) | 668 | 1,688 | 5,134 | 224,411 | 4.0 |
-    | serde_json (Rust) | visitor | 1,311 | 2,316 | 7,241 | 130,249 | 5.1 |
-    | RapidJSON | SAX (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,299 (U 1,141) | 2,179 (U 1,796) | 11,198 | 172,104 (U 162,975) | 5.7 (U 4.1) |
-    | Glaze | generic (double) [P], generic (double, strict), lazy_json [P] | 2,397 | 4,330 | 11,094 | 304,997 (P 256,411) | 10.1 (P 6.4) |
+    | simdjson | On-Demand | 345 | 802 | 3,465 | 92,425 | 1.9 |
+    | **nlohmann/json `json_document`** | parse | 388 | 967 | 3,634 | 91,873 | 2.0 |
+    | sonic-rs (Rust) | visitor | 501 | 1,123 | 4,397 | 59,583 | 2.5 |
+    | sonic-cpp | Document [U] | – (U 460) | – (U 1,126) | – (U 3,948) | – (U 105,174) | – (U 2.0) |
+    | yyjson | insitu (copy), read | 450 | 1,100 | 4,131 | 136,960 | 1.9 |
+    | Boost.JSON | SAX | 698 | 961 | 5,821 | 60,418 | 3.0 |
+    | nlohmann/json `json` | sax | 814 | 1,638 | 5,673 | 95,614 | 4.0 |
+    | simd-json (Rust) | visitor (copy) | 681 | 1,650 | 5,083 | 210,185 | 3.5 |
+    | serde_json (Rust) | visitor | 1,311 | 2,288 | 7,127 | 129,497 | 4.6 |
+    | RapidJSON | SAX, SAX (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,300 (U 1,141) | 2,039 (U 1,680) | 11,309 | 170,218 (U 155,049) | 5.3 (U 3.9) |
+    | Glaze | generic (double) [P], generic (double, strict), lazy_json [P] | 2,334 | 4,099 | 11,762 (P 10,370) | 243,497 (P 233,200) | 8.7 (P 6.3) |
 
     **select**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse | 333 | 812 | 1,336 | 92,556 | 1.7 |
-    | yyjson | insitu (copy), read, read (raw numbers) | 406 | 1,012 | 2,177 | 145,779 | 1.8 |
-    | sonic-rs (Rust) | structs | 538 | 1,028 | 2,283 | 91,950 | 2.0 |
-    | simdjson | DOM, On-Demand (key selectors) [P], On-Demand [P] | 314 (P 183) | 697 (P 516) | 3,281 (P 701) | 128,804 (P 50,654) | 2.0 (P 1.2) |
-    | sonic-cpp | Document [U] | – (U 409) | – (U 1,005) | – (U 3,180) | – (U 111,279) | – (U 1.8) |
-    | Glaze | structs (validate_skipped), structs [P] | 603 (P 344) | 2,097 (P 422) | 2,586 (P 430) | 90,324 (P 70,824) | 2.1 (P 1.5) |
-    | serde_json (Rust) | from_utf8 + structs, structs [U] | 722 | 1,559 | 2,585 (U 2,448) | 114,701 | 3.0 |
-    | Boost.JSON | parse_into structs | 874 | 1,330 | 6,790 | 100,853 | 3.9 |
-    | simd-json (Rust) | structs (copy) | 740 | 1,802 | 4,997 | 258,566 | 3.7 |
-    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 1,261 (U 1,101) | 2,027 (U 1,963) | 10,840 | 166,338 | 5.6 (U 4.1) |
-    | nlohmann/json `json` | structs (from_json) | 3,583 | 5,868 | 11,608 | 646,498 | 14.7 |
+    | **nlohmann/json `json_document`** | parse, structs (from_json) | 328 | 773 | 1,306 | 91,598 | 1.7 |
+    | yyjson | insitu (copy), read, read (raw numbers) | 400 | 950 | 2,136 | 138,356 | 1.7 |
+    | sonic-rs (Rust) | structs | 504 | 1,033 | 2,328 | 90,486 | 2.0 |
+    | simdjson | DOM, On-Demand (key selectors) [P], On-Demand [P] | 311 (P 178) | 698 (P 495) | 3,263 (P 674) | 127,285 (P 49,613) | 1.9 (P 1.1) |
+    | sonic-cpp | Document [U] | – (U 408) | – (U 933) | – (U 3,178) | – (U 113,267) | – (U 1.8) |
+    | Glaze | structs (validate_skipped), structs [P] | 604 (P 344) | 1,976 (P 401) | 2,534 (P 418) | 87,637 (P 70,801) | 2.1 (P 1.5) |
+    | serde_json (Rust) | from_utf8 + structs, structs [U] | 701 | 1,532 | 2,529 (U 2,402) | 107,316 | 3.0 |
+    | Boost.JSON | parse, parse_into structs | 886 | 1,268 | 6,606 | 94,730 | 3.7 |
+    | simd-json (Rust) | structs (copy) | 679 | 1,731 | 5,144 | 239,164 | 3.5 |
+    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 1,261 (U 1,096) | 1,893 (U 1,834) | 10,263 | 165,979 (U 159,427) | 5.4 (U 3.8) |
+    | nlohmann/json `json` | parse, structs (from_json) | 3,454 | 5,203 | 11,070 | 426,942 | 17.8 |
 
     **edit**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | editable | 538 | 1,146 | 5,464 | 175,454 | 3.2 |
-    | sonic-cpp | Document [U] | – (U 623) | – (U 1,522) | – (U 8,678) | – (U 193,208) | – (U 3.4) |
-    | yyjson | insitu (copy) + mut copy, mut copy | 793 | 1,742 | 7,566 | 296,291 | 3.7 |
-    | sonic-rs (Rust) | Value | 1,201 | 2,416 | 7,958 | 421,718 | 6.9 |
-    | Boost.JSON | parse | 1,779 | 2,536 | 12,676 | 324,644 | 8.8 |
-    | RapidJSON | Document (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,965 (U 1,877) | 2,915 (U 2,803) | 19,784 | 317,671 (U 297,090) | 9.2 (U 7.7) |
-    | simd-json (Rust) | borrowed (copy), owned (copy) | 1,924 | 4,575 | 15,746 | 435,817 | 9.6 |
-    | nlohmann/json `json` | ordered_json, parse | 3,103 | 5,437 | 15,614 | 910,653 | 14.5 |
-    | Glaze | generic (strict), generic [P] | 3,577 | 6,466 | 22,051 | 761,903 | 16.5 (P 16.0) |
-    | serde_json (Rust) | Value | 4,036 | 7,181 | 17,371 | 843,034 | 16.9 |
+    | **nlohmann/json `json_document`** | editable, editable (source numbers) [N] | 538 | 1,112 | 5,519 (N 2,133) | 195,482 | 3.0 |
+    | sonic-cpp | Document [U] | – (U 619) | – (U 1,434) | – (U 8,257) | – (U 183,468) | – (U 3.4) |
+    | yyjson | insitu (copy) + mut copy, mut copy | 787 | 1,645 | 7,403 | 311,249 | 3.6 |
+    | sonic-rs (Rust) | Value | 1,197 | 2,389 | 7,744 | 390,952 | 6.9 |
+    | Boost.JSON | parse | 1,768 | 2,511 | 12,298 | 339,121 | 8.5 |
+    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 1,951 (U 1,793) | 2,858 | 19,274 | 288,710 | 9.1 (U 7.7) |
+    | simd-json (Rust) | borrowed (copy), owned (copy) | 1,862 | 4,194 | 14,896 | 391,369 | 9.0 |
+    | nlohmann/json `json` | ordered_json, parse | 2,806 | 4,972 | 14,917 | 635,353 | 13.7 |
+    | Glaze | generic (strict), generic [P] | 3,364 | 6,118 | 20,572 | 626,529 | 15.0 |
+    | serde_json (Rust) | Value | 4,042 | 6,586 | 16,631 | 632,766 | 17.6 |
 
     **minify**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse + dump | 486 | 1,104 | 5,300 | 157,399 | 2.5 |
-    | yyjson | insitu (copy) + write, read + write | 622 | 1,324 | 6,687 | 215,236 | 2.9 |
-    | sonic-cpp | Document + Serialize [U] | – (U 628) | – (U 1,538) | – (U 8,644) | – (U 182,074) | – (U 3.3) |
-    | simdjson | DOM + to_string, minify [P] | 797 (P 105) | 1,389 (P 264) | 8,834 (P 371) | 306,425 (P 49,313) | 4.8 (P 0.5) |
-    | sonic-rs (Rust) | Value | 1,003 | 2,174 | 7,753 | 217,354 | 5.5 |
-    | Boost.JSON | parse + serialize | 1,767 | 2,687 | 12,514 | 311,858 | 8.6 |
-    | simd-json (Rust) | borrowed (copy) | 1,878 | 4,655 | 15,955 | 419,412 | 9.5 |
-    | RapidJSON | Document + Writer, SAX to Writer, SAX to Writer (no encoding check) [U] | 2,529 (U 1,795) | 3,097 (U 2,690) | 21,347 | 379,477 (U 281,208) | 14.0 (U 9.6) |
-    | Glaze | generic (strict), minify_json [P] | 3,511 (P 417) | 6,660 (P 1,436) | 22,202 (P 2,656) | 500,412 (P 100,316) | 15.4 (P 1.9) |
-    | serde_json (Rust) | Value | 4,220 | 6,876 | 17,276 | 628,192 | 16.7 |
-    | nlohmann/json `json` | parse + dump | 4,219 | 6,864 | 15,620 | 724,748 | 16.4 |
+    | **nlohmann/json `json_document`** | parse + dump, parse + dump (source numbers) [N] | 481 (N 466) | 1,034 | 5,163 (N 2,153) | 151,260 | 2.5 (N 2.4) |
+    | yyjson | insitu (copy) + write, read (raw numbers) + write [N], read + write | 616 | 1,273 (N 1,224) | 6,621 (N 2,874) | 203,508 | 2.9 |
+    | sonic-cpp | Document + Serialize [U] | – (U 635) | – (U 1,427) | – (U 8,228) | – (U 175,214) | – (U 3.3) |
+    | simdjson | DOM + to_string, minify [P] | 788 (P 93.7) | 1,302 (P 279) | 8,426 (P 313) | 301,627 (P 46,983) | 4.7 (P 0.5) |
+    | sonic-rs (Rust) | Value | 1,000 | 2,097 | 7,795 | 215,280 | 5.4 |
+    | Boost.JSON | parse + serialize | 1,768 | 2,494 | 12,141 | 330,129 | 8.7 |
+    | simd-json (Rust) | borrowed (copy) | 1,889 | 4,196 | 15,716 | 414,377 | 9.2 |
+    | RapidJSON | Document + Writer, SAX to Writer, SAX to Writer (no encoding check) [U], SAX to Writer (raw numbers) (no encoding check) [U N] | 2,431 (U 1,730) | 2,815 (U 2,395) | 20,693 (U N 14,118) | 375,304 (U 274,873) | 13.5 (U 9.5) |
+    | Glaze | generic (strict), minify_json [P] | 3,268 (P 418) | 6,057 (P 1,292) | 20,639 (P 2,650) | 457,013 (P 93,423) | 13.9 (P 1.9) |
+    | nlohmann/json `json` | parse + dump | 3,861 | 5,772 | 14,812 | 546,637 | 19.4 |
+    | serde_json (Rust) | Value | 4,012 | 6,583 | 17,306 | 509,702 | 16.5 |
 
     **write**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | dump | 158 | 255 | 3,957 | 69,975 | 1.0 |
-    | yyjson | write | 215 | 319 | 3,367 | 66,593 | 1.3 |
-    | sonic-cpp | Serialize | 254 | 510 | 5,356 | 72,110 | 1.6 |
-    | nlohmann/json `json` | dump | 427 | 613 | 4,150 | 113,965 | 2.0 |
-    | Glaze | generic, generic (strict) | 380 | 714 | 4,135 | 133,036 | 2.2 |
-    | sonic-rs (Rust) | Value | 445 | 931 | 4,048 | 104,487 | 2.8 |
-    | Boost.JSON | serialize | 452 | 825 | 5,580 | 126,955 | 2.7 |
-    | simdjson | to_string | 461 | 590 | 5,868 | 176,988 | 3.3 |
-    | simd-json (Rust) | borrowed | 597 | 809 | 4,817 | 114,245 | 3.1 |
-    | serde_json (Rust) | Value | 560 | 848 | 3,964 | 129,473 | 3.2 |
-    | RapidJSON | Writer | 686 | 980 | 9,132 | 132,234 | 4.1 |
+    | **nlohmann/json `json_document`** | dump, dump (source numbers) [N] | 155 (N 139) | 251 (N 232) | 3,844 (N 835) | 70,827 | 0.9 (N 0.8) |
+    | yyjson | write | 187 | 333 | 3,343 | 68,342 | 1.3 |
+    | sonic-cpp | Serialize | 250 | 512 | 5,098 | 69,815 | 1.6 |
+    | nlohmann/json `json` | dump | 424 | 656 | 3,870 | 117,712 | 1.8 |
+    | Glaze | generic | 380 | 733 | 4,017 | 133,545 | 2.0 |
+    | sonic-rs (Rust) | Value | 434 | 927 | 3,987 | 109,176 | 2.8 |
+    | Boost.JSON | serialize | 455 | 837 | 5,472 | 144,557 | 2.3 |
+    | simdjson | to_string | 463 | 586 | 5,626 | 185,384 | 2.8 |
+    | simd-json (Rust) | borrowed | 582 | 800 | 5,147 | 122,623 | 2.8 |
+    | serde_json (Rust) | Value | 550 | 887 | 4,005 | 134,163 | 3.3 |
+    | RapidJSON | Writer | 637 | 983 | 8,996 | 130,099 | 3.8 |
 
-??? info "Times in µs on x86-64 with GCC 13"
+??? info "Times in µs on x86-64 with GCC 13.4"
 
     **validate**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | accept | 268 | 577 | 968 | 36,996 | 1.3 |
-    | sonic-rs (Rust) | IgnoredAny | 482 | 969 | 2,489 | 55,486 | 1.8 |
-    | Boost.JSON | SAX, SAX (numbers: none) | 716 | 949 | 1,638 | 63,909 | 3.4 |
-    | yyjson | insitu (copy), read, read (raw numbers) | 394 | 990 | 2,224 | 137,955 | 1.7 |
-    | Glaze | validate_json | 595 | 1,445 | 1,870 | 77,940 | 2.3 |
-    | simdjson | DOM | 314 | 755 | 3,203 | 123,091 | 1.9 |
-    | sonic-cpp | Document [U] | – (U 408) | – (U 1,044) | – (U 3,641) | – (U 99,805) | – (U 1.8) |
-    | serde_json (Rust) | IgnoredAny [U], from_utf8 + IgnoredAny | 622 (U 480) | 1,440 (U 1,371) | 2,621 (U 2,538) | 65,602 (U 60,154) | 2.5 (U 1.9) |
-    | nlohmann/json `json` | accept | 659 | 1,360 | 4,533 | 76,432 | 3.4 |
-    | simd-json (Rust) | tape (copy) | 563 | 1,403 | 4,630 | 212,467 | 2.9 |
-    | RapidJSON | SAX, SAX (no encoding check) [U], SAX (raw numbers), SAX (raw numbers) (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,606 (U 1,133) | 2,315 (U 1,678) | 10,370 | 223,678 (U 162,310) | 7.9 (U 4.2) |
+    | **nlohmann/json `json_document`** | accept | 269 | 576 | 984 | 34,383 | 1.2 |
+    | sonic-rs (Rust) | IgnoredAny | 501 | 970 | 2,249 | 54,369 | 1.8 |
+    | simdjson | DOM | 311 | 750 | 3,111 | 114,707 | 1.8 |
+    | Boost.JSON | SAX, SAX (numbers: none) | 723 | 933 | 1,674 | 61,382 | 3.2 |
+    | yyjson | insitu (copy), read (raw numbers) | 392 | 991 | 2,209 | 125,376 | 1.7 |
+    | Glaze | validate_json | 592 | 1,417 | 1,868 | 72,510 | 2.3 |
+    | sonic-cpp | Document [U] | – (U 416) | – (U 1,034) | – (U 3,563) | – (U 95,396) | – (U 1.6) |
+    | serde_json (Rust) | IgnoredAny [U], from_utf8 + IgnoredAny | 624 (U 484) | 1,440 (U 1,370) | 2,406 (U 2,314) | 64,720 (U 58,247) | 2.4 (U 1.9) |
+    | nlohmann/json `json` | accept | 698 | 1,299 | 4,370 | 72,856 | 3.1 |
+    | simd-json (Rust) | tape (copy) | 567 | 1,430 | 4,359 | 207,551 | 2.9 |
+    | RapidJSON | SAX (no encoding check) [U], SAX (raw numbers), insitu (copy), insitu (copy) (no encoding check) [U] | 1,694 (U 1,126) | 2,222 (U 1,695) | 10,357 | 207,460 (U 153,062) | 7.0 (U 3.6) |
 
     **sum**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | simdjson | On-Demand | 360 | 869 | 3,514 | 97,315 | 2.1 |
-    | **nlohmann/json `json_document`** | parse | 411 | 1,034 | 3,808 | 97,029 | 2.2 |
-    | sonic-rs (Rust) | visitor | 503 | 1,123 | 4,418 | 59,993 | 2.8 |
-    | sonic-cpp | Document [U] | – (U 489) | – (U 1,320) | – (U 4,448) | – (U 108,214) | – (U 2.2) |
-    | yyjson | insitu (copy), read | 448 | 1,161 | 6,230 | 137,830 | 2.1 |
-    | Boost.JSON | SAX | 794 | 1,131 | 5,696 | 69,348 | 3.5 |
-    | nlohmann/json `json` | sax | 822 | 1,849 | 6,124 | 106,310 | 4.2 |
-    | simd-json (Rust) | visitor (copy) | 668 | 1,688 | 5,134 | 224,411 | 4.0 |
-    | serde_json (Rust) | visitor | 1,311 | 2,316 | 7,241 | 130,249 | 5.1 |
-    | RapidJSON | SAX, SAX (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,768 (U 1,283) | 2,476 (U 1,910) | 12,444 | 223,612 (U 160,781) | 7.9 (U 4.4) |
-    | Glaze | generic (double) [P], generic (double, strict), lazy_json [P] | 2,416 | 4,521 | 12,148 | 312,263 (P 241,145) | 10.5 (P 6.6) |
+    | simdjson | On-Demand | 356 | 811 | 3,330 | 89,536 | 2.0 |
+    | **nlohmann/json `json_document`** | parse | 391 | 919 | 3,687 | 83,751 | 2.0 |
+    | sonic-rs (Rust) | visitor | 501 | 1,123 | 4,397 | 59,583 | 2.5 |
+    | sonic-cpp | Document [U] | – (U 462) | – (U 1,211) | – (U 4,178) | – (U 102,429) | – (U 1.9) |
+    | yyjson | insitu (copy), read | 445 | 1,153 | 5,982 | 132,844 | 2.0 |
+    | Boost.JSON | SAX | 736 | 1,018 | 5,847 | 62,361 | 3.3 |
+    | nlohmann/json `json` | sax | 792 | 1,545 | 5,697 | 95,144 | 4.1 |
+    | simd-json (Rust) | visitor (copy) | 681 | 1,650 | 5,083 | 210,185 | 3.5 |
+    | serde_json (Rust) | visitor | 1,311 | 2,288 | 7,127 | 129,497 | 4.6 |
+    | RapidJSON | SAX, SAX (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,647 (U 1,169) | 2,326 (U 1,739) | 10,949 | 212,747 (U 156,639) | 7.7 (U 4.0) |
+    | Glaze | generic (double) [P], generic (double, strict), lazy_json [P] | 2,350 | 4,048 | 10,485 | 233,680 (P 220,377) | 8.9 (P 6.1) |
 
     **select**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse, structs (from_json) | 347 | 826 | 1,403 | 92,440 | 1.8 |
-    | sonic-rs (Rust) | structs | 538 | 1,028 | 2,283 | 91,950 | 2.0 |
-    | yyjson | insitu (copy), read, read (raw numbers) | 398 | 1,054 | 2,306 | 146,260 | 1.8 |
-    | Glaze | structs (validate_skipped), structs [P] | 525 (P 338) | 1,534 (P 417) | 1,926 (P 446) | 98,399 (P 72,947) | 2.0 (P 1.4) |
-    | simdjson | DOM, On-Demand (key selectors) [P], On-Demand [P] | 324 (P 186) | 781 (P 530) | 3,418 (P 733) | 132,025 (P 49,766) | 2.2 (P 1.2) |
-    | sonic-cpp | Document [U] | – (U 414) | – (U 1,100) | – (U 3,705) | – (U 108,534) | – (U 1.8) |
-    | serde_json (Rust) | from_utf8 + structs, structs [U] | 722 | 1,559 | 2,585 (U 2,448) | 114,701 | 3.0 |
-    | simd-json (Rust) | structs (copy) | 740 | 1,802 | 4,997 | 258,566 | 3.7 |
-    | Boost.JSON | parse, parse_into structs | 905 | 1,325 | 7,511 | 99,987 | 4.3 |
-    | RapidJSON | Document, Document (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,614 (U 1,135) | 2,467 (U 2,120) | 11,973 | 231,174 (U 176,105) | 7.9 (U 3.9) |
-    | nlohmann/json `json` | parse, structs (from_json) | 3,260 | 5,881 | 12,046 | 630,235 | 13.8 |
+    | **nlohmann/json `json_document`** | parse | 335 | 740 | 1,358 | 94,846 | 1.6 |
+    | yyjson | insitu (copy), read, read (raw numbers) | 399 | 996 | 2,221 | 142,096 | 1.8 |
+    | sonic-rs (Rust) | structs | 504 | 1,033 | 2,328 | 90,486 | 2.0 |
+    | simdjson | DOM, On-Demand (key selectors) [P], On-Demand [P] | 320 (P 184) | 755 (P 508) | 3,149 (P 701) | 129,932 (P 51,763) | 2.0 (P 1.2) |
+    | Glaze | structs (validate_skipped), structs [P] | 526 (P 341) | 1,453 (P 405) | 1,902 (P 432) | 87,166 (P 66,832) | 2.0 (P 1.5) |
+    | sonic-cpp | Document [U] | – (U 415) | – (U 1,040) | – (U 3,708) | – (U 111,786) | – (U 1.7) |
+    | serde_json (Rust) | from_utf8 + structs, structs [U] | 701 | 1,532 | 2,529 (U 2,402) | 107,316 | 3.0 |
+    | simd-json (Rust) | structs (copy) | 679 | 1,731 | 5,144 | 239,164 | 3.5 |
+    | Boost.JSON | parse_into structs | 889 | 1,383 | 6,906 | 102,896 | 4.1 |
+    | RapidJSON | Document (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,601 (U 1,117) | 2,216 (U 1,920) | 11,491 | 221,481 (U 166,715) | 7.5 (U 3.9) |
+    | nlohmann/json `json` | parse, structs (from_json) | 3,323 | 5,055 | 12,002 | 432,006 | 17.4 |
 
     **edit**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | editable | 559 | 1,123 | 5,741 | 180,574 | 3.6 |
-    | sonic-cpp | Document [U] | – (U 654) | – (U 1,617) | – (U 8,704) | – (U 191,868) | – (U 3.6) |
-    | yyjson | insitu (copy) + mut copy, mut copy | 811 | 1,726 | 9,875 | 296,846 | 3.9 |
-    | sonic-rs (Rust) | Value | 1,201 | 2,416 | 7,958 | 421,718 | 6.9 |
-    | Boost.JSON | parse | 2,028 | 2,875 | 13,782 | 342,712 | 10.0 |
-    | simd-json (Rust) | borrowed (copy), owned (copy) | 1,924 | 4,575 | 15,746 | 435,817 | 9.6 |
-    | RapidJSON | Document, Document (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 2,508 (U 1,956) | 3,342 (U 3,004) | 21,057 | 372,662 (U 316,448) | 12.3 (U 8.4) |
-    | nlohmann/json `json` | ordered_json, parse | 3,191 | 5,392 | 16,314 | 915,203 | 15.7 |
-    | Glaze | generic (strict), generic [P] | 3,707 | 6,528 | 23,959 | 788,989 | 17.7 |
-    | serde_json (Rust) | Value | 4,036 | 7,181 | 17,371 | 843,034 | 16.9 |
+    | **nlohmann/json `json_document`** | editable, editable (source numbers) [N] | 534 | 1,091 | 5,634 (N 2,606) | 192,274 | 3.1 |
+    | sonic-cpp | Document [U] | – (U 635) | – (U 1,558) | – (U 8,793) | – (U 186,661) | – (U 3.4) |
+    | yyjson | insitu (copy) + mut copy, mut copy | 806 | 1,712 | 9,794 | 314,081 | 3.8 |
+    | sonic-rs (Rust) | Value | 1,197 | 2,389 | 7,744 | 390,952 | 6.9 |
+    | Boost.JSON | parse | 1,921 | 2,957 | 13,679 | 357,636 | 9.2 |
+    | simd-json (Rust) | borrowed (copy), owned (copy) | 1,862 | 4,194 | 14,896 | 391,369 | 9.0 |
+    | RapidJSON | Document (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 2,334 (U 1,892) | 3,188 (U 2,898) | 20,424 | 354,478 (U 297,773) | 11.8 (U 7.7) |
+    | nlohmann/json `json` | ordered_json | 2,840 | 4,985 | 15,317 | 649,500 | 14.3 |
+    | serde_json (Rust) | Value | 4,042 | 6,586 | 16,631 | 632,766 | 17.6 |
+    | Glaze | generic (strict), generic [P] | 3,600 | 6,812 | 22,771 | 676,289 | 15.9 |
 
     **minify**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse + dump | 504 | 1,127 | 5,555 | 158,589 | 2.6 |
-    | yyjson | insitu (copy) + write, read + write | 647 | 1,396 | 9,552 | 204,215 | 3.0 |
-    | sonic-cpp | Document + Serialize [U] | – (U 648) | – (U 1,654) | – (U 9,043) | – (U 176,994) | – (U 3.3) |
-    | simdjson | DOM + to_string, minify [P] | 797 (P 127) | 1,468 (P 343) | 8,866 (P 502) | 306,970 (P 47,256) | 5.0 (P 0.6) |
-    | sonic-rs (Rust) | Value | 1,003 | 2,174 | 7,753 | 217,354 | 5.5 |
-    | Boost.JSON | parse + serialize | 1,948 | 3,011 | 14,314 | 318,313 | 9.5 |
-    | simd-json (Rust) | borrowed (copy) | 1,878 | 4,655 | 15,955 | 419,412 | 9.5 |
-    | RapidJSON | Document + Writer, SAX to Writer, SAX to Writer (no encoding check) [U] | 2,812 (U 1,897) | 3,360 (U 2,725) | 21,929 | 425,370 (U 291,382) | 15.8 (U 11.1) |
-    | Glaze | generic (strict), minify_json [P] | 3,637 (P 425) | 6,974 (P 1,210) | 24,962 (P 2,654) | 528,359 (P 98,485) | 15.8 (P 2.0) |
-    | nlohmann/json `json` | parse + dump | 3,842 | 6,640 | 16,883 | 753,123 | 16.0 |
-    | serde_json (Rust) | Value | 4,220 | 6,876 | 17,276 | 628,192 | 16.7 |
+    | **nlohmann/json `json_document`** | parse + dump, parse + dump (source numbers) [N] | 485 | 1,004 | 5,260 (N 2,236) | 142,985 | 2.5 |
+    | yyjson | insitu (copy) + write, read (raw numbers) + write [N], read + write | 633 | 1,327 (N 1,268) | 8,944 (N 2,942) | 194,228 | 3.0 |
+    | sonic-cpp | Document + Serialize [U] | – (U 648) | – (U 1,551) | – (U 8,646) | – (U 162,814) | – (U 3.4) |
+    | simdjson | DOM + to_string, minify [P] | 795 (P 123) | 1,396 (P 336) | 8,342 (P 423) | 283,280 (P 44,890) | 4.7 (P 0.6) |
+    | sonic-rs (Rust) | Value | 1,000 | 2,097 | 7,795 | 215,280 | 5.4 |
+    | Boost.JSON | parse + serialize | 1,933 | 2,927 | 13,580 | 333,217 | 9.4 |
+    | simd-json (Rust) | borrowed (copy) | 1,889 | 4,196 | 15,716 | 414,377 | 9.2 |
+    | RapidJSON | Document + Writer, SAX to Writer, SAX to Writer (no encoding check) [U], SAX to Writer (raw numbers) (no encoding check) [U N] | 2,716 (U 1,837) | 3,082 (U 2,508) | 20,610 (U N 14,998) | 386,778 (U N 277,974) | 15.2 (U 10.2) |
+    | Glaze | generic (strict), minify_json [P] | 3,324 (P 419) | 6,164 (P 1,112) | 22,576 (P 2,095) | 476,579 (P 96,282) | 14.6 (P 1.9) |
+    | nlohmann/json `json` | parse + dump | 3,753 | 5,669 | 15,647 | 527,354 | 19.3 |
+    | serde_json (Rust) | Value | 4,012 | 6,583 | 17,306 | 509,702 | 16.5 |
 
     **write**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | dump | 152 | 272 | 3,839 | 72,604 | 1.1 |
-    | yyjson | write | 188 | 327 | 3,535 | 74,169 | 1.4 |
-    | sonic-cpp | Serialize | 279 | 538 | 5,132 | 78,073 | 1.7 |
-    | Glaze | generic | 340 | 663 | 3,669 | 133,954 | 2.1 |
-    | nlohmann/json `json` | dump | 435 | 622 | 4,021 | 124,517 | 2.3 |
-    | sonic-rs (Rust) | Value | 445 | 931 | 4,048 | 104,487 | 2.8 |
-    | simdjson | to_string | 461 | 622 | 5,222 | 189,639 | 3.2 |
-    | serde_json (Rust) | Value | 560 | 848 | 3,964 | 129,473 | 3.2 |
-    | simd-json (Rust) | borrowed | 597 | 809 | 4,817 | 114,245 | 3.1 |
-    | Boost.JSON | serialize | 480 | 1,026 | 5,843 | 132,662 | 2.7 |
-    | RapidJSON | Writer | 694 | 1,018 | 8,831 | 148,079 | 4.4 |
+    | **nlohmann/json `json_document`** | dump, dump (source numbers) [N] | 151 | 270 (N 255) | 3,827 (N 870) | 66,099 | 0.9 (N 0.8) |
+    | yyjson | write | 205 | 334 | 3,525 | 71,877 | 1.3 |
+    | sonic-cpp | Serialize | 258 | 536 | 5,070 | 71,191 | 1.7 |
+    | Glaze | generic, generic (strict) | 332 | 655 | 3,676 | 128,044 | 1.8 |
+    | nlohmann/json `json` | dump | 437 | 631 | 4,027 | 119,028 | 2.0 |
+    | sonic-rs (Rust) | Value | 434 | 927 | 3,987 | 109,176 | 2.8 |
+    | simdjson | to_string | 457 | 618 | 4,906 | 175,750 | 2.8 |
+    | simd-json (Rust) | borrowed | 582 | 800 | 5,147 | 122,623 | 2.8 |
+    | Boost.JSON | serialize | 464 | 999 | 6,202 | 142,516 | 2.5 |
+    | serde_json (Rust) | Value | 550 | 887 | 4,005 | 134,163 | 3.3 |
+    | RapidJSON | Writer | 669 | 1,025 | 9,078 | 140,116 | 4.0 |
 
 ??? info "Times in µs on x86-64 with Clang 23"
 
@@ -2150,96 +2177,96 @@ value, so it holds a little more.
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | accept | 254 | 544 | 1,110 | 37,852 | 1.2 |
-    | sonic-rs (Rust) | IgnoredAny | 482 | 969 | 2,489 | 55,486 | 1.8 |
-    | Boost.JSON | SAX, SAX (numbers: none) | 576 | 913 | 1,678 | 57,742 | 2.4 |
-    | yyjson | insitu (copy), read, read (raw numbers) | 380 | 982 | 2,325 | 127,605 | 1.7 |
-    | simdjson | DOM | 308 | 726 | 3,190 | 123,266 | 1.9 |
-    | Glaze | validate_json | 593 | 1,272 | 1,778 | 79,561 | 2.6 |
-    | sonic-cpp | Document [U] | – (U 452) | – (U 1,077) | – (U 3,054) | – (U 103,704) | – (U 2.1) |
-    | serde_json (Rust) | IgnoredAny [U], from_utf8 + IgnoredAny | 622 (U 480) | 1,440 (U 1,371) | 2,621 (U 2,538) | 65,602 (U 60,154) | 2.5 (U 1.9) |
-    | nlohmann/json `json` | accept | 675 | 1,314 | 4,278 | 76,082 | 3.7 |
-    | simd-json (Rust) | tape (copy) | 563 | 1,403 | 4,630 | 212,467 | 2.9 |
-    | RapidJSON | SAX, SAX (no encoding check) [U], SAX (raw numbers), SAX (raw numbers) (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,912 (U 1,212) | 2,285 (U 1,774) | 10,385 | 254,120 (U 168,144) | 9.2 (U 4.6) |
+    | **nlohmann/json `json_document`** | accept | 254 | 517 | 995 | 34,154 | 1.2 |
+    | sonic-rs (Rust) | IgnoredAny | 501 | 970 | 2,249 | 54,369 | 1.8 |
+    | Boost.JSON | SAX, SAX (numbers: none) | 569 | 909 | 1,683 | 54,986 | 2.3 |
+    | simdjson | DOM | 306 | 722 | 3,203 | 118,182 | 1.7 |
+    | yyjson | insitu (copy), read, read (raw numbers) | 380 | 897 | 2,573 | 125,497 | 1.6 |
+    | Glaze | validate_json | 582 | 1,229 | 2,011 | 72,734 | 2.5 |
+    | sonic-cpp | Document [U] | – (U 445) | – (U 1,000) | – (U 3,042) | – (U 100,684) | – (U 1.8) |
+    | serde_json (Rust) | IgnoredAny [U], from_utf8 + IgnoredAny | 624 (U 484) | 1,440 (U 1,370) | 2,406 (U 2,314) | 64,720 (U 58,247) | 2.4 (U 1.9) |
+    | nlohmann/json `json` | accept | 654 | 1,283 | 4,043 | 70,284 | 3.3 |
+    | simd-json (Rust) | tape (copy) | 567 | 1,430 | 4,359 | 207,551 | 2.9 |
+    | RapidJSON | SAX, SAX (no encoding check) [U], SAX (raw numbers), insitu (copy), insitu (copy) (no encoding check) [U] | 1,808 (U 1,171) | 2,105 (U 1,664) | 10,540 | 247,331 (U 158,423) | 8.1 (U 4.1) |
 
     **sum**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse | 375 | 898 | 3,822 | 94,039 | 1.9 |
-    | yyjson | insitu (copy), read | 435 | 1,086 | 3,458 | 141,006 | 1.9 |
-    | sonic-rs (Rust) | visitor | 503 | 1,123 | 4,418 | 59,993 | 2.8 |
-    | simdjson | DOM, On-Demand | 395 | 1,028 | 4,221 | 121,944 | 2.4 |
-    | Boost.JSON | SAX | 582 | 939 | 6,061 | 60,122 | 2.5 |
-    | sonic-cpp | Document [U] | – (U 503) | – (U 1,181) | – (U 3,913) | – (U 116,464) | – (U 2.4) |
-    | nlohmann/json `json` | sax | 745 | 1,619 | 5,470 | 100,260 | 4.4 |
-    | simd-json (Rust) | visitor (copy) | 668 | 1,688 | 5,134 | 224,411 | 4.0 |
-    | serde_json (Rust) | visitor | 1,311 | 2,316 | 7,241 | 130,249 | 5.1 |
-    | RapidJSON | SAX, SAX (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,869 (U 1,231) | 2,305 (U 1,954) | 12,617 | 269,631 (U 185,360) | 9.0 (U 4.8) |
-    | Glaze | generic (double, strict), lazy_json [P] | 2,522 | 4,278 | 12,460 | 334,494 (P 221,802) | 11.1 (P 6.2) |
+    | **nlohmann/json `json_document`** | parse | 372 | 948 | 3,720 | 86,351 | 1.9 |
+    | sonic-rs (Rust) | visitor | 501 | 1,123 | 4,397 | 59,583 | 2.5 |
+    | yyjson | insitu (copy), read | 435 | 1,054 | 3,456 | 131,400 | 1.9 |
+    | simdjson | DOM, On-Demand | 398 | 981 | 4,131 | 116,924 | 2.3 |
+    | sonic-cpp | Document [U] | – (U 508) | – (U 1,171) | – (U 3,661) | – (U 110,607) | – (U 2.2) |
+    | Boost.JSON | SAX | 580 | 924 | 5,915 | 60,351 | 2.3 |
+    | nlohmann/json `json` | sax | 720 | 1,382 | 5,162 | 87,316 | 3.9 |
+    | simd-json (Rust) | visitor (copy) | 681 | 1,650 | 5,083 | 210,185 | 3.5 |
+    | serde_json (Rust) | visitor | 1,311 | 2,288 | 7,127 | 129,497 | 4.6 |
+    | RapidJSON | SAX, SAX (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,865 (U 1,232) | 2,173 (U 1,757) | 11,995 | 258,526 (U 166,047) | 8.5 (U 4.4) |
+    | Glaze | generic (double) [P], generic (double, strict), lazy_json [P] | 2,392 | 4,048 | 11,814 | 264,675 (P 198,418) | 8.9 (P 5.7) |
 
     **select**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse, structs (from_json) | 320 | 779 | 1,446 | 97,121 | 1.6 |
-    | yyjson | insitu (copy), read, read (raw numbers) | 392 | 934 | 2,385 | 142,562 | 1.7 |
-    | sonic-rs (Rust) | structs | 538 | 1,028 | 2,283 | 91,950 | 2.0 |
-    | simdjson | DOM, On-Demand (key selectors) [P], On-Demand [P], On-Demand structs [P] | 318 (P 183) | 798 (P 500) | 3,369 (P 705) | 135,711 (P 54,241) | 1.9 (P 1.3) |
-    | Glaze | structs (validate_skipped), structs [P] | 552 (P 344) | 1,462 (P 442) | 1,833 (P 464) | 96,315 (P 74,134) | 2.2 (P 1.7) |
-    | sonic-cpp | Document [U] | – (U 458) | – (U 1,038) | – (U 3,127) | – (U 119,384) | – (U 2.1) |
-    | serde_json (Rust) | from_utf8 + structs, structs [U] | 722 | 1,559 | 2,585 (U 2,448) | 114,701 | 3.0 |
-    | Boost.JSON | parse, parse_into structs | 788 | 1,479 | 7,216 | 103,495 | 3.3 |
-    | simd-json (Rust) | structs (copy) | 740 | 1,802 | 4,997 | 258,566 | 3.7 |
-    | RapidJSON | Document (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 1,815 (U 1,184) | 2,519 (U 2,076) | 12,154 | 263,951 (U 195,046) | 8.4 (U 4.6) |
-    | nlohmann/json `json` | parse, structs (from_json) | 3,764 | 5,991 | 12,787 | 673,472 | 17.9 |
+    | **nlohmann/json `json_document`** | parse, structs (from_json) | 314 | 778 | 1,387 | 87,988 | 1.6 |
+    | yyjson | insitu (copy), read, read (raw numbers) | 389 | 900 | 2,627 | 134,301 | 1.7 |
+    | simdjson | DOM, On-Demand (key selectors) [P], On-Demand [P] | 316 (P 182) | 736 (P 495) | 3,272 (P 698) | 121,563 (P 47,588) | 1.9 (P 1.1) |
+    | sonic-rs (Rust) | structs | 504 | 1,033 | 2,328 | 90,486 | 2.0 |
+    | Glaze | structs (validate_skipped), structs [P] | 542 (P 337) | 1,370 (P 418) | 1,870 (P 446) | 82,551 (P 67,047) | 2.2 (P 1.6) |
+    | sonic-cpp | Document [U] | – (U 456) | – (U 1,013) | – (U 3,104) | – (U 113,400) | – (U 1.9) |
+    | serde_json (Rust) | from_utf8 + structs, structs [U] | 701 | 1,532 | 2,529 (U 2,402) | 107,316 | 3.0 |
+    | Boost.JSON | parse, parse_into structs | 767 | 1,389 | 7,310 | 95,891 | 3.2 |
+    | simd-json (Rust) | structs (copy) | 679 | 1,731 | 5,144 | 239,164 | 3.5 |
+    | RapidJSON | insitu (copy), insitu (copy) (no encoding check) [U] | 1,813 (U 1,181) | 2,306 (U 1,932) | 11,750 | 253,907 (U 182,669) | 8.3 (U 4.1) |
+    | nlohmann/json `json` | parse, structs (from_json) | 3,521 | 5,192 | 11,196 | 453,587 | 20.0 |
 
     **edit**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | editable | 525 | 1,169 | 6,142 | 188,750 | 3.0 |
-    | sonic-cpp | Document [U] | – (U 656) | – (U 1,542) | – (U 8,630) | – (U 185,270) | – (U 3.5) |
-    | yyjson | insitu (copy) + mut copy, mut copy | 813 | 1,845 | 7,648 | 301,256 | 4.0 |
-    | sonic-rs (Rust) | Value | 1,201 | 2,416 | 7,958 | 421,718 | 6.9 |
-    | Boost.JSON | parse | 1,733 | 2,761 | 14,208 | 330,404 | 9.0 |
-    | simd-json (Rust) | borrowed (copy), owned (copy) | 1,924 | 4,575 | 15,746 | 435,817 | 9.6 |
-    | RapidJSON | Document (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 2,481 (U 1,877) | 3,414 (U 3,057) | 23,990 | 401,007 (U 315,136) | 12.0 (U 8.4) |
-    | nlohmann/json `json` | ordered_json | 2,952 | 5,505 | 17,698 | 857,064 | 15.1 |
-    | serde_json (Rust) | Value | 4,036 | 7,181 | 17,371 | 843,034 | 16.9 |
-    | Glaze | generic (strict), generic [P] | 4,375 | 8,829 (P 8,524) | 33,432 | 863,139 | 21.5 |
+    | **nlohmann/json `json_document`** | editable, editable (source numbers) [N] | 524 | 1,143 | 5,462 (N 2,443) | 202,684 | 2.9 |
+    | sonic-cpp | Document [U] | – (U 634) | – (U 1,458) | – (U 7,852) | – (U 183,532) | – (U 3.3) |
+    | yyjson | insitu (copy) + mut copy, mut copy | 869 | 1,674 | 7,099 | 309,767 | 3.9 |
+    | sonic-rs (Rust) | Value | 1,197 | 2,389 | 7,744 | 390,952 | 6.9 |
+    | Boost.JSON | parse | 1,723 | 2,574 | 12,679 | 358,088 | 8.4 |
+    | simd-json (Rust) | borrowed (copy), owned (copy) | 1,862 | 4,194 | 14,896 | 391,369 | 9.0 |
+    | RapidJSON | Document (no encoding check) [U], insitu (copy), insitu (copy) (no encoding check) [U] | 2,470 (U 1,839) | 3,194 (U 2,862) | 21,016 | 380,503 (U 311,506) | 12.1 (U 7.8) |
+    | nlohmann/json `json` | ordered_json, parse | 2,784 | 4,911 | 15,563 | 659,023 | 13.1 |
+    | serde_json (Rust) | Value | 4,042 | 6,586 | 16,631 | 632,766 | 17.6 |
+    | Glaze | generic (strict), generic [P] | 3,866 | 7,305 | 27,388 | 744,826 | 18.5 |
 
     **minify**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | parse + dump | 471 | 1,018 | 5,144 | 154,046 | 2.5 |
-    | yyjson | insitu (copy) + write, read + write | 629 | 1,281 | 6,146 | 211,812 | 3.1 |
-    | sonic-cpp | Document + Serialize [U] | – (U 662) | – (U 1,523) | – (U 8,111) | – (U 170,679) | – (U 3.3) |
-    | simdjson | DOM + to_string, minify [P] | 841 (P 104) | 1,430 (P 256) | 8,343 (P 375) | 299,968 (P 46,051) | 4.9 (P 0.5) |
-    | sonic-rs (Rust) | Value | 1,003 | 2,174 | 7,753 | 217,354 | 5.5 |
-    | Boost.JSON | parse + serialize | 1,745 | 2,654 | 12,599 | 324,994 | 8.8 |
-    | simd-json (Rust) | borrowed (copy) | 1,878 | 4,655 | 15,955 | 419,412 | 9.5 |
-    | RapidJSON | Document + Writer, Document + Writer (no encoding check) [U], SAX to Writer, SAX to Writer (no encoding check) [U] | 2,467 (U 1,790) | 2,972 (U 2,577) | 22,419 | 383,355 (U 293,834) | 13.8 (U 9.8) |
-    | serde_json (Rust) | Value | 4,220 | 6,876 | 17,276 | 628,192 | 16.7 |
-    | nlohmann/json `json` | parse + dump | 4,076 | 6,340 | 16,899 | 744,614 | 18.1 |
-    | Glaze | generic (strict), minify_json [P] | 4,282 (P 419) | 8,704 (P 1,024) | 29,995 (P 2,463) | 604,082 (P 93,661) | 20.6 (P 2.0) |
+    | **nlohmann/json `json_document`** | parse + dump, parse + dump (source numbers) [N] | 474 | 1,050 | 5,333 (N 2,402) | 156,634 (N 147,779) | 2.4 |
+    | yyjson | insitu (copy) + write, read (raw numbers) + write [N], read + write | 631 | 1,262 | 6,304 (N 3,614) | 196,789 | 3.1 |
+    | sonic-cpp | Document + Serialize [U] | – (U 646) | – (U 1,482) | – (U 8,135) | – (U 167,844) | – (U 3.2) |
+    | simdjson | DOM + to_string, minify [P] | 842 (P 98.8) | 1,430 (P 269) | 8,105 (P 332) | 297,946 (P 44,830) | 4.9 (P 0.5) |
+    | sonic-rs (Rust) | Value | 1,000 | 2,097 | 7,795 | 215,280 | 5.4 |
+    | Boost.JSON | parse + serialize | 1,753 | 2,591 | 13,210 | 339,360 | 8.5 |
+    | simd-json (Rust) | borrowed (copy) | 1,889 | 4,196 | 15,716 | 414,377 | 9.2 |
+    | RapidJSON | Document + Writer, SAX to Writer, SAX to Writer (no encoding check) [U], SAX to Writer (raw numbers) (no encoding check) [U N] | 2,416 (U 1,751) | 2,870 (U 2,380) | 22,073 (U N 14,655) | 354,208 (U N 261,920) | 13.2 (U 9.5) |
+    | serde_json (Rust) | Value | 4,012 | 6,583 | 17,306 | 509,702 | 16.5 |
+    | nlohmann/json `json` | parse + dump | 3,990 | 5,719 | 16,153 | 536,911 | 20.8 |
+    | Glaze | generic (strict), minify_json [P] | 3,834 (P 422) | 7,269 (P 1,058) | 27,454 (P 2,150) | 521,119 (P 88,952) | 17.3 (P 2.0) |
 
     **write**
 
     | library | variant | `twitter.json` | `citm_catalog.json` | `canada.json` | `jeopardy.json` | one status (2.5 KB) |
     | --- | --- | --: | --: | --: | --: | --: |
-    | **nlohmann/json `json_document`** | dump | 153 | 273 | 4,019 | 71,355 | 0.9 |
-    | yyjson | write | 217 | 376 | 3,618 | 77,694 | 1.3 |
-    | sonic-cpp | Serialize | 229 | 501 | 5,302 | 72,121 | 1.2 |
-    | nlohmann/json `json` | dump | 439 | 623 | 4,836 | 124,328 | 1.9 |
-    | Glaze | generic, generic (strict) | 383 | 741 | 4,522 | 139,142 | 2.1 |
-    | sonic-rs (Rust) | Value | 445 | 931 | 4,048 | 104,487 | 2.8 |
-    | Boost.JSON | serialize | 485 | 892 | 6,128 | 134,196 | 2.6 |
-    | simd-json (Rust) | borrowed | 597 | 809 | 4,817 | 114,245 | 3.1 |
-    | serde_json (Rust) | Value | 560 | 848 | 3,964 | 129,473 | 3.2 |
-    | simdjson | to_string | 496 | 679 | 5,335 | 187,340 | 3.2 |
-    | RapidJSON | Writer | 647 | 970 | 10,796 | 133,581 | 3.6 |
+    | **nlohmann/json `json_document`** | dump, dump (source numbers) [N] | 159 (N 152) | 277 | 3,798 (N 986) | 67,700 | 0.9 |
+    | yyjson | write | 216 | 359 | 3,514 | 73,410 | 1.4 |
+    | sonic-cpp | Serialize | 219 | 473 | 4,853 | 67,189 | 1.3 |
+    | nlohmann/json `json` | dump | 441 | 606 | 4,485 | 113,462 | 1.9 |
+    | Glaze | generic, generic (strict) | 400 | 722 | 4,229 | 134,914 | 2.1 |
+    | sonic-rs (Rust) | Value | 434 | 927 | 3,987 | 109,176 | 2.8 |
+    | Boost.JSON | serialize | 487 | 900 | 5,691 | 142,547 | 2.5 |
+    | simdjson | to_string | 503 | 672 | 5,039 | 173,990 | 2.9 |
+    | simd-json (Rust) | borrowed | 582 | 800 | 5,147 | 122,623 | 2.8 |
+    | serde_json (Rust) | Value | 550 | 887 | 4,005 | 134,163 | 3.3 |
+    | RapidJSON | Writer | 627 | 952 | 9,851 | 126,032 | 3.8 |
 
 ### F. Behavior changes
 
@@ -2251,7 +2278,7 @@ Visible changes that came with the speed:
   number of digits but the closer ones. They all read back as the same `double`, and none of one million short
   decimals changes. In `canada.json`, 69 of the 111,126 numbers come out differently.
 - **Error positions** ([#5283][5283]). The column reported after a number at the end of a line is now correct; the
-  fast paths otherwise report the same byte, line and column as the byte path, checked on 481,000 documents.
+  fast paths otherwise report the same byte, line, and column as the byte path, checked on 481,000 documents.
 - **SAX float text** ([#5852][5852]). The built-in handlers behind `parse()` and `accept()` get an empty string as
   the text of a float token. A user-written SAX handler still gets the token's text.
 - **`FILE*` locking** ([#5828][5828]). The lock is taken once and held for the whole parse instead of once per byte.
@@ -2272,36 +2299,39 @@ removed because 3.12.0 has no BON8.
 | suite | 3 rounds × 4 repetitions per version, random interleaving, each round of a version started only when the load average was below 4 and repeated when it rose above 5 while running; of 3.12.0 and 3.13.0, the round that was 4.2 % and 1.8 % slower overall than the other two was dropped; the median of the remaining 8 |
 | noise | the coefficient of variation was 3 % or less for 172 of the 182 rows with 3.12.0 and 174 with 3.13.0; the largest was 7.3 %, not counting one 3.12.0 run of a 1.5 µs benchmark that a disturbance made 1.4× as slow |
 | inputs | the files of [Appendix A](#a-test-files), and number-heavy files |
+| Intel check | the suite again on a MacBook Pro (15-inch, 2016) with an Intel Core i7-6920HQ (Skylake, 4 cores), macOS 12.0.1, Apple clang 13, the same flags with C++11; started below a load of 3, repeated above 4; the first round of each version dropped (3.12.0's was 4.7 % slower than the others); the coefficient of variation was 3 % or less for 120 rows with 3.12.0 and 161 of 234 with 3.13.0, so single rows are less reliable than on the M1 Max; geometric mean 3.07×, and two rows below 1×: copying `citm_catalog.json` without destroying the copy (0.93×) and `==` of it and a copy (0.95×), both in each round |
 
 <p class="nj-table-caption" markdown>Setup of the Google Benchmark comparison of 3.12.0 and 3.13.0.</p>
 
 **The other measurements.** The timeline is
 [`tests/benchmarks/history`](https://github.com/nlohmann/json/tree/develop/tests/benchmarks/history): one program,
-compiled against `single_include` of 3.12.0, of each of the 315 commits on `develop` up to October 27 that changed `json.hpp` or
-`json_view.hpp` since, and of 3.13.0 (C++17, `-O3`, no LTO), 4 rounds in random order, median of the rounds. The
+compiled against `single_include` of 3.12.0, of each of the 351 commits on `develop` up to November 3 that changed `json.hpp` or
+`json_view.hpp` since, and of 3.13.0 (C++17, `-O3`, no LTO), 4 rounds in random order, median of the rounds. Two
+commits that don't compile on their own are left out. The commits up to October 27 were run on October 27, the
+later ones and 3.13.0 on November 3, together with twelve of the earlier commits as a check: per workload, their
+median moved by 1.5 % or less. The
 algorithmic fixes come from small extra programs (C++17, `-O3`, median of 3 interleaved runs). The comparison with
 other libraries is described in [Appendix E](#e-comparison-with-other-libraries).
 
 **Compile times.** The two programs of [The price](#the-price), each compiled as one translation unit with
 `-std=c++20` (modules need it) and `-O0` or `-O2`, with Apple clang 21 and Homebrew GCC 16.2 on the M1 Max. The time is
-the CPU time (user plus system) of the compiler process, the median of 9 rounds in which all 40 compilations ran in a
-random order. The machine had other work running (load average 5 to 12), which CPU time is less sensitive to than wall
-time; the slowest of the 9 runs was within 18 % of the fastest for every program, and within 30 % for building the
-precompiled header with GCC. Every variant was also linked
+the CPU time (user plus system) of the compiler process, the median of 5 rounds in which all 40 compilations ran in a
+random order. The slowest of the 5 runs was within 13 % of the fastest for every program and every build of the
+precompiled header or the module. Every variant was also linked
 and run once, with the same output from all of them.
 
 | build | program | 3.12.0 | 3.13.0 | 3.13.0, PCH | 3.13.0, module |
 | --- | --- | --: | --: | --: | --: |
-| Apple clang `-O0` | `count_numbers` | 959 | 1,155 | 679 | 804 |
-|  | `server_config` | 1,108 | 1,445 | 763 | 1,057 |
-| Apple clang `-O2` | `count_numbers` | 1,269 | 1,868 | 1,364 | 1,513 |
-|  | `server_config` | 1,577 | 2,354 | 1,749 | 2,141 |
-| GCC 16 `-O0` | `count_numbers` | 1,444 | 2,346 | 1,579 | 1,662 |
-|  | `server_config` | 1,985 | 2,782 | 2,113 | 2,181 |
-| GCC 16 `-O2` | `count_numbers` | 2,327 | 3,453 | 2,972 | 2,895 |
-|  | `server_config` | 2,889 | 4,389 | 3,942 | 3,826 |
+| Apple clang `-O0` | `count_numbers` | 955 | 1,320 | 689 | 918 |
+|  | `server_config` | 1,113 | 1,496 | 863 | 1,136 |
+| Apple clang `-O2` | `count_numbers` | 1,393 | 2,081 | 1,458 | 1,685 |
+|  | `server_config` | 1,754 | 2,546 | 1,925 | 2,169 |
+| GCC 16 `-O0` | `count_numbers` | 1,569 | 2,548 | 1,725 | 1,700 |
+|  | `server_config` | 2,025 | 2,985 | 2,302 | 2,326 |
+| GCC 16 `-O2` | `count_numbers` | 2,336 | 3,702 | 2,987 | 2,913 |
+|  | `server_config` | 3,122 | 4,714 | 4,006 | 4,055 |
 
-<p class="nj-table-caption" markdown>Compile time in milliseconds of the two programs in [The price](#the-price) (CPU time of the compiler, median of 9 runs). Building the precompiled header took 876 and 931 ms with Apple clang (`-O0`, `-O2`) and 2,302 and 2,323 ms with GCC; building the module took 1,406 and 1,541 ms or 2,420 and 2,392 ms.</p>
+<p class="nj-table-caption" markdown>Compile time in milliseconds of the two programs in [The price](#the-price) (CPU time of the compiler, median of 5 runs). Building the precompiled header took 973 and 987 ms with Apple clang (`-O0`, `-O2`) and 2,565 and 2,589 ms with GCC; building the module took 1,617 and 1,602 ms or 2,499 and 2,465 ms.</p>
 
 ??? example "The programs and the build commands"
 
@@ -2425,8 +2455,8 @@ and run once, with the same output from all of them.
 
     <p class="nj-code-caption" markdown>The commands for one program at `-O2`; the module variants are linked with `json_mod.o`.</p>
 
-**What we did not measure.** The suite, the timeline and the algorithmic fixes ran on one Apple silicon laptop with
-Clang. The comparison with other libraries also ran on an x86-64 server with GCC 16.2, GCC 13 and Clang 23, and
+**What we did not measure.** The timeline and the algorithmic fixes ran on one Apple silicon laptop with Clang, the
+suite also on an Intel laptop with Clang. The comparison with other libraries also ran on an x86-64 server with GCC 16.2, GCC 13, and Clang 23, and
 on the Mac with GCC 16.2 and Clang 23 as a check. That server is a virtual machine with 8 cores that present
 themselves as Haswell; its timings show the penalty of the microcode fix for Intel's JCC erratum, which Haswell
 doesn't have, so the real CPU is probably a later one. It shares its cores with other work, so its differences of a
@@ -2438,7 +2468,7 @@ measure binary size or memory use.
 ### H. Pull requests by theme
 
 - <a class="nj-theme" href="#theme-1" title="theme 1">1</a> **Specialize for each input:** contiguous input [#5283][5283]; streams and `FILE*` [#5828][5828], [#5884][5884]; binary strings in bulk [#5233][5233]; sized sentinels [#5268][5268].
-- <a class="nj-theme" href="#theme-2" title="theme 2">2</a> **Work on words, not bytes:** word-at-a-time strings, UTF-8 runs and digits [#5283][5283], [#5738][5738],
+- <a class="nj-theme" href="#theme-2" title="theme 2">2</a> **Work on words, not bytes:** word-at-a-time strings, UTF-8 runs, and digits [#5283][5283], [#5738][5738],
   [#5851][5851]; indentation [#5810][5810]; `dump()` runs [#5285][5285]; SSE2 and NEON [#5853][5853],
   [#5628][5628]; `json_document` with `ensure_ascii` [#5879][5879]; short strings [#5878][5878], [#5883][5883];
   escape table [#5822][5822]; loop shape [#5490][5490]; fraction digits [#5971][5971]; BSON keys [#5968][5968];
@@ -2538,11 +2568,11 @@ These are the checks behind the themes:
 - **Error positions** (theme <a class="nj-theme" href="#theme-1" title="theme 1">1</a>). The contiguous fast paths defer to the byte path on anything malformed. On 481,000
   documents, 298,333 of them with errors, the contiguous and the byte path reported the same exception, message, byte,
   line and column, except for the one deliberate correction listed in [Appendix F](#f-behavior-changes).
-- **Stream windows** (theme <a class="nj-theme" href="#theme-1" title="theme 1">1</a>). A test `streambuf` hands out get areas of 1 to 4,096 bytes, so that every token
+- **Stream windows** (theme <a class="nj-theme" href="#theme-1" title="theme 1">1</a>). A test `streambuf` hands out get areas of 1–4,096 bytes, so that every token
   crosses a window edge at every offset, and the result is compared with a `streambuf` without a get area, which
   takes the old path.
 - **Differential fuzzing of the input kinds.** Every fuzz input is also parsed from an `std::istringstream`, from
-  `std::list` iterators (the byte path) and from a `FILE*`, and the value, the exception id, the message and the byte
+  `std::list` iterators (the byte path) and from a `FILE*`, and the value, the exception id, the message, and the byte
   offset must be identical ([#5827][5827]).
 - **Guard pages.** The input is copied so that its last byte is the last readable byte of a page, and the next page
   is unmapped. AddressSanitizer misses an over-read into the slack of the same heap allocation, and fuzzers rarely end
