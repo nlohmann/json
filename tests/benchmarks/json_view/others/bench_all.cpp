@@ -21,6 +21,7 @@
 // Usage: bench_all <json_test_data dir> [rounds] [document] [use case]
 //        bench_all --files <dir> [rounds] [document] [use case]   (every *.json file of dir: validate, sum, minify, write)
 //        bench_all --conformance <dir>                            (every validate variant on every *.json file of dir)
+//        BENCH_ONLY=<prefix>[,<prefix>...] times only the variants whose name starts with one of them (e.g. "nlohmann ")
 #include <nlohmann/json_view.hpp>
 
 #include <boost/describe.hpp>
@@ -357,6 +358,79 @@ struct yy_insitu
     }
 };
 
+// "(copy untimed)": an in-situ way whose input copy is made before the timer starts and freed after it stops, as for
+// a program that reads a file into a buffer it owns and no longer needs; never chosen as a library's best. Outside
+// the timing loop (the checks and probes), take() copies the input itself.
+struct input_copies
+{
+    std::vector<char*> bufs;
+    std::size_t next = 0;
+    void make(const std::string& s, int n)
+    {
+        clear();
+        for (int i = 0; i < n; ++i)
+        {
+            char* b = static_cast<char*>(std::malloc(s.size() + YYJSON_PADDING_SIZE));
+            std::memcpy(b, s.data(), s.size());
+            std::memset(b + s.size(), 0, YYJSON_PADDING_SIZE);
+            bufs.push_back(b);
+        }
+    }
+    void clear()
+    {
+        for (char* b : bufs)
+        {
+            std::free(b);
+        }
+        bufs.clear();
+        next = 0;
+    }
+};
+static input_copies g_copies;
+
+struct taken_copy
+{
+    char* buf = nullptr;
+    bool owned = false;
+    explicit taken_copy(const std::string& s)
+    {
+        if (g_copies.next < g_copies.bufs.size())
+        {
+            buf = g_copies.bufs[g_copies.next++];
+            return;
+        }
+        owned = true;
+        buf = static_cast<char*>(std::malloc(s.size() + YYJSON_PADDING_SIZE));
+        std::memcpy(buf, s.data(), s.size());
+        std::memset(buf + s.size(), 0, YYJSON_PADDING_SIZE);
+    }
+    taken_copy(const taken_copy&) = delete;
+    taken_copy& operator=(const taken_copy&) = delete;
+    ~taken_copy()
+    {
+        if (owned)
+        {
+            std::free(buf);
+        }
+    }
+};
+
+// yyjson in situ on a copy made before the timer
+struct yy_insitu_untimed
+{
+    taken_copy c;
+    yyjson_doc* doc = nullptr;
+    explicit yy_insitu_untimed(const std::string& s)
+        : c(s), doc(yyjson_read_opts(c.buf, s.size(), YYJSON_READ_INSITU, nullptr, nullptr))
+    {}
+    yy_insitu_untimed(const yy_insitu_untimed&) = delete;
+    yy_insitu_untimed& operator=(const yy_insitu_untimed&) = delete;
+    ~yy_insitu_untimed()
+    {
+        yyjson_doc_free(doc);
+    }
+};
+
 // ---- simdjson DOM and On-Demand
 // after the type switch, the unchecked accessors (value_unsafe()) instead of the throwing conversions (int64_t(e),
 // as in the 3.13.0 post; measured the same)
@@ -575,6 +649,16 @@ static bool rj_read(const std::string& s, Handler& h)
 {
     rapidjson::MemoryStream ms(s.data(), s.size());
     rapidjson::EncodedInputStream<rapidjson::UTF8<>, rapidjson::MemoryStream> is(ms);
+    rapidjson::Reader reader;
+    return !reader.Parse<Flags>(is, h).IsError();
+}
+
+// RapidJSON's Reader on the NUL-terminated string, as Document::Parse(const char*) does it: StringStream has
+// RapidJSON's SIMD string scanner, which skips the encoding check
+template<unsigned Flags, class Handler>
+static bool rj_read_cstr(const std::string& s, Handler& h)
+{
+    rapidjson::StringStream is(s.c_str());
     rapidjson::Reader reader;
     return !reader.Parse<Flags>(is, h).IsError();
 }
@@ -2706,6 +2790,7 @@ struct variant
     std::string name;   // "<library>: <variant>"
     std::function<bool(const std::string&, result&)> fn;
     bool any_order = false;   // sum: visits objects in key order, so its sum may differ in the last bits
+    bool untimed_copy = false;   // takes its input copy from g_copies, made before the timer starts
 };
 
 struct context
@@ -2732,6 +2817,7 @@ static std::vector<variant> validate_variants(context& c)
         {"nlohmann json: parse", [](const std::string & s, result & r) { json j = json::parse(s); r.acc = static_cast<double>(j.size()); return true; }},
         {"yyjson: read", [](const std::string & s, result&) { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); const bool ok = d != nullptr; yyjson_doc_free(d); return ok; }},
         {"yyjson: insitu (copy)", [](const std::string & s, result&) { yy_insitu d(s); return d.doc != nullptr; }},
+        {"yyjson: insitu (copy untimed)", [](const std::string & s, result&) { yy_insitu_untimed d(s); return d.doc != nullptr; }, false, true},
         {"yyjson: read (raw numbers)", [](const std::string & s, result&) { yyjson_doc* d = yyjson_read(s.data(), s.size(), yy_raw); const bool ok = d != nullptr; yyjson_doc_free(d); return ok; }},
         {"yyjson: read (reused allocator)", [&c](const std::string & s, result&) { yyjson_doc* d = yyjson_read_opts(const_cast<char*>(s.data()), s.size(), 0, c.yy.a, nullptr); const bool ok = d != nullptr; yyjson_doc_free(d); return ok; }},
         {"simdjson: DOM", [](const std::string & s, result&) { simdjson::dom::parser p; return !p.parse(s).error(); }},
@@ -2758,11 +2844,13 @@ static std::vector<variant> sum_variants(context& c)
     return
     {
         {"nlohmann json_document: parse", [](const std::string & s, result & r) { auto d = json_document::parse(s); walk(d.root(), r.st); return true; }},
+        {"nlohmann json_document: parse_copy", [](const std::string & s, result & r) { auto d = json_document::parse_copy(s); walk(d.root(), r.st); return true; }},
         {"nlohmann json_document: read (reused)", [&c](const std::string & s, result & r) { c.reused.read(s); walk(c.reused.root(), r.st); return true; }},
         {"nlohmann json: parse", [](const std::string & s, result & r) { json j = json::parse(s); walk(j, r.st); return true; }, true},
         {"nlohmann json: sax", [](const std::string & s, result & r) { json_sum_sax h{&r.st}; return json::sax_parse(s, &h); }},
         {"yyjson: read", [](const std::string & s, result & r) { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); if (d == nullptr) { return false; } walk(yyjson_doc_get_root(d), r.st); yyjson_doc_free(d); return true; }},
         {"yyjson: insitu (copy)", [](const std::string & s, result & r) { yy_insitu d(s); if (d.doc == nullptr) { return false; } walk(yyjson_doc_get_root(d.doc), r.st); return true; }},
+        {"yyjson: insitu (copy untimed)", [](const std::string & s, result & r) { yy_insitu_untimed d(s); if (d.doc == nullptr) { return false; } walk(yyjson_doc_get_root(d.doc), r.st); return true; }, false, true},
         {"yyjson: read (reused allocator)", [&c](const std::string & s, result & r) { yyjson_doc* d = yyjson_read_opts(const_cast<char*>(s.data()), s.size(), 0, c.yy.a, nullptr); if (d == nullptr) { return false; } walk(yyjson_doc_get_root(d), r.st); yyjson_doc_free(d); return true; }},
         {"simdjson: DOM", [](const std::string & s, result & r) { simdjson::dom::parser p; auto e = p.parse(s); if (e.error()) { return false; } walk(e.value_unsafe(), r.st); return true; }},
         {"simdjson: DOM (reused)", [&c](const std::string & s, result & r) { auto e = c.sj.parse(s); if (e.error()) { return false; } walk(e.value_unsafe(), r.st); return true; }},
@@ -2790,12 +2878,14 @@ static std::vector<variant> select_variants(context& c)
     return
     {
         {"nlohmann json_document: parse", [n](const std::string & s, result & r) { auto d = json_document::parse(s); r.acc = pick<acc_view>(n, d.root()); return true; }},
+        {"nlohmann json_document: parse_copy", [n](const std::string & s, result & r) { auto d = json_document::parse_copy(s); r.acc = pick<acc_view>(n, d.root()); return true; }},
         {"nlohmann json_document: read (reused)", [&c, n](const std::string & s, result & r) { c.reused.read(s); r.acc = pick<acc_view>(n, c.reused.root()); return true; }},
         {"nlohmann json: parse", [n](const std::string & s, result & r) { json j = json::parse(s); r.acc = pick<acc_json>(n, &j); return true; }},
         {"nlohmann json_document: structs (from_json)", [n](const std::string & s, result & r) { auto d = json_document::parse(s); r.acc = pick_nlohmann_structs(n, d.root()); return true; }},
         {"nlohmann json: structs (from_json)", [n](const std::string & s, result & r) { r.acc = pick_nlohmann_structs(n, json::parse(s)); return true; }},
         {"yyjson: read", [n](const std::string & s, result & r) { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); if (d == nullptr) { return false; } r.acc = pick<acc_yyjson>(n, yyjson_doc_get_root(d)); yyjson_doc_free(d); return true; }},
         {"yyjson: insitu (copy)", [n](const std::string & s, result & r) { yy_insitu d(s); if (d.doc == nullptr) { return false; } r.acc = pick<acc_yyjson>(n, yyjson_doc_get_root(d.doc)); return true; }},
+        {"yyjson: insitu (copy untimed)", [n](const std::string & s, result & r) { yy_insitu_untimed d(s); if (d.doc == nullptr) { return false; } r.acc = pick<acc_yyjson>(n, yyjson_doc_get_root(d.doc)); return true; }, false, true},
         {"yyjson: read (raw numbers)", [n](const std::string & s, result & r) { yyjson_doc* d = yyjson_read(s.data(), s.size(), yy_raw); if (d == nullptr) { return false; } r.acc = pick<acc_yyjson_raw>(n, yyjson_doc_get_root(d)); yyjson_doc_free(d); return true; }},
         {"yyjson: read (reused allocator)", [&c, n](const std::string & s, result & r) { yyjson_doc* d = yyjson_read_opts(const_cast<char*>(s.data()), s.size(), 0, c.yy.a, nullptr); if (d == nullptr) { return false; } r.acc = pick<acc_yyjson>(n, yyjson_doc_get_root(d)); yyjson_doc_free(d); return true; }},
         {"simdjson: DOM", [n](const std::string & s, result & r) { simdjson::dom::parser p; auto e = p.parse(s); if (e.error()) { return false; } r.acc = pick<acc_simdjson>(n, e.value_unsafe()); return true; }},
@@ -2833,6 +2923,7 @@ static std::vector<variant> edit_variants(context& c)
         {"nlohmann json: ordered_json", [n](const std::string & s, result & r) { ordered_json j = ordered_json::parse(s); edit(n, j); return emit(r, j.dump()); }},
         {"yyjson: mut copy", [n](const std::string & s, result & r) { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); const bool ok = edit_yyjson(n, d, r); yyjson_doc_free(d); return ok; }},
         {"yyjson: insitu (copy) + mut copy", [n](const std::string & s, result & r) { yy_insitu d(s); return edit_yyjson(n, d.doc, r); }},
+        {"yyjson: insitu (copy untimed) + mut copy", [n](const std::string & s, result & r) { yy_insitu_untimed d(s); return edit_yyjson(n, d.doc, r); }, false, true},
         {"sonic-cpp: Document", [n](const std::string & s, result & r) { return edit_sonic(n, s, r); }},
 #if !BENCH_NO_GLAZE
         {"Glaze: generic", [n](const std::string & s, result & r) { return edit_glaze(n, s, r); }},
@@ -2849,11 +2940,13 @@ static std::vector<variant> minify_variants(context& c)
     return
     {
         {"nlohmann json_document: parse + dump", [](const std::string & s, result & r) { auto d = json_document::parse(s); return emit(r, d.root().dump()); }},
+        {"nlohmann json_document: parse_copy + dump", [](const std::string & s, result & r) { auto d = json_document::parse_copy(s); return emit(r, d.root().dump()); }},
         {"nlohmann json_document: parse + dump (source numbers)", [](const std::string & s, result & r) { auto d = json_document::parse(s); return emit(r, d.root().dump(-1, ' ', false, json_view::number_format::source)); }},
         {"nlohmann json_document: read + dump (reused)", [&c](const std::string & s, result & r) { c.reused.read(s); return emit(r, c.reused.root().dump()); }},
         {"nlohmann json: parse + dump", [](const std::string & s, result & r) { json j = json::parse(s); return emit(r, j.dump()); }},
         {"yyjson: read + write", [](const std::string & s, result & r) { yyjson_doc* d = yyjson_read(s.data(), s.size(), 0); if (d == nullptr) { return false; } std::size_t n = 0; char* o = yyjson_write(d, 0, &n); const bool ok = o != nullptr && emit(r, o, n); std::free(o); yyjson_doc_free(d); return ok; }},
         {"yyjson: insitu (copy) + write", [](const std::string & s, result & r) { yy_insitu d(s); if (d.doc == nullptr) { return false; } std::size_t n = 0; char* o = yyjson_write(d.doc, 0, &n); const bool ok = o != nullptr && emit(r, o, n); std::free(o); return ok; }},
+        {"yyjson: insitu (copy untimed) + write", [](const std::string & s, result & r) { yy_insitu_untimed d(s); if (d.doc == nullptr) { return false; } std::size_t n = 0; char* o = yyjson_write(d.doc, 0, &n); const bool ok = o != nullptr && emit(r, o, n); std::free(o); return ok; }, false, true},
         // the raw number text is written verbatim
         {"yyjson: read (raw numbers) + write", [](const std::string & s, result & r) { yyjson_doc* d = yyjson_read(s.data(), s.size(), yy_raw); if (d == nullptr) { return false; } std::size_t n = 0; char* o = yyjson_write(d, 0, &n); const bool ok = o != nullptr && emit(r, o, n); std::free(o); yyjson_doc_free(d); return ok; }},
         {"yyjson: read + write (reused allocator)", [&c](const std::string & s, result & r) { yyjson_alc* a = c.yy.a; yyjson_doc* d = yyjson_read_opts(const_cast<char*>(s.data()), s.size(), 0, a, nullptr); if (d == nullptr) { return false; } std::size_t n = 0; char* o = yyjson_write_opts(d, 0, a, &n, nullptr); const bool ok = o != nullptr && emit(r, o, n); if (o != nullptr) { a->free(a->ctx, o); } yyjson_doc_free(d); return ok; }},
@@ -2887,9 +2980,14 @@ static void add_rapidjson(std::vector<variant>& vs, const std::string& uc, const
     rj_reuse* const rp = &rr;
     if (uc == "validate")
     {
+        // validate reads no number, so the default (not correctly rounded) precision is allowed here
         vs.push_back({std::string("RapidJSON: SAX") + sfx, [](const std::string & s, result&) { rapidjson::BaseReaderHandler<> h; return rj_read<F>(s, h); }});
         vs.push_back({std::string("RapidJSON: Document") + sfx, [](const std::string & s, result&) { rapidjson::Document d; d.Parse<F>(s.data(), s.size()); return !d.HasParseError(); }});
         vs.push_back({std::string("RapidJSON: insitu (copy)") + sfx, [](const std::string & s, result&) { std::string b = s; rapidjson::Document d; d.ParseInsitu<F>(&b[0]); return !d.HasParseError(); }});
+        vs.push_back({std::string("RapidJSON: insitu (copy untimed)") + sfx, [](const std::string & s, result&) { taken_copy b(s); rapidjson::Document d; d.ParseInsitu<F>(b.buf); return !d.HasParseError(); }, false, true});
+        vs.push_back({std::string("RapidJSON: SAX (string stream)") + sfx, [](const std::string & s, result&) { rapidjson::BaseReaderHandler<> h; return rj_read_cstr<F>(s, h); }});
+        vs.push_back({std::string("RapidJSON: SAX (default precision)") + sfx, [](const std::string & s, result&) { rapidjson::BaseReaderHandler<> h; return rj_read<F & ~rapidjson::kParseFullPrecisionFlag>(s, h); }});
+        vs.push_back({std::string("RapidJSON: SAX (string stream, default precision)") + sfx, [](const std::string & s, result&) { rapidjson::BaseReaderHandler<> h; return rj_read_cstr<F & ~rapidjson::kParseFullPrecisionFlag>(s, h); }});
         vs.push_back({std::string("RapidJSON: SAX (raw numbers)") + sfx, [](const std::string & s, result&) { rapidjson::BaseReaderHandler<> h; return rj_read<F | rj_raw>(s, h); }});
         vs.push_back({std::string("RapidJSON: Document (reused allocator)") + sfx, [rp](const std::string & s, result&) { return rp->parse<F>(s, [](const rapidjson::Value&) { return true; }); }});
     }
@@ -2898,12 +2996,16 @@ static void add_rapidjson(std::vector<variant>& vs, const std::string& uc, const
         vs.push_back({std::string("RapidJSON: Document") + sfx, [](const std::string & s, result & r) { rapidjson::Document d; d.Parse<F>(s.data(), s.size()); if (d.HasParseError()) { return false; } walk(d, r.st); return true; }});
         vs.push_back({std::string("RapidJSON: SAX") + sfx, [](const std::string & s, result & r) { rj_sum h(&r.st); return rj_read<F>(s, h); }});
         vs.push_back({std::string("RapidJSON: insitu (copy)") + sfx, [](const std::string & s, result & r) { std::string b = s; rapidjson::Document d; d.ParseInsitu<F>(&b[0]); if (d.HasParseError()) { return false; } walk(d, r.st); return true; }});
+        vs.push_back({std::string("RapidJSON: insitu (copy untimed)") + sfx, [](const std::string & s, result & r) { taken_copy b(s); rapidjson::Document d; d.ParseInsitu<F>(b.buf); if (d.HasParseError()) { return false; } walk(d, r.st); return true; }, false, true});
+        vs.push_back({std::string("RapidJSON: SAX (string stream)") + sfx, [](const std::string & s, result & r) { rj_sum h(&r.st); return rj_read_cstr<F>(s, h); }});
         vs.push_back({std::string("RapidJSON: Document (reused allocator)") + sfx, [rp](const std::string & s, result & r) { return rp->parse<F>(s, [&r](const rapidjson::Value & d) { walk(d, r.st); return true; }); }});
     }
     else if (uc == "select")
     {
         vs.push_back({std::string("RapidJSON: Document") + sfx, [n](const std::string & s, result & r) { rapidjson::Document d; d.Parse<F>(s.data(), s.size()); if (d.HasParseError()) { return false; } r.acc = pick<acc_rapidjson>(n, &d); return true; }});
         vs.push_back({std::string("RapidJSON: insitu (copy)") + sfx, [n](const std::string & s, result & r) { std::string b = s; rapidjson::Document d; d.ParseInsitu<F>(&b[0]); if (d.HasParseError()) { return false; } r.acc = pick<acc_rapidjson>(n, &d); return true; }});
+        vs.push_back({std::string("RapidJSON: insitu (copy untimed)") + sfx, [n](const std::string & s, result & r) { taken_copy b(s); rapidjson::Document d; d.ParseInsitu<F>(b.buf); if (d.HasParseError()) { return false; } r.acc = pick<acc_rapidjson>(n, &d); return true; }, false, true});
+        vs.push_back({std::string("RapidJSON: Document (string stream)") + sfx, [n](const std::string & s, result & r) { rapidjson::Document d; d.Parse<F>(s.c_str()); if (d.HasParseError()) { return false; } r.acc = pick<acc_rapidjson>(n, &d); return true; }});
         vs.push_back({std::string("RapidJSON: Document (raw numbers)") + sfx, [n](const std::string & s, result & r) { rapidjson::Document d; d.Parse<F | rj_raw>(s.data(), s.size()); if (d.HasParseError()) { return false; } r.acc = pick<acc_rapidjson_raw>(n, &d); return true; }});
         vs.push_back({std::string("RapidJSON: Document (reused allocator)") + sfx, [n, rp](const std::string & s, result & r) { return rp->parse<F>(s, [&](const rapidjson::Value & d) { r.acc = pick<acc_rapidjson>(n, &d); return true; }); }});
     }
@@ -2911,11 +3013,14 @@ static void add_rapidjson(std::vector<variant>& vs, const std::string& uc, const
     {
         vs.push_back({std::string("RapidJSON: Document") + sfx, [n](const std::string & s, result & r) { rapidjson::Document d; d.Parse<F>(s.data(), s.size()); return !d.HasParseError() && edit_rapidjson(n, d, r); }});
         vs.push_back({std::string("RapidJSON: insitu (copy)") + sfx, [n](const std::string & s, result & r) { std::string b = s; rapidjson::Document d; d.ParseInsitu<F>(&b[0]); return !d.HasParseError() && edit_rapidjson(n, d, r); }});
+        vs.push_back({std::string("RapidJSON: insitu (copy untimed)") + sfx, [n](const std::string & s, result & r) { taken_copy b(s); rapidjson::Document d; d.ParseInsitu<F>(b.buf); return !d.HasParseError() && edit_rapidjson(n, d, r); }, false, true});
+        vs.push_back({std::string("RapidJSON: Document (string stream)") + sfx, [n](const std::string & s, result & r) { rapidjson::Document d; d.Parse<F>(s.c_str()); return !d.HasParseError() && edit_rapidjson(n, d, r); }});
     }
     else if (uc == "minify")
     {
         vs.push_back({std::string("RapidJSON: Document + Writer") + sfx, [](const std::string & s, result & r) { rapidjson::Document d; d.Parse<F>(s.data(), s.size()); if (d.HasParseError()) { return false; } rapidjson::StringBuffer sb; rapidjson::Writer<rapidjson::StringBuffer> w(sb); return d.Accept(w) && emit(r, sb.GetString(), sb.GetSize()); }});
         vs.push_back({std::string("RapidJSON: SAX to Writer") + sfx, [](const std::string & s, result & r) { rapidjson::StringBuffer sb; rapidjson::Writer<rapidjson::StringBuffer> w(sb); return rj_read<F>(s, w) && emit(r, sb.GetString(), sb.GetSize()); }});
+        vs.push_back({std::string("RapidJSON: SAX to Writer (string stream)") + sfx, [](const std::string & s, result & r) { rapidjson::StringBuffer sb; rapidjson::Writer<rapidjson::StringBuffer> w(sb); return rj_read_cstr<F>(s, w) && emit(r, sb.GetString(), sb.GetSize()); }});
         vs.push_back({std::string("RapidJSON: SAX to Writer (raw numbers)") + sfx, [](const std::string & s, result & r) { rapidjson::StringBuffer sb; rj_raw_writer w(sb); return rj_read<F | rapidjson::kParseNumbersAsStringsFlag>(s, w) && emit(r, sb.GetString(), sb.GetSize()); }});
         vs.push_back({std::string("RapidJSON: Document + Writer (reused allocator)") + sfx, [rp](const std::string & s, result & r) { return rp->parse<F>(s, [&r](const rapidjson::Value & d) { rapidjson::StringBuffer sb; rapidjson::Writer<rapidjson::StringBuffer> w(sb); return d.Accept(w) && emit(r, sb.GetString(), sb.GetSize()); }); }});
     }
@@ -3286,6 +3391,22 @@ int main(int argc, char** argv)
                 add_rapidjson<rj_flags>(all, uc, dc.base, "", rj);
                 add_rapidjson<rj_fast>(all, uc, dc.base, " (no encoding check)", rj);
             }
+            // BENCH_ONLY=<prefix>[,<prefix>...]: only the variants whose name starts with one of them (A/B runs of two
+            // nlohmann headers, or a few libraries)
+            if (const char* const only = std::getenv("BENCH_ONLY"))
+            {
+                std::vector<std::string> prefixes;
+                std::string rest = only;
+                for (std::size_t comma; (comma = rest.find(',')) != std::string::npos; rest.erase(0, comma + 1))
+                {
+                    prefixes.push_back(rest.substr(0, comma));
+                }
+                prefixes.push_back(rest);
+                all.erase(std::remove_if(all.begin(), all.end(), [&](const variant& v)
+                {
+                    return std::none_of(prefixes.begin(), prefixes.end(), [&](const std::string& p) { return v.name.compare(0, p.size(), p) == 0; });
+                }), all.end());
+            }
 
             // the reference result, from json_document (sum, select) or json (edit, minify, write)
             stats ref_st;
@@ -3401,8 +3522,16 @@ int main(int argc, char** argv)
                 for (const std::size_t k : order)
                 {
                     result res;
+                    if (vs[k].untimed_copy)
+                    {
+                        g_copies.make(s, 1);
+                    }
                     run(vs[k], s, res);   // untimed: the previous variant's leftovers are cleaned up here
                     g_sink = res.st.num + res.acc;
+                    if (vs[k].untimed_copy)
+                    {
+                        g_copies.make(s, dc.batch);
+                    }
                     const auto t0 = std::chrono::steady_clock::now();
                     for (int b = 0; b < dc.batch; ++b)
                     {
@@ -3410,6 +3539,7 @@ int main(int argc, char** argv)
                         g_sink = run(vs[k], s, rt) ? rt.st.num + rt.acc : -1;
                     }
                     best[k] = std::min(best[k], std::chrono::duration<double, std::nano>(std::chrono::steady_clock::now() - t0).count() / dc.batch);
+                    g_copies.clear();
                 }
             }
             std::printf("%-13s %-9s", dc.name.c_str(), uc.c_str());

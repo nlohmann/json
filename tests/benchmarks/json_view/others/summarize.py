@@ -17,8 +17,9 @@ error, or crashes on any probe), or "n/a" (write: no input to validate; counts a
 worst it got for any file. Prints, for every use case and file,
   (a) per library the best "full" variant and, if faster, the best variant at any level, with their ratios to the
       best "full" nlohmann json_document variant (variants named "(reused)" or "(reused allocator)" keep a parser,
-      document or allocator across calls and are never chosen as a library's best), and in a "reused:" line the
-      library's best reused variant in the same way,
+      document or allocator across calls and are never chosen as a library's best; neither are "(copy untimed)"
+      variants, which copy their input before the timer starts), and in a "reused:" line the library's best reused
+      variant in the same way,
   (b) all variants with their levels and times,
   (c) the variants below "full" with what the probes found, and the variants excluded for wrong results.
 --json writes {use case: {file: {library: {"best": {"variant", "us", "level"} or null, "best_any": {...},
@@ -52,6 +53,10 @@ def variant(name):
 
 def is_reused(name):
     return re.search(r"\(reused[ )]", name) is not None
+
+
+def is_untimed_copy(name):
+    return "(copy untimed)" in name
 
 
 def worse(a, b):
@@ -159,7 +164,7 @@ def main():
                 return {"variant": variant(x[0]), "us": x[1], "level": levels[(uc, x[0])]} if x else None
 
             for lib, vs in libs.items():
-                b, a = pick({n: t for n, t in vs.items() if not is_reused(n)})
+                b, a = pick({n: t for n, t in vs.items() if not is_reused(n) and not is_untimed_copy(n)})
                 rb, ra = pick({n: t for n, t in vs.items() if is_reused(n)})
                 entry[lib] = {
                     "best": described(b),

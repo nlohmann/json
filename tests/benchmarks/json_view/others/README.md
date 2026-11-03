@@ -43,6 +43,10 @@ files use the select and edit of their originals.
 The input is a `const std::string` holding the file, with at least 64 bytes of spare capacity (`reserve`), so libraries
 that need padding (simdjson) can use it without a copy. A variant that modifies the input (in-situ parsing: yyjson
 `YYJSON_READ_INSITU`, RapidJSON `ParseInsitu`, simd-json) copies it inside the timed call; its name says `(copy)`.
+The C++ in-situ variants also run as `(copy untimed)`: the copy is made before the timer starts and freed after it
+stops, as for a program that reads a file into a buffer it owns and no longer needs. They are reported but never
+chosen as a library's best. `json_document`'s `parse_copy` is the opposite case: a document that owns a copy of its
+text.
 Each timed call starts from the text and frees everything it built, except variants named `(reused)` or
 `(reused allocator)`, which keep a parser, document or allocator across calls (simdjson's reused parsers,
 `json_document::read()`, Boost.JSON's reset `parser` and `basic_parser`, yyjson's dynamic allocator, RapidJSON's
@@ -107,11 +111,11 @@ Level on the Mac in brackets where it is not `full` (`P` = partial, `U` = no UTF
 
 | library | validate | sum | select | edit | minify | write |
 |---|---|---|---|---|---|---|
-| nlohmann json_document | `accept`, `parse`, `read (reused)` | `parse`, `read (reused)` | `parse`, `structs (from_json)`, `read (reused)` | `editable`, `editable (source numbers)` (`json_editable_document`: set/erase, `dump` with `number_format::source`) | `parse + dump`, `parse + dump (source numbers)`, `read + dump (reused)` | `dump`, `dump (source numbers)` |
+| nlohmann json_document | `accept`, `parse`, `read (reused)` | `parse`, `parse_copy`, `read (reused)` | `parse`, `parse_copy`, `structs (from_json)`, `read (reused)` | `editable`, `editable (source numbers)` (`json_editable_document`: set/erase, `dump` with `number_format::source`) | `parse + dump`, `parse_copy + dump`, `parse + dump (source numbers)`, `read + dump (reused)` | `dump`, `dump (source numbers)` |
 | nlohmann json | `accept`, `parse` | `parse`, `sax` | `parse`, `structs (from_json)` | `parse`, `ordered_json` | `parse + dump` | `dump` |
-| yyjson | `read`, `insitu (copy)`, `read (raw numbers)`, `read (reused allocator)` | `read`, `insitu (copy)`, `read (reused allocator)` | `read`, `insitu (copy)`, `read (raw numbers)`, `read (reused allocator)` | `mut copy`, `insitu (copy) + mut copy` (`yyjson_doc_mut_copy`) | `read + write`, `insitu (copy) + write`, `read (raw numbers) + write`, `read + write (reused allocator)` | `write` |
+| yyjson | `read`, `insitu (copy)`, `insitu (copy untimed)`, `read (raw numbers)`, `read (reused allocator)` | `read`, `insitu (copy)`, `insitu (copy untimed)`, `read (reused allocator)` | `read`, `insitu (copy)`, `insitu (copy untimed)`, `read (raw numbers)`, `read (reused allocator)` | `mut copy`, `insitu (copy) + mut copy` (`yyjson_doc_mut_copy`), `insitu (copy untimed) + mut copy` | `read + write`, `insitu (copy) + write`, `insitu (copy untimed) + write`, `read (raw numbers) + write`, `read + write (reused allocator)` | `write` |
 | simdjson | `DOM`, `DOM (reused)` | `DOM`, `DOM (reused)`, `On-Demand`, `On-Demand (reused)` | `DOM`, `DOM (reused)`, `On-Demand` [P], `On-Demand (reused)` [P], `On-Demand structs` [P], `On-Demand (key selectors)` [P] | n/a (no mutable document) | `DOM + to_string`, `DOM (reused) + to_string`, `minify` [P] | `to_string` |
-| RapidJSON | `SAX` (null handler), `Document`, `insitu (copy)`, `SAX (raw numbers)`, `Document (reused allocator)` | `Document`, `SAX`, `insitu (copy)`, `Document (reused allocator)` | `Document`, `insitu (copy)`, `Document (raw numbers)`, `Document (reused allocator)` | `Document`, `insitu (copy)` | `Document + Writer`, `SAX to Writer`, `SAX to Writer (raw numbers)`, `Document + Writer (reused allocator)` | `Writer` |
+| RapidJSON | `SAX` (null handler), `Document`, `insitu (copy)`, `insitu (copy untimed)`, `SAX (string stream)`, `SAX (default precision)`, `SAX (string stream, default precision)`, `SAX (raw numbers)`, `Document (reused allocator)` | `Document`, `SAX`, `insitu (copy)`, `insitu (copy untimed)`, `SAX (string stream)`, `Document (reused allocator)` | `Document`, `insitu (copy)`, `insitu (copy untimed)`, `Document (string stream)`, `Document (raw numbers)`, `Document (reused allocator)` | `Document`, `insitu (copy)`, `insitu (copy untimed)`, `Document (string stream)` | `Document + Writer`, `SAX to Writer`, `SAX to Writer (string stream)`, `SAX to Writer (raw numbers)`, `Document + Writer (reused allocator)` | `Writer` |
 | RapidJSON, `(no encoding check)` | the same [U] | the same [U] | the same [U] | the same [U] | the same [U] | |
 | sonic-cpp | `Document` [U] | `Document` [U] | `Document` [U] | `Document` [U] | `Document + Serialize` [U] | `Serialize` |
 | Glaze | `validate_json`, `generic` [P], `generic (double)` [P], `generic (strict)`, `generic (double, strict)` | `generic` [P], `generic (double)` [P], `generic (strict)`, `generic (double, strict)`, `lazy_json` [P], `lazy_json (string_view)` (x) | `structs` [P], `structs (validate_skipped)`, `generic` [P], `generic (double)` [P], `generic (strict)`, `generic (double, strict)`, `lazy_json` [P], `lazy_json (string_view)` (x) | `generic` [P], `generic (double)` (x), `generic (strict)`, `generic (double, strict)` (x) | `generic` [P], `generic (double)` (x), `generic (strict)`, `generic (double, strict)` (x), `minify_json` [P] | `generic`, `generic (double)` (x), `generic (strict)`, `generic (double, strict)` (x) |
@@ -140,7 +144,10 @@ described struct, so their members are not counted. `key selectors` are simdjson
 `DeserializeSeed` that sums without building a value; `SAX` and `sax` are the libraries' event interfaces with a
 summing (or, for `validate`, an empty) handler. RapidJSON parses with `kParseFullPrecisionFlag` (correctly rounded
 floats; without it, sums and written floats are wrong) and Boost.JSON with `number_precision::precise`, as every other
-library rounds correctly by default.
+library rounds correctly by default; only `validate`, which reads no number, also has RapidJSON's `(default
+precision)`. RapidJSON's `Document::Parse(data, size)` and our `SAX` read through `EncodedInputStream<MemoryStream>`;
+`(string stream)` reads the NUL-terminated string through `StringStream`, as `Document::Parse(const char*)` does,
+where RapidJSON has a SIMD string scanner (used only without `kParseValidateEncodingFlag`).
 
 Variants named `(raw numbers)` or `(numbers: none)` use a library's mode that validates numbers without converting
 them (yyjson `YYJSON_READ_NUMBER_AS_RAW`, RapidJSON `kParseNumbersAsStringsFlag`, Boost.JSON
@@ -159,7 +166,7 @@ control characters, e.g. U+0001, unescaped, which is not JSON; `gsoc-2018.json` 
 |---|---|---|
 | `json_document`, `json` | this checkout | |
 | yyjson | 0.13.0 | |
-| simdjson | 5.0.8 | |
+| simdjson | 5.1.1 | the single-header files of the tag |
 | sonic-cpp | 1.0.2 | |
 | RapidJSON | master 24b5e7a8b27f (2025-02-05) | |
 | Glaze | 9.1.0 | `generic_u64` and `generic` (owning DOMs, member order kept) |
@@ -173,7 +180,8 @@ SHA-256 of the downloads:
 30edf9e47c417f653546c39295fdb66ba5f89fb37eb3780122c6ee66605e5837  sonic-cpp v1.0.2.tar.gz
 2d2601a82d2d3b7e143a3c8d43ef616671391034bc46891a9816b79cf2d3e7a8  rapidjson 24b5e7a8b27f42fa16b96fc70aade9106cf7102f.tar.gz
 34e0f62a2bc11ab20d601e8ca1cc2b2079503aa45119a19133d89d19b94a0fae  yyjson 0.13.0.tar.gz
-356cc3a2d6a3d0d45bf5eba813e58ef4f2f6d9cc2a25d8aada2563bc13755789  simdjson-v5.0.8.tar.gz
+f3e5ee5f39051960b5ce65762ee4b6919caf270675eb52240ebd92f21a5bcefd  simdjson v5.1.1 singleheader/simdjson.h
+3ea5f501cef6c2e16e28095b566feeb56021ca473aaf50aad32102f45d734195  simdjson v5.1.1 singleheader/simdjson.cpp
 c4a3b310ddd2472416e091067166b0713be97c63f38c212c484ada022fd296ce  boost_1_92_0.tar.gz
 ```
 
@@ -189,13 +197,13 @@ at most the given number).
 
 All libraries except yyjson and simdjson are used header-only. With the downloads unpacked into `DL`
 (`compare.py --download` fetches yyjson and Boost into its build directory, and simdjson 4.6.11, so take simdjson
-5.0.8 from its release archive):
+5.1.1's `singleheader` files from its tag):
 
 ```sh
 cc  -O3 -DNDEBUG -c $DL/yyjson-0.13.0/src/yyjson.c -o yyjson.o
-c++ -std=c++17 -O3 -DNDEBUG -c $DL/simdjson-5.0.8/singleheader/simdjson.cpp -o simdjson.o
+c++ -std=c++17 -O3 -DNDEBUG -c $DL/simdjson-5.1.1/singleheader/simdjson.cpp -o simdjson.o
 c++ -std=c++23 -O3 -DNDEBUG -DRAPIDJSON_NEON \
-    -I ../../../../include -I $DL/yyjson-0.13.0/src -I $DL/simdjson-5.0.8/singleheader -I $DL/boost_1_92_0 \
+    -I ../../../../include -I $DL/yyjson-0.13.0/src -I $DL/simdjson-5.1.1/singleheader -I $DL/boost_1_92_0 \
     -I $DL/glaze-9.1.0/include -I $DL/rapidjson/include -I $DL/sonic/include \
     bench_all.cpp yyjson.o simdjson.o -o bench_all
 ./bench_all <json_test_data> 30 > mac-cpp-1.log
