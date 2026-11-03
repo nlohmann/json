@@ -1167,6 +1167,10 @@ TEST_CASE("parse() survives a failing allocation at every point (#5985)")
     // terminates the program instead of throwing std::bad_alloc. Nothing to
     // check there.
 #if !(defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0)
+    // Clang 3.4 and 3.5 leak memory when an element constructor throws
+    // inside libstdc++'s containers (a std::map copy, a std::vector
+    // reallocation), without any json value involved.
+#if !(defined(__clang__) && !defined(__apple_build_version__) && __clang_major__ == 3 && __clang_minor__ < 6)
     SECTION("parser callback")
     {
         const auto keep_all = [](int /*depth*/, sweep_json::parse_event_t /*event*/, sweep_json& /*parsed*/) noexcept
@@ -1200,6 +1204,7 @@ TEST_CASE("parse() survives a failing allocation at every point (#5985)")
             return value;
         });
     }
+#endif
 #endif
 }
 #endif
