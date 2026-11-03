@@ -1038,6 +1038,14 @@ template<class T>
 struct sweep_allocator
 {
     using value_type = T;
+    // GCC 4.8's std::map takes these from the allocator instead of from
+    // std::allocator_traits
+    using pointer = T*;
+    using const_pointer = const T*;
+    using reference = T&;
+    using const_reference = const T&;
+    using size_type = std::size_t;
+    using difference_type = std::ptrdiff_t;
 
     sweep_allocator() = default;
     template<class U> sweep_allocator(const sweep_allocator<U>& /*unused*/) noexcept {}
@@ -1155,9 +1163,14 @@ TEST_CASE("parse() survives a failing allocation at every point (#5985)")
 
     // With iterator debugging (MSVC STL debug builds, also used by clang-cl),
     // containers allocate a debug proxy through the allocator inside their
-    // noexcept move constructors, so failing that allocation terminates the
-    // program instead of throwing std::bad_alloc. Nothing to check there.
+    // noexcept default and move constructors, so failing that allocation
+    // terminates the program instead of throwing std::bad_alloc. Nothing to
+    // check there.
 #if !(defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0)
+    // Clang 3.4 and 3.5 leak memory when an element constructor throws
+    // inside libstdc++'s containers (a std::map copy, a std::vector
+    // reallocation), without any json value involved.
+#if !(defined(__clang__) && !defined(__apple_build_version__) && __clang_major__ == 3 && __clang_minor__ < 6)
     SECTION("parser callback")
     {
         const auto keep_all = [](int /*depth*/, sweep_json::parse_event_t /*event*/, sweep_json& /*parsed*/) noexcept
@@ -1178,7 +1191,6 @@ TEST_CASE("parse() survives a failing allocation at every point (#5985)")
             return sweep_json::parse(text, drop_d);
         });
     }
-#endif
 
     SECTION("sax_parse into an existing value")
     {
@@ -1192,5 +1204,7 @@ TEST_CASE("parse() survives a failing allocation at every point (#5985)")
             return value;
         });
     }
+#endif
+#endif
 }
 #endif
