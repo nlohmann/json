@@ -121,19 +121,6 @@ class oversized_get_area_streambuf : public std::streambuf
     std::array<char, 8> m_data{{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}};
 };
 
-// the size the oversized_get_area_streambuf claims: 3 GiB with a 64-bit
-// std::size_t, else 0 to skip the test (tag dispatch, as a constant condition
-// triggers MSVC's C4127)
-template<std::size_t SizeOfSizeT>
-std::size_t oversized_get_area_size(std::integral_constant<std::size_t, SizeOfSizeT> /*unused*/)
-{
-    return 0;
-}
-
-std::size_t oversized_get_area_size(std::integral_constant<std::size_t, 8> /*unused*/)
-{
-    return std::size_t{3} << 30u;
-}
 #endif
 
 // how a test reads from the stream
@@ -480,7 +467,9 @@ TEST_CASE("parsing from a std::istream scans the get area in bulk")
     SECTION("skipping more characters than gbump() takes at once")
     {
         // gbump() takes an int, but a get area can be larger
-        const std::size_t claimed = oversized_get_area_size(std::integral_constant<std::size_t, sizeof(std::size_t)>());
+        // 3 GiB with a 64-bit std::size_t, else 0 (computed without a
+        // condition, which would trigger MSVC's C4127)
+        const std::size_t claimed = (std::size_t{3} << 30u) * (sizeof(std::size_t) / 8);
         oversized_get_area_streambuf buf(claimed);
         if (claimed == 0 || static_cast<std::size_t>(buf.in_avail()) != claimed)
         {

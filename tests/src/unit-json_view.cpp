@@ -105,6 +105,20 @@ template<typename T>
 struct failing_allocator
 {
     using value_type = T;
+    // GCC 4.8's std::map takes these from the allocator instead of from
+    // std::allocator_traits
+    using pointer = T*;
+    using const_pointer = const T*;
+    using reference = T&;
+    using const_reference = const T&;
+    using size_type = std::size_t;
+    using difference_type = std::ptrdiff_t;
+
+    template<typename U>
+    struct rebind
+    {
+        using other = failing_allocator<U>;
+    };
 
     failing_allocator() = default;
 
@@ -117,6 +131,26 @@ struct failing_allocator
     }
 
     void deallocate(T* /*p*/, std::size_t /*n*/) noexcept {} // NOLINT(readability-convert-member-functions-to-static)
+
+    // GCC 4.8's std::map calls these on the allocator directly instead of
+    // going through std::allocator_traits
+    std::size_t max_size() const noexcept // NOLINT(readability-convert-member-functions-to-static)
+    {
+        return (std::numeric_limits<std::size_t>::max)() / sizeof(T);
+    }
+
+    template<typename U, typename... Args>
+    void construct(U* p, Args&& ... args) // NOLINT(readability-convert-member-functions-to-static)
+    {
+        ::new (static_cast<void*>(p)) U(std::forward<Args>(args)...);
+    }
+
+    template<typename U>
+    void destroy(U* p) noexcept // NOLINT(readability-convert-member-functions-to-static)
+    {
+        static_cast<void>(p); // unused for trivially destructible types
+        p->~U();
+    }
 
     template<typename U>
     bool operator==(const failing_allocator<U>& /*other*/) const noexcept
@@ -270,7 +304,7 @@ TEST_CASE("json_view")
                     "\"", "\"abc", "\"\\x\"", "\"\\u12\"", "\"\\ud800\"", "\"\\udc00\"", "\"\x01\"", "\"\xff\"", "\"\xc3\"", "[1]x", "/", "/*", "[\n  1,\n  x\n]", // NOLINT(modernize-raw-string-literal)
                     "1e400", "-1e400", "[1.7976931348623159e308]", "{\"a\":\n{\"b\": [1, 2,\n 3 x]}}",
                     // (an error after every kind of value: the error is found by replaying the parser)
-                    "[null, true, -1, 1, 1.5, \"s\", {\"a\": 1} 2]", "{\"a\": null, \"b\": -1, \"c\": 1.5, \"d\": \"s\", \"e\": {}, 1}"
+                    R"([null, true, -1, 1, 1.5, "s", {"a": 1} 2])", R"({"a": null, "b": -1, "c": 1.5, "d": "s", "e": {}, 1})"
                 })
         {
             CAPTURE(text)
