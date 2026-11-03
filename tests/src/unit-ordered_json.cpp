@@ -541,6 +541,7 @@ TEST_CASE("object_key_index")
         };
 
         std::vector<std::size_t> hashes;
+        hashes.reserve(initial);
         for (std::size_t i = 0; i < initial; ++i)
         {
             hashes.push_back(hash_of(i));

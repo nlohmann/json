@@ -1533,7 +1533,7 @@ TEST_CASE("regression tests 1")
         {
             my_json::object_t top = orig.get_ref<const my_json::object_t&>();
             top.at("x") = my_json::parse(R"({"a":{"b":1},"n":null,"arr":[10,20],"objs":[{"m":5},{"m":6}]})");
-            return my_json(std::move(top));
+            return my_json(std::move(top)); // NOLINT(modernize-return-braced-init-list): {top} would be an array
         };
 
         SECTION("existing members")
