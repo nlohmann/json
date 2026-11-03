@@ -2222,9 +2222,10 @@ TEST_CASE("serialization of short strings")
     {
         CAPTURE(s)
         const json j = s;
-        CHECK(j.dump() == "\"" + s + "\"");
-        CHECK(j.dump(-1, ' ', true) == "\"" + s + "\"");
-        CHECK(json({{s, s}}).dump() == "{\"" + s + "\":\"" + s + "\"}");
+        const std::string quoted = "\"" + s + "\""; // NOLINT(performance-inefficient-string-concatenation)
+        CHECK(j.dump() == quoted);
+        CHECK(j.dump(-1, ' ', true) == quoted);
+        CHECK(json({{s, s}}).dump() == "{" + quoted + ":" + quoted + "}"); // NOLINT(performance-inefficient-string-concatenation)
     }
 
     // a character that needs an escape
