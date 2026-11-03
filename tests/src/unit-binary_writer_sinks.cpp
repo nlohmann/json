@@ -50,6 +50,14 @@ std::vector<json> test_values()
         large_payloads.push_back(json::binary(std::vector<std::uint8_t>(static_cast<std::size_t>(100 * i), static_cast<std::uint8_t>(i))));
     }
 
+    // several times vector_sink_window characters in every format: the vector
+    // sink makes the capacity it grows to writable a window at a time
+    json many_windows = json::array();
+    for (std::uint64_t i = 0; i < 30000; ++i)
+    {
+        many_windows.push_back((i * 0x9E3779B97F4A7C15u) >> 1u);
+    }
+
     return
     {
         json(nullptr), json(true), json(false),
@@ -61,7 +69,7 @@ std::vector<json> test_values()
         json::array(), json::object(),
         json::array({1, 2, 3}), json({{"a", 1}, {"b", nullptr}}),
         json({{"nested", {{"deep", json::array({1, "two", 3.0, nullptr})}}}}),
-        big_array, big_object, large_payloads,
+        big_array, big_object, large_payloads, many_windows,
         json::binary(std::vector<std::uint8_t>(5000, 0x42))
     };
 }
