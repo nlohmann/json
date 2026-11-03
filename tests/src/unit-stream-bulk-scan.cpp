@@ -464,17 +464,18 @@ TEST_CASE("parsing from a std::istream scans the get area in bulk")
         CHECK(token.empty());
     }
 
+#if SIZE_MAX > UINT32_MAX
+    // a get area larger than an int needs a 64-bit std::size_t (checked by the
+    // preprocessor, as a constant condition triggers MSVC's C4127)
     SECTION("skipping more characters than gbump() takes at once")
     {
         // gbump() takes an int, but a get area can be larger
-        // 3 GiB with a 64-bit std::size_t, else 0 (computed without a
-        // condition, which would trigger MSVC's C4127)
-        const std::size_t claimed = (std::size_t{3} << 30u) * (sizeof(std::size_t) / 8);
+        const std::size_t claimed = std::size_t{3} << 30u;
         oversized_get_area_streambuf buf(claimed);
-        if (claimed == 0 || static_cast<std::size_t>(buf.in_avail()) != claimed)
+        if (static_cast<std::size_t>(buf.in_avail()) != claimed)
         {
-            // a 32-bit size_t, or a standard library whose streambuf stores
-            // the size of the get area in an int (MSVC)
+            // a standard library whose streambuf stores the size of the get
+            // area in an int (MSVC)
             MESSAGE("a get area larger than an int is not supported");
         }
         else
@@ -494,6 +495,7 @@ TEST_CASE("parsing from a std::istream scans the get area in bulk")
             buf.restore_get_area();
         }
     }
+#endif
 #endif
 
     SECTION("SAX parsing from a stream")
