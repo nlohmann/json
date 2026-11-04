@@ -14,6 +14,8 @@ To write a value directly to a stream (for example, a file or `std::cout`), the 
 std::cout << j << std::endl;
 ```
 
+To write a file without leaving a truncated file behind when serialization fails, see [Reading and writing files](https://json.nlohmann.me/features/files/#writing-a-json-file).
+
 String, not raw value
 
 `dump` always returns a **JSON text**. Serializing a JSON string therefore includes the surrounding quotes and escapes special characters. To obtain the *contained* string value without quotes, use [`get<std::string>()`](https://json.nlohmann.me/features/conversions/index.md) instead of `dump`. See the [converting values](https://json.nlohmann.me/features/conversions/index.md) page.

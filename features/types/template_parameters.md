@@ -758,6 +758,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | `#!cpp operator<<(std::ostream&, const json_pointer&)`                                                                            | streamability to `#!cpp std::ostream`                                                                                                                                                        |
 | [`to_string`](../../api/basic_json/to_string.md)                                                                                  | conversion of `StringType` to `#!cpp std::string` (the function returns a `#!cpp std::string`)                                                                                               |
 | exception messages                                                                                                                | `data()` and `size()`, or `begin()` and `end()`                                                                                                                                              |
+| [`basic_json_view::dump`](../../api/basic_json_view/dump.md)                                                                      | `reserve(n)` and `resize(n)` (one argument); `capacity()` is **not** required                                                                                                                |
 
 ### Compatible types
 

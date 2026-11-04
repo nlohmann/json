@@ -29,7 +29,8 @@ other three continue on its result.
 
     [`patch`](../api/basic_json/patch.md) leaves the original value unchanged and returns the patched result as a copy.
     If the document is large and the original value is no longer needed,
-    [`patch_inplace`](../api/basic_json/patch_inplace.md) applies the same operations in place instead.
+    [`patch_inplace`](../api/basic_json/patch_inplace.md) applies the same operations in place instead. Unlike
+    `patch`, it is not atomic: if an operation fails, the operations before it stay applied.
 
 !!! note "Duplicate member names"
 

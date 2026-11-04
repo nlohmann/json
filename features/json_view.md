@@ -458,7 +458,9 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
   wide. The limit is 16 bytes below 2^32, because the parser reads in 16-byte steps, and a position one step past the
   end must still fit.
 - **A stream is always read to its end.** There is no partial/streaming read of an `#!cpp std::istream`: the stream
-  is read to its end into a buffer the document owns, and parsing starts after that.
+  is read to its end into a buffer the document owns, and parsing starts after that. For a file, reading it into a
+  `#!cpp std::string` yourself and parsing that (an lvalue is borrowed) is therefore not more expensive in memory, and
+  was about 6 to 12 % faster than parsing from an `#!cpp std::ifstream`.
 - **Fewer source positions after edits.** With
   [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md) enabled,
   [`materialize()`](../api/basic_json_view/materialize.md) sets the same positions as `#!cpp basic_json::parse()`.

@@ -34,6 +34,8 @@ std::ifstream f("example.json");
 json data = json::parse(f);
 ```
 
+See [Reading and writing files](https://json.nlohmann.me/features/files/index.md) for checking that the file was opened and for writing files safely.
+
 The input must be encoded in UTF-8; other encodings are not supported. The exception is wide-character input, which is read as UTF-16 or UTF-32 — depending on the character type — and converted to UTF-8; see the [`parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) page for an example. A single input may contain only one JSON value. Inputs consisting of multiple values separated by newlines are handled by the [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md) format; input that arrives in chunks or contains several values is covered in [Large, streamed, and partial input](https://json.nlohmann.me/features/parsing/large_and_partial_input/index.md).
 
 By default, the library rejects comments and trailing commas. Both can be enabled with parameters of the `parse` function — see [comments](https://json.nlohmann.me/features/comments/index.md) and [trailing commas](https://json.nlohmann.me/features/trailing_commas/index.md).
@@ -60,6 +62,8 @@ All inputs produce the same values and the same exceptions, but they are read in
 | other iterator ranges (e.g., `std::list<char>`, `std::istreambuf_iterator<char>`), wide strings                  | one character at a time                                                                                                             |
 
 Parsing a file from a `std::ifstream` is therefore only about 10 to 20 % slower than reading the whole file into a `std::string` first and parsing that, and it needs no memory for a copy of the file. The stream is never read ahead: after parsing, it is positioned exactly as if every character had been read one at a time, so [`operator>>`](https://json.nlohmann.me/api/operator_gtgt/index.md) can still read several values from one stream (see also [JSON Lines](https://json.nlohmann.me/features/parsing/json_lines/index.md)).
+
+This does not hold for [`json_document`](https://json.nlohmann.me/features/json_view/index.md): it reads a stream into a buffer it owns, so the stream saves no memory, and reading the file into a `std::string` yourself and borrowing it is about 6 to 12 % faster.
 
 Two macros switch these optimizations off without changing any result: [`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) for stream buffers that do not follow the usual `std::streambuf` contract, and [`JSON_DISABLE_UNLOCKED_FILE_IO`](https://json.nlohmann.me/api/macros/json_disable_unlocked_file_io/index.md) for programs in which another thread must use the same `FILE` object while it is parsed.
 

@@ -639,6 +639,7 @@ true
 | `operator<<(std::ostream&, const json_pointer&)`                                                                                                                                                             | streamability to `std::ostream`                                                                                                                                            |
 | [`to_string`](https://json.nlohmann.me/api/basic_json/to_string/index.md)                                                                                                                                    | conversion of `StringType` to `std::string` (the function returns a `std::string`)                                                                                         |
 | exception messages                                                                                                                                                                                           | `data()` and `size()`, or `begin()` and `end()`                                                                                                                            |
+| [`basic_json_view::dump`](https://json.nlohmann.me/api/basic_json_view/dump/index.md)                                                                                                                        | `reserve(n)` and `resize(n)` (one argument); `capacity()` is **not** required                                                                                              |
 
 ### Compatible types
 

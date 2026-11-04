@@ -98,6 +98,10 @@ If the source value is outside the range of the target type, the behavior is the
 
 See [Number conversion](https://json.nlohmann.me/features/types/number_handling/#number-conversion) for more information.
 
+Booleans as numbers
+
+A JSON boolean converts to `0` or `1` for every arithmetic type **except** [`number_integer_t`](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md), [`number_unsigned_t`](https://json.nlohmann.me/api/basic_json/number_unsigned_t/index.md) and [`number_float_t`](https://json.nlohmann.me/api/basic_json/number_float_t/index.md) (by default `std::int64_t`, `std::uint64_t`, and `double`), for which `get<T>()` throws [`type_error.302`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error302) ("type must be number, but is boolean"). So `json(true).get<int>()` is `1`, while `json(true).get<std::int64_t>()` and `json(true).get<double>()` throw. This is the behavior of all 3.x versions; [`basic_json_view::get<T>()`](https://json.nlohmann.me/api/basic_json_view/get/index.md) behaves the same.
+
 `std::optional` conversions
 
 Prior to version 3.13.0 unreleased, `get<std::optional<T>>()` (and other conversions to `std::optional<T>`) failed to compile in every configuration, due to an internal implementation bug that made the `from_json` overload for `std::optional` unreachable regardless of the [`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md) setting. This has been fixed.

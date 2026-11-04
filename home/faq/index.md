@@ -100,7 +100,7 @@ Question
 
 `json::parse(file)` throws `parse_error.101` at line 1, column 1 for a file that is valid JSON. Why?
 
-The parser did not see any character: the file was most likely not opened. A relative path is resolved against the working directory of the running program, which is often the build directory of your IDE, not the source directory. Check `is_open()` and try an absolute path. Other causes are an empty file and a stream that was already read. See [`parse_error.101`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error101).
+The parser did not see any character: the file was most likely not opened. A relative path is resolved against the working directory of the running program, which is often the build directory of your IDE, not the source directory. Check `is_open()` and try an absolute path. Other causes are an empty file and a stream that was already read. See [`parse_error.101`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error101) and [Reading and writing files](https://json.nlohmann.me/features/files/index.md).
 
 ### Input that arrives in chunks
 

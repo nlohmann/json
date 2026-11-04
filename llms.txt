@@ -73,6 +73,7 @@ JSON for Modern C++ is a C++11 header-only library implementing a JSON value typ
 - [Converting values](https://json.nlohmann.me/features/conversions/index.md)
 - [Creating JSON values](https://json.nlohmann.me/features/creating_values/index.md)
 - [Specializing enum conversion](https://json.nlohmann.me/features/enum_conversion/index.md)
+- [Reading and writing files](https://json.nlohmann.me/features/files/index.md)
 - [Iterators](https://json.nlohmann.me/features/iterators/index.md)
 - [JSON Patch and Diff](https://json.nlohmann.me/features/json_patch/index.md)
 - [JSON Pointer](https://json.nlohmann.me/features/json_pointer/index.md)

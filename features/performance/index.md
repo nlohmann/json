@@ -17,7 +17,7 @@ A `std::istream` (including `std::ifstream`) gets the same bulk scanning: `input
 
 Inputs that are still read one character at a time: iterator ranges that are not contiguous (e.g. `std::list<char>` or `std::istreambuf_iterator<char>`), wide strings, and user-defined adapters. An iterator pair over non-contiguous but random-access storage (e.g. `std::deque<char>::iterator`) gets the first optimization but not the second, since the byte-scanning fast path requires contiguous storage.
 
-Practically: a file can be passed directly to `parse`, which also avoids the memory for a copy of the file. Reading it into a string first is no longer necessary for speed:
+Practically: a file can be passed directly to `parse`, which also avoids the memory for a copy of the file. Reading it into a string first is no longer necessary for speed (this is for `json::parse`; a [`json_document`](https://json.nlohmann.me/features/json_view/index.md) reads a stream into an owned buffer anyway, so for it reading the file into a string and borrowing that is the faster way):
 
 ```
 // fast: the stream buffer's get area is scanned in bulk

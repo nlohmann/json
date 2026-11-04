@@ -19,7 +19,7 @@ Stepper through the six operations: *Next* applies the next operation, *Back* un
 
 Applying a patch without copying
 
-[`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md) leaves the original value unchanged and returns the patched result as a copy. If the document is large and the original value is no longer needed, [`patch_inplace`](https://json.nlohmann.me/api/basic_json/patch_inplace/index.md) applies the same operations in place instead.
+[`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md) leaves the original value unchanged and returns the patched result as a copy. If the document is large and the original value is no longer needed, [`patch_inplace`](https://json.nlohmann.me/api/basic_json/patch_inplace/index.md) applies the same operations in place instead. Unlike `patch`, it is not atomic: if an operation fails, the operations before it stay applied.
 
 Duplicate member names
 

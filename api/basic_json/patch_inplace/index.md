@@ -12,7 +12,7 @@ void patch_inplace(const basic_json& json_patch);
 
 ## Exception safety
 
-No guarantees, value may be corrupted by an unsuccessful patch operation.
+No guarantees: if an operation fails, the operations before it stay applied, and a failing `move` operation may already have removed the value at its "from" location. Use [`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md) if the value must be unchanged after a failed patch.
 
 ## Exceptions
 
@@ -38,7 +38,13 @@ Linear in the size of the JSON value and the length of the JSON patch. As usuall
 
 ## Notes
 
-Unlike [`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md), `patch_inplace` applies the operation "in place" and no copy of the JSON value is created. That makes it faster for large documents by avoiding the copy. However, the JSON value might be corrupted if the function throws an exception.
+Unlike [`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md), `patch_inplace` applies the operation "in place" and no copy of the JSON value is created. That makes it faster for large documents by avoiding the copy.
+
+Not atomic
+
+`patch_inplace` applies the operations one after the other and does not undo them when one fails. After an exception, the value holds the result of the operations before the failing one, and a failing `move` operation (a "remove" followed by an "add") may already have removed the value at its "from" location; see the second example below. [RFC 6902](https://tools.ietf.org/html/rfc6902#section-5) requires that a patch with a failing operation is not deemed successful, but leaves open what happens to the document.
+
+If the value must stay unchanged when the patch fails, use [`patch`](https://json.nlohmann.me/api/basic_json/patch/index.md), which applies the patch to a copy: `j = j.patch(json_patch);`. Validating the patch beforehand is not enough, as "test" operations and missing paths are only detected while the patch is applied.
 
 Duplicate member names inside an operation object are resolved by the parser before the patch is applied (the last one is kept, see [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/#behavior)), so `{"op": "add", "op": "remove", "path": "/a"}` is a `remove` operation.
 

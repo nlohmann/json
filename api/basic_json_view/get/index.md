@@ -10,7 +10,7 @@ Converts the value to `T`.
 For the types below, the conversion works directly on the flat index — no `BasicJsonType` value is built for it:
 
 - `bool`
-- arithmetic types other than `bool` (for a boolean, `0`/`1`, exactly as for [`BasicJsonType::get<T>()`](https://json.nlohmann.me/api/basic_json/get/index.md))
+- arithmetic types other than `bool` (for a boolean, `0`/`1`, exactly as for [`BasicJsonType::get<T>()`](https://json.nlohmann.me/api/basic_json/get/#notes), except for `number_integer_t`, `number_unsigned_t` and `number_float_t`, which throw `type_error.302` for a boolean, as `BasicJsonType::get<T>()` does)
 - `std::nullptr_t`
 - `std::basic_string<char, Traits, Alloc>` (including `string_t`) — a copy of the string
 - [`string_view_t`](https://json.nlohmann.me/api/basic_json_view/#member-types) — **no copy**: the returned view points into the document's [`source()`](https://json.nlohmann.me/api/basic_json_document/source/index.md) text, or, for a string that contains escape sequences, into the document's own buffer of decoded strings (see [`get_string()`](https://json.nlohmann.me/api/basic_json_view/get_string/index.md))
