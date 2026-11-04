@@ -17,9 +17,10 @@
 #endif
 #include <algorithm>
 #include <chrono>
-#include <cstdio>
 #include <fstream>
 #include <functional>
+#include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -64,7 +65,7 @@ static void bench(const char* name, const std::function<std::size_t()>& f)
         v.push_back(std::chrono::duration<double, std::micro>(clk::now() - t0).count() / n);
     }
     std::sort(v.begin(), v.end());
-    std::printf("%s %.3f\n", name, v[4]);
+    std::cout << name << ' ' << std::fixed << std::setprecision(3) << v[4] << '\n';
 }
 
 int main(int, char** argv)
