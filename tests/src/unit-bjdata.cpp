@@ -78,23 +78,25 @@ TEST_CASE("BJData")
 {
     SECTION("binary_reader BJData lookup tables")
     {
-        // both lookups are static member functions
+        // bjd_type_name() is static; is_valid_optimized_type() needs a BJData reader
         std::vector<std::uint8_t> const data;
         using reader_t = nlohmann::detail::binary_reader<json, decltype(nlohmann::detail::input_adapter(data))>;
 
-        // the excluded optimized-type markers must match binary_writer's
-        // is_bjdata_excluded_type_marker(), which encodes the same 8 markers
+        // the markers BJData excludes as optimized types must match
+        // binary_writer's is_bjdata_excluded_type_marker(), which encodes the
+        // same 8 markers
+        const reader_t reader(nlohmann::detail::input_adapter(data), json::input_format_t::bjdata);
         for (const char marker :
-                {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'
+                {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z', 'x'
                 })
         {
-            CHECK(reader_t::is_bjd_excluded_optimized_type(static_cast<unsigned char>(marker)));
+            CHECK(!reader.is_valid_optimized_type(static_cast<unsigned char>(marker)));
         }
         for (const char marker :
-                {'U', 'i', 'u', 'I', 'm', 'l', 'M', 'L', 'd', 'D', 'C', 'B', 'x'
+                {'U', 'i', 'u', 'I', 'm', 'l', 'M', 'L', 'd', 'D', 'C', 'B', 'h'
                 })
         {
-            CHECK(!reader_t::is_bjd_excluded_optimized_type(static_cast<unsigned char>(marker)));
+            CHECK(reader.is_valid_optimized_type(static_cast<unsigned char>(marker)));
         }
 
         // every dtype marker must round-trip to its ND-array type name

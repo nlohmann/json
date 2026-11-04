@@ -3126,22 +3126,19 @@ class binary_writer
                 // negative fixnum
                 write_number(static_cast<std::int8_t>(j.m_data.m_value.number_integer));
             }
-            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int8_t>::min)() &&
-                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int8_t>::max)())
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int8_t>::min)())
             {
                 // int 8
                 oa.write_character(to_char_type(0xD0));
                 write_number(static_cast<std::int8_t>(j.m_data.m_value.number_integer));
             }
-            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int16_t>::min)() &&
-                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int16_t>::max)())
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int16_t>::min)())
             {
                 // int 16
                 oa.write_character(to_char_type(0xD1));
                 write_number(static_cast<std::int16_t>(j.m_data.m_value.number_integer));
             }
-            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int32_t>::min)() &&
-                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int32_t>::max)())
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int32_t>::min)())
             {
                 // int 32
                 oa.write_character(to_char_type(0xD2));
@@ -4057,7 +4054,7 @@ class binary_writer
     Containers, strings, high-precision numbers, booleans and null cannot be
     declared as the single type of an optimized container in BJData; such a
     container is written unoptimized. The reader rejects them with the same
-    list (binary_reader::is_bjd_excluded_optimized_type()).
+    list (binary_reader::is_valid_optimized_type()).
     */
     static constexpr bool is_bjdata_excluded_type_marker(const CharType marker) noexcept
     {
