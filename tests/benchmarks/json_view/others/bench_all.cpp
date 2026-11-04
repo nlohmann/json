@@ -992,11 +992,11 @@ struct bj_counting final : boost::container::pmr::memory_resource
     void* do_allocate(std::size_t n, std::size_t align) override
     {
         bytes += n;
-        return ::operator new(n, std::align_val_t(align));
+        return ::operator new (n, std::align_val_t(align));
     }
     void do_deallocate(void* p, std::size_t n, std::size_t align) override
     {
-        ::operator delete(p, n, std::align_val_t(align));
+        ::operator delete (p, n, std::align_val_t(align));
     }
     bool do_is_equal(const boost::container::pmr::memory_resource& o) const noexcept override
     {
@@ -2806,6 +2806,8 @@ struct context
 
 constexpr yyjson_read_flag yy_raw = YYJSON_READ_NUMBER_AS_RAW;
 
+// the variant tables keep one variant per line, so astyle leaves them alone
+// *INDENT-OFF*
 static std::vector<variant> validate_variants(context& c)
 {
     return
@@ -3064,6 +3066,7 @@ static std::vector<variant> write_variants(const std::string& s)
         {"Boost.JSON: serialize", [bj](const std::string&, result & r) { return emit(r, boost::json::serialize(*bj)); }},
     };
 }
+// *INDENT-ON*
 
 ///////////////////////////////////////////////////////////////////////////////
 // driver
@@ -3377,7 +3380,8 @@ int main(int argc, char** argv)
         }
         const std::vector<bad_input> bad = malformed(s);
         context ctx{dc.base, reused, sj, od, yy, bj, rj};
-        for (const char* const ucp : {"validate", "sum", "select", "edit", "minify", "write"})
+        static const char* const use_cases[] = {"validate", "sum", "select", "edit", "minify", "write"};
+        for (const char* const ucp : use_cases)
         {
             const std::string uc = ucp;
             if ((!only_uc.empty() && uc != only_uc) || (files && (uc == "select" || uc == "edit")))
@@ -3402,9 +3406,12 @@ int main(int argc, char** argv)
                     prefixes.push_back(rest.substr(0, comma));
                 }
                 prefixes.push_back(rest);
-                all.erase(std::remove_if(all.begin(), all.end(), [&](const variant& v)
+                all.erase(std::remove_if(all.begin(), all.end(), [&](const variant & v)
                 {
-                    return std::none_of(prefixes.begin(), prefixes.end(), [&](const std::string& p) { return v.name.compare(0, p.size(), p) == 0; });
+                    return std::none_of(prefixes.begin(), prefixes.end(), [&](const std::string & p)
+                    {
+                        return v.name.compare(0, p.size(), p) == 0;
+                    });
                 }), all.end());
             }
 
