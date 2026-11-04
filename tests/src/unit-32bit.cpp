@@ -97,3 +97,23 @@ TEST_CASE("CBOR")
         }
     }
 }
+
+TEST_CASE("MessagePack")
+{
+    SECTION("parse errors")
+    {
+        SECTION("array/map size equal to the unknown-size sentinel")
+        {
+            // on 32-bit platforms an array 32/map 32 length of 0xFFFFFFFF aliases unknown_size()
+            std::vector<uint8_t> const varr = {0xDD, 0xFF, 0xFF, 0xFF, 0xFF};
+            std::vector<uint8_t> const vmap = {0xDF, 0xFF, 0xFF, 0xFF, 0xFF};
+
+            json _;
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(varr), "[json.exception.out_of_range.408] syntax error while parsing MessagePack size: excessive array size", json::out_of_range&);
+            CHECK(json::from_msgpack(varr, true, false).is_discarded());
+
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(vmap), "[json.exception.out_of_range.408] syntax error while parsing MessagePack size: excessive map size", json::out_of_range&);
+            CHECK(json::from_msgpack(vmap, true, false).is_discarded());
+        }
+    }
+}
