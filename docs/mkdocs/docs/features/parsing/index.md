@@ -35,6 +35,8 @@ std::ifstream f("example.json");
 json data = json::parse(f);
 ```
 
+See [Reading and writing files](../files.md) for checking that the file was opened and for writing files safely.
+
 The input must be encoded in UTF-8; other encodings are not supported. The exception is wide-character input, which
 is read as UTF-16 or UTF-32 — depending on the character type — and converted to UTF-8; see the
 [`parse`](../../api/basic_json/parse.md) page for an example. A single input may contain only one JSON value.
@@ -83,6 +85,9 @@ Parsing a file from a `#!cpp std::ifstream` is therefore only about 10 to 20 % s
 ahead: after parsing, it is positioned exactly as if every character had been read one at a time, so
 [`operator>>`](../../api/operator_gtgt.md) can still read several values from one stream (see also
 [JSON Lines](json_lines.md)).
+
+This does not hold for [`json_document`](../json_view.md): it reads a stream into a buffer it owns, so the stream saves
+no memory, and reading the file into a `#!cpp std::string` yourself and borrowing it is about 6 to 12 % faster.
 
 Two macros switch these optimizations off without changing any result:
 [`JSON_DISABLE_STREAM_BULK_SCAN`](../../api/macros/json_disable_stream_bulk_scan.md) for stream buffers that do not
