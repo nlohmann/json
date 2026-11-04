@@ -86,6 +86,9 @@ ahead: after parsing, it is positioned exactly as if every character had been re
 [`operator>>`](../../api/operator_gtgt.md) can still read several values from one stream (see also
 [JSON Lines](json_lines.md)).
 
+This does not hold for [`json_document`](../json_view.md): it reads a stream into a buffer it owns, so the stream saves
+no memory, and reading the file into a `#!cpp std::string` yourself and borrowing it is about 6 to 12 % faster.
+
 Two macros switch these optimizations off without changing any result:
 [`JSON_DISABLE_STREAM_BULK_SCAN`](../../api/macros/json_disable_stream_bulk_scan.md) for stream buffers that do not
 follow the usual `std::streambuf` contract, and
