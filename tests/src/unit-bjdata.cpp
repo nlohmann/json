@@ -85,7 +85,7 @@ TEST_CASE("BJData")
         // the markers BJData excludes as optimized types must match
         // binary_writer's is_bjdata_excluded_type_marker(), which encodes the
         // same 8 markers
-        reader_t reader(nlohmann::detail::input_adapter(data), json::input_format_t::bjdata);
+        const reader_t reader(nlohmann::detail::input_adapter(data), json::input_format_t::bjdata);
         for (const char marker :
                 {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z', 'x'
                 })
