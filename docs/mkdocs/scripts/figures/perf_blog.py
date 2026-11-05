@@ -511,7 +511,7 @@ def price():
     lo, hi = -50, 70
     X = lambda pct: L + (pct - lo) / (hi - lo) * (R - L)
     pct = lambda new, old: round((new / old - 1) * 100)
-    lab = lambda p: (MINUS + "%d %%" % -p) if p < 0 else "+%d %%" % p
+    lab = lambda p: (MINUS + "%d%%" % -p) if p < 0 else "+%d%%" % p
     bh, pitch, gap = 11, 14, 10
     b, desc = [], []
     # the key above the plot
