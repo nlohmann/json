@@ -889,7 +889,7 @@ from JSON text.
 
 !!! note
 
-    This exception was added in version 3.13.0, together with editable [`json_document`s](../features/json_view/index.md).
+    This exception was added in version 3.13.0, together with editable [`json_document`s](../features/json_view/editing.md).
 
 ### json.exception.type_error.320
 

@@ -76,10 +76,8 @@ Its body may only use what views and `basic_json` have in common: the type check
 functions a view does not have; such a type is converted through `materialize()`. A `from_json()` for `json` only is
 converted through `materialize()` as well.
 
-One thing differs when a `from_json()` reads the view: members looked up by name (`at()`, `value()`, ... and thus
-the macros) find the **first** member with a repeated key, see [Duplicate keys](differences.md#duplicate-keys);
-`#!cpp materialize().get<T>()` would see the last one. Containers built from an object, such as `#!cpp std::map`,
-keep the **last** value either way, as [`parse()`](../../api/basic_json/parse.md) does.
+Reading the view and `#!cpp materialize().get<T>()` give the same result, except for an object with a repeated key;
+see [Duplicate keys](differences.md#duplicate-keys).
 
 `to_json()` is unaffected: it writes `basic_json` values, never views.
 

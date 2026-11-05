@@ -20,7 +20,7 @@ does not: what a document parses differently, what a view's functions do differe
 | [Number spelling](#serialization) | lost when parsing | kept: `number_token()`, `number_format::source` | — |
 | [Comparison](#comparison) | `==`, `!=`, `<`, `<=>`, ... | `==` and `!=` only | `materialize()` |
 | [Modification](#what-a-view-does-not-have) | member functions of the value | only through an [editable document](editing.md) | `materialize()` |
-| [Iterators](#what-a-view-does-not-have) | bidirectional, reverse iterators | forward only | `materialize()` |
+| [Iterators](#what-a-view-does-not-have) | bidirectional (`rbegin()`/`rend()`) | forward only | `materialize()` |
 
 <p class="nj-table-caption" markdown>Each row is one difference; the last column names the way to get `basic_json`'s behavior from a view, where there is one.</p>
 
@@ -201,7 +201,6 @@ A view is a read-only handle. These parts of the `basic_json` interface have no 
   [`set`](../../api/basic_json_document/set.md), [`push_back`](../../api/basic_json_document/push_back.md),
   [`insert`](../../api/basic_json_document/insert.md), and [`erase`](../../api/basic_json_document/erase.md).
 - **Reverse iteration.** A view's iterator is a forward iterator; there is no `rbegin()`/`rend()`.
-- **Ordering comparisons**, see [Comparison](#comparison).
 - **JSON Patch and friends**: [`patch()`](../../api/basic_json/patch.md),
   [`merge_patch()`](../../api/basic_json/merge_patch.md), [`diff()`](../../api/basic_json/diff.md),
   [`flatten()`](../../api/basic_json/flatten.md).

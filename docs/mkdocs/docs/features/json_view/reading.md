@@ -25,7 +25,7 @@ Two conversions never copy at all:
   rounding it into a `#!cpp double`/`#!cpp int64_t` the way `#!cpp get<T>()` (and
   [`basic_json::parse()`](../../api/basic_json/parse.md)) would.
 
-Both results are only valid as long as the view — and, for a string with no escapes, the borrowed source text — is.
+Both results are only valid as long as the document and, if it [borrows its source text](lifetime.md), that text.
 
 ### `string_view` members
 
@@ -58,12 +58,8 @@ const record r = doc.root().get<record>();             // r.name points into tex
 ## Writing a view back
 
 [`dump()`](../../api/basic_json_view/dump.md) serializes a view directly from the flat index, without ever building a
-`basic_json` value. An object's members are written in document order, not sorted by key, and *every* occurrence of a
-repeated key is written, not only the last one — the same two ways
-[iteration differs](differences.md#object-member-order) from a
-[`materialize()`](../../api/basic_json_view/materialize.md)d value, see
-[Duplicate keys](differences.md#duplicate-keys). `#!cpp materialize().dump()` gives a different result in both
-respects for a `json_view`.
+`basic_json` value. It writes object members in document order and every occurrence of a repeated key, so it can
+differ from `#!cpp materialize().dump()`; see [Serialization](differences.md#serialization).
 
 By default, numbers are written the way [`basic_json::dump()`](../../api/basic_json/dump.md) would.
 [`number_format::source`](../../api/basic_json_view/number_format.md) instead copies every number exactly as it was
