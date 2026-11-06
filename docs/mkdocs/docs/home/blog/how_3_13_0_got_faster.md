@@ -1386,6 +1386,12 @@ needed, it is closer: on the Mac, a SAX handler is on par with Boost.JSON's, and
 Boost.JSON validates in 0.65–0.69× and sums in 0.75–0.79× the time). `dump()` writes faster than Boost.JSON, RapidJSON
 and serde_json, and about as fast as Glaze.
 
+Much of Boost.JSON's lead in building a tree comes from its allocator: here it builds the tree in a
+`monotonic_resource`, an arena that is freed in one go, which saves it 28–41%. With its default allocator, which
+allocates every string, array, and object on its own as `json` does, `boost::json::parse()` with precise numbers takes
+as long as `json::parse()` on `twitter.json`, 5% longer on `citm_catalog.json`, and 17% less time on `canada.json` (on
+the Mac, freeing the tree included).
+
 ### Results on x86-64
 
 On x86-64, the same programs ran on a virtual server with Ubuntu 26.04 whose CPU presents itself as Haswell, pinned to
