@@ -4940,12 +4940,15 @@ class binary_reader
         {
             return false;
         }
+        // (len > 0, so the unsigned type holds it; casting a signed char
+        // straight to std::size_t would trip bugprone-signed-char-misuse)
+        const auto ulen = static_cast<typename std::make_unsigned<NumberType>::type>(len);
         const std::size_t remaining = ia.bulk_remaining();
-        if (static_cast<std::uintmax_t>(len) > static_cast<std::uintmax_t>(remaining))
+        if (static_cast<std::uintmax_t>(ulen) > static_cast<std::uintmax_t>(remaining))
         {
             return false; // (the loop reports the premature end)
         }
-        const auto n = static_cast<std::size_t>(len);
+        const auto n = static_cast<std::size_t>(ulen);
         result.append(reinterpret_cast<const typename string_t::value_type*>(ia.bulk_data()), n);
         ia.bulk_skip(n);
         chars_read += n;
