@@ -834,8 +834,10 @@ class serializer
         const uint8x8_t lo = vld1_u8(reinterpret_cast<const std::uint8_t*>(p));
         const uint8x8_t hi = vld1_u8(reinterpret_cast<const std::uint8_t*>(p + n - 8));
         const uint8x16_t in = vcombine_u8(lo, hi);
-        const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))),
-                                            vorrq_u8(vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20)), vceqq_u8(in, vdupq_n_u8(0x7F))));
+        // (int8_t)(c ^ 2) < 33: the quote, the control characters and the
+        // non-ASCII bytes (see vector_plain_run())
+        const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('\\')), vceqq_u8(in, vdupq_n_u8(0x7F))),
+                                            vcltq_s8(vreinterpretq_s8_u8(veorq_u8(in, vdupq_n_u8(2))), vdupq_n_s8(33)));
         if (vmaxvq_u8(special) != 0)
         {
             return false;
@@ -846,8 +848,8 @@ class serializer
         const __m128i lo = _mm_loadl_epi64(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
         const __m128i hi = _mm_loadl_epi64(static_cast<const __m128i*>(static_cast<const void*>(p + n - 8))); // NOLINT(bugprone-casting-through-void)
         const __m128i in = _mm_unpacklo_epi64(lo, hi);
-        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
-                                             _mm_or_si128(_mm_cmplt_epi8(in, _mm_set1_epi8(0x20)), _mm_cmpeq_epi8(in, _mm_set1_epi8(0x7F))));
+        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('\\')), _mm_cmpeq_epi8(in, _mm_set1_epi8(0x7F))),
+                                             _mm_cmplt_epi8(_mm_xor_si128(in, _mm_set1_epi8(2)), _mm_set1_epi8(33)));
         if (_mm_movemask_epi8(special) != 0)
         {
             return false;
@@ -866,10 +868,13 @@ class serializer
 #if JSON_SCAN_NEON
         const uint8x16_t a = vld1q_u8(reinterpret_cast<const std::uint8_t*>(p));
         const uint8x16_t b = vld1q_u8(reinterpret_cast<const std::uint8_t*>(p + n - 16));
-        const uint8x16_t special = vorrq_u8(vorrq_u8(vorrq_u8(vceqq_u8(a, vdupq_n_u8('"')), vceqq_u8(a, vdupq_n_u8('\\'))),
-                                            vorrq_u8(vceqq_u8(b, vdupq_n_u8('"')), vceqq_u8(b, vdupq_n_u8('\\')))),
-                                            vorrq_u8(vorrq_u8(vcltq_s8(vreinterpretq_s8_u8(a), vdupq_n_s8(0x20)), vcltq_s8(vreinterpretq_s8_u8(b), vdupq_n_s8(0x20))),
-                                                vorrq_u8(vceqq_u8(a, vdupq_n_u8(0x7F)), vceqq_u8(b, vdupq_n_u8(0x7F)))));
+        // (int8_t)(c ^ 2) < 33: the quote, the control characters and the
+        // non-ASCII bytes (see vector_plain_run())
+        const uint8x16_t flip = vdupq_n_u8(2);
+        const int8x16_t limit = vdupq_n_s8(33);
+        const uint8x16_t special = vorrq_u8(vorrq_u8(vorrq_u8(vceqq_u8(a, vdupq_n_u8('\\')), vceqq_u8(b, vdupq_n_u8('\\'))),
+                                            vorrq_u8(vceqq_u8(a, vdupq_n_u8(0x7F)), vceqq_u8(b, vdupq_n_u8(0x7F)))),
+                                            vorrq_u8(vcltq_s8(vreinterpretq_s8_u8(veorq_u8(a, flip)), limit), vcltq_s8(vreinterpretq_s8_u8(veorq_u8(b, flip)), limit)));
         if (vmaxvq_u8(special) != 0)
         {
             return false;
@@ -879,14 +884,15 @@ class serializer
 #else
         const __m128i a = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
         const __m128i b = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p + n - 16))); // NOLINT(bugprone-casting-through-void)
-        const __m128i quote = _mm_set1_epi8('"');
+        // (int8_t)(c ^ 2) < 33: the quote, the control characters and the
+        // non-ASCII bytes (see vector_plain_run())
         const __m128i backslash = _mm_set1_epi8('\\');
-        const __m128i space = _mm_set1_epi8(0x20);
         const __m128i del = _mm_set1_epi8(0x7F);
-        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(a, quote), _mm_cmpeq_epi8(a, backslash)),
-                                             _mm_or_si128(_mm_cmpeq_epi8(b, quote), _mm_cmpeq_epi8(b, backslash))),
-                                             _mm_or_si128(_mm_or_si128(_mm_cmplt_epi8(a, space), _mm_cmplt_epi8(b, space)),
-                                                 _mm_or_si128(_mm_cmpeq_epi8(a, del), _mm_cmpeq_epi8(b, del))));
+        const __m128i flip = _mm_set1_epi8(2);
+        const __m128i limit = _mm_set1_epi8(33);
+        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(a, backslash), _mm_cmpeq_epi8(b, backslash)),
+                                             _mm_or_si128(_mm_cmpeq_epi8(a, del), _mm_cmpeq_epi8(b, del))),
+                                             _mm_or_si128(_mm_cmplt_epi8(_mm_xor_si128(a, flip), limit), _mm_cmplt_epi8(_mm_xor_si128(b, flip), limit)));
         if (_mm_movemask_epi8(special) != 0)
         {
             return false;

@@ -12361,8 +12361,12 @@ namespace detail
 character, or not ASCII, 16 bytes per step
 
 Stops at such a byte, or where fewer than 16 bytes are left (the caller tells
-the two apart). A signed compare with 0x20 finds control characters and
-non-ASCII bytes at once.
+the two apart). One signed compare finds the quote, the control characters and
+the non-ASCII bytes at once: flipping bit 1 maps 0x00-0x1F onto itself and the
+quote (0x22) onto 0x20, keeps 0x80-0xFF negative, and maps every other byte to
+33 or more, so these are exactly the bytes with (int8_t)(c ^ 2) < 33 (see
+D. Lemire, "Detect control characters, quotes and backslashes efficiently
+using SWAR", 2025). The backslash needs its own compare.
 */
 JSON_HEDLEY_ALWAYS_INLINE const unsigned char* vector_plain_run(const unsigned char* p, const unsigned char* e) noexcept
 {
@@ -12370,8 +12374,8 @@ JSON_HEDLEY_ALWAYS_INLINE const unsigned char* vector_plain_run(const unsigned c
     {
 #if JSON_SCAN_NEON
         const uint8x16_t in = vld1q_u8(p);
-        const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))),
-                                            vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20)));
+        const uint8x16_t special = vorrq_u8(vceqq_u8(in, vdupq_n_u8('\\')),
+                                            vcltq_s8(vreinterpretq_s8_u8(veorq_u8(in, vdupq_n_u8(2))), vdupq_n_s8(33)));
         // one nibble per byte (the usual NEON replacement of x86's movemask, see
         // D. Kutenin, "Porting x86 vector bitmask optimizations to Arm NEON", 2022)
         const std::uint64_t bits = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(special), 4)), 0);
@@ -12381,8 +12385,8 @@ JSON_HEDLEY_ALWAYS_INLINE const unsigned char* vector_plain_run(const unsigned c
         }
 #else
         const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
-        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
-                                             _mm_cmplt_epi8(in, _mm_set1_epi8(0x20)));
+        const __m128i special = _mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('\\')),
+                                             _mm_cmplt_epi8(_mm_xor_si128(in, _mm_set1_epi8(2)), _mm_set1_epi8(33)));
         const auto bits = static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
         if (bits != 0)
         {
@@ -12519,7 +12523,8 @@ JSON_SCAN_SSSE3_TARGET JSON_HEDLEY_NEVER_INLINE inline bool vector_utf8_run(cons
     while (e - block >= 16)
     {
         const uint8x16_t in = vld1q_u8(block);
-        const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))), vcltq_u8(in, vdupq_n_u8(0x20)));
+        // the quote and the control characters: (c ^ 2) < 33 (see vector_plain_run())
+        const uint8x16_t special = vorrq_u8(vceqq_u8(in, vdupq_n_u8('\\')), vcltq_u8(veorq_u8(in, vdupq_n_u8(2)), vdupq_n_u8(33)));
         const uint8x16_t prev1 = vextq_u8(prev, in, 15);
         const uint8x16_t sc = vandq_u8(vandq_u8(vqtbl1q_u8(t1h, vshrq_n_u8(prev1, 4)), vqtbl1q_u8(t1l, vandq_u8(prev1, vdupq_n_u8(0x0F)))), vqtbl1q_u8(t2h, vshrq_n_u8(in, 4)));
         const uint8x16_t must23 = vorrq_u8(vqsubq_u8(vextq_u8(prev, in, 14), vdupq_n_u8(0xE0 - 0x80)), vqsubq_u8(vextq_u8(prev, in, 13), vdupq_n_u8(0xF0 - 0x80)));
@@ -12559,8 +12564,10 @@ JSON_SCAN_SSSE3_TARGET JSON_HEDLEY_NEVER_INLINE inline bool vector_utf8_run(cons
     while (e - block >= 16)
     {
         const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block))); // NOLINT(bugprone-casting-through-void)
-        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
-                                             _mm_cmpeq_epi8(_mm_subs_epu8(in, _mm_set1_epi8(0x1F)), zero)); // in < 0x20
+        // the quote and the control characters: (c ^ 2) < 33, that is,
+        // (c ^ 2) - 32 saturates to 0 (see vector_plain_run())
+        const __m128i special = _mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('\\')),
+                                             _mm_cmpeq_epi8(_mm_subs_epu8(_mm_xor_si128(in, _mm_set1_epi8(2)), _mm_set1_epi8(32)), zero));
         const __m128i prev1 = _mm_alignr_epi8(in, prev, 15);
         const __m128i sc = _mm_and_si128(_mm_and_si128(_mm_shuffle_epi8(t1h, _mm_and_si128(_mm_srli_epi16(prev1, 4), nibble)),
                                          _mm_shuffle_epi8(t1l, _mm_and_si128(prev1, nibble))),
@@ -37344,8 +37351,10 @@ class serializer
         const uint8x8_t lo = vld1_u8(reinterpret_cast<const std::uint8_t*>(p));
         const uint8x8_t hi = vld1_u8(reinterpret_cast<const std::uint8_t*>(p + n - 8));
         const uint8x16_t in = vcombine_u8(lo, hi);
-        const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))),
-                                            vorrq_u8(vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20)), vceqq_u8(in, vdupq_n_u8(0x7F))));
+        // (int8_t)(c ^ 2) < 33: the quote, the control characters and the
+        // non-ASCII bytes (see vector_plain_run())
+        const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('\\')), vceqq_u8(in, vdupq_n_u8(0x7F))),
+                                            vcltq_s8(vreinterpretq_s8_u8(veorq_u8(in, vdupq_n_u8(2))), vdupq_n_s8(33)));
         if (vmaxvq_u8(special) != 0)
         {
             return false;
@@ -37356,8 +37365,8 @@ class serializer
         const __m128i lo = _mm_loadl_epi64(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
         const __m128i hi = _mm_loadl_epi64(static_cast<const __m128i*>(static_cast<const void*>(p + n - 8))); // NOLINT(bugprone-casting-through-void)
         const __m128i in = _mm_unpacklo_epi64(lo, hi);
-        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
-                                             _mm_or_si128(_mm_cmplt_epi8(in, _mm_set1_epi8(0x20)), _mm_cmpeq_epi8(in, _mm_set1_epi8(0x7F))));
+        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('\\')), _mm_cmpeq_epi8(in, _mm_set1_epi8(0x7F))),
+                                             _mm_cmplt_epi8(_mm_xor_si128(in, _mm_set1_epi8(2)), _mm_set1_epi8(33)));
         if (_mm_movemask_epi8(special) != 0)
         {
             return false;
@@ -37376,10 +37385,13 @@ class serializer
 #if JSON_SCAN_NEON
         const uint8x16_t a = vld1q_u8(reinterpret_cast<const std::uint8_t*>(p));
         const uint8x16_t b = vld1q_u8(reinterpret_cast<const std::uint8_t*>(p + n - 16));
-        const uint8x16_t special = vorrq_u8(vorrq_u8(vorrq_u8(vceqq_u8(a, vdupq_n_u8('"')), vceqq_u8(a, vdupq_n_u8('\\'))),
-                                            vorrq_u8(vceqq_u8(b, vdupq_n_u8('"')), vceqq_u8(b, vdupq_n_u8('\\')))),
-                                            vorrq_u8(vorrq_u8(vcltq_s8(vreinterpretq_s8_u8(a), vdupq_n_s8(0x20)), vcltq_s8(vreinterpretq_s8_u8(b), vdupq_n_s8(0x20))),
-                                                vorrq_u8(vceqq_u8(a, vdupq_n_u8(0x7F)), vceqq_u8(b, vdupq_n_u8(0x7F)))));
+        // (int8_t)(c ^ 2) < 33: the quote, the control characters and the
+        // non-ASCII bytes (see vector_plain_run())
+        const uint8x16_t flip = vdupq_n_u8(2);
+        const int8x16_t limit = vdupq_n_s8(33);
+        const uint8x16_t special = vorrq_u8(vorrq_u8(vorrq_u8(vceqq_u8(a, vdupq_n_u8('\\')), vceqq_u8(b, vdupq_n_u8('\\'))),
+                                            vorrq_u8(vceqq_u8(a, vdupq_n_u8(0x7F)), vceqq_u8(b, vdupq_n_u8(0x7F)))),
+                                            vorrq_u8(vcltq_s8(vreinterpretq_s8_u8(veorq_u8(a, flip)), limit), vcltq_s8(vreinterpretq_s8_u8(veorq_u8(b, flip)), limit)));
         if (vmaxvq_u8(special) != 0)
         {
             return false;
@@ -37389,14 +37401,15 @@ class serializer
 #else
         const __m128i a = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
         const __m128i b = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p + n - 16))); // NOLINT(bugprone-casting-through-void)
-        const __m128i quote = _mm_set1_epi8('"');
+        // (int8_t)(c ^ 2) < 33: the quote, the control characters and the
+        // non-ASCII bytes (see vector_plain_run())
         const __m128i backslash = _mm_set1_epi8('\\');
-        const __m128i space = _mm_set1_epi8(0x20);
         const __m128i del = _mm_set1_epi8(0x7F);
-        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(a, quote), _mm_cmpeq_epi8(a, backslash)),
-                                             _mm_or_si128(_mm_cmpeq_epi8(b, quote), _mm_cmpeq_epi8(b, backslash))),
-                                             _mm_or_si128(_mm_or_si128(_mm_cmplt_epi8(a, space), _mm_cmplt_epi8(b, space)),
-                                                 _mm_or_si128(_mm_cmpeq_epi8(a, del), _mm_cmpeq_epi8(b, del))));
+        const __m128i flip = _mm_set1_epi8(2);
+        const __m128i limit = _mm_set1_epi8(33);
+        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(a, backslash), _mm_cmpeq_epi8(b, backslash)),
+                                             _mm_or_si128(_mm_cmpeq_epi8(a, del), _mm_cmpeq_epi8(b, del))),
+                                             _mm_or_si128(_mm_cmplt_epi8(_mm_xor_si128(a, flip), limit), _mm_cmplt_epi8(_mm_xor_si128(b, flip), limit)));
         if (_mm_movemask_epi8(special) != 0)
         {
             return false;
