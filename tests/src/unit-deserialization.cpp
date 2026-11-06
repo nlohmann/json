@@ -1428,6 +1428,18 @@ std::string outcome_of(Iterator first, Iterator last)
     }
 }
 
+/// the bytes of @a text as a vector of @a T (explicit casts: no implicit char conversion)
+template<typename T>
+std::vector<T> bytes_as(const std::string& text)
+{
+    std::vector<T> result;
+    for (const char c : text)
+    {
+        result.push_back(static_cast<T>(c));
+    }
+    return result;
+}
+
 /// a std::string, std::vector<char>, <unsigned char> and <signed char> as
 /// iterator pairs: the same as the byte path (std::list iterators)
 void check_iterator_pairs(const std::string& text)
@@ -1444,10 +1456,10 @@ void check_iterator_pairs(const std::string& text)
 
     const std::vector<char> vc(text.begin(), text.end());
     CHECK(outcome_of(vc.begin(), vc.end()) == expected);
-    const std::vector<unsigned char> vu(text.begin(), text.end());
+    const std::vector<unsigned char> vu = bytes_as<unsigned char>(text);
     CHECK(outcome_of(vu.begin(), vu.end()) == expected);
     CHECK(json::accept(vu.begin(), vu.end()) == expected_accept);
-    const std::vector<signed char> vs(text.begin(), text.end());
+    const std::vector<signed char> vs = bytes_as<signed char>(text);
     CHECK(outcome_of(vs.begin(), vs.end()) == expected);
 }
 }  // namespace
