@@ -52,9 +52,9 @@ file_ptr open_with(const char* name, const std::string& content)
 // the smallest size setvbuf() accepts for _IOFBF: the Microsoft C runtime
 // rejects sizes below 2 as an invalid parameter, which ends the process
 #if defined(_WIN32)
-constexpr int min_full_buffer = 2;
+    constexpr int min_full_buffer = 2;
 #else
-constexpr int min_full_buffer = 1;
+    constexpr int min_full_buffer = 1;
 #endif
 
 // The stdio lock is recursive, so whether parsing released it can only be
