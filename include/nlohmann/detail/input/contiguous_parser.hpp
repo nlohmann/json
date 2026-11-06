@@ -646,7 +646,9 @@ done:
         }
         else if (i < avail && data[i] >= '1' && data[i] <= '9')
         {
-            i = accumulate_digits(data, i, avail, w);
+            // accept() needs the value only for a float with a large exponent,
+            // which computes it below; its handler ignores the values
+            i = keep_values() ? accumulate_digits(data, i, avail, w) : skip_digits(data, i, avail);
         }
         else
         {
@@ -664,7 +666,7 @@ done:
                 return false;
             }
             const std::size_t fraction_begin = i;
-            i = accumulate_digits(data, i, avail, w);
+            i = keep_values() ? accumulate_digits(data, i, avail, w) : skip_digits(data, i, avail);
             fraction_digits = i - fraction_begin;
             digit_count += fraction_digits;
         }
@@ -752,6 +754,16 @@ done:
             if (!keep_values() && s.exponent + 19 <= std::numeric_limits<number_float_t>::max_exponent10)
             {
                 return report(sax->number_float(value, number_text(data, data + i)));
+            }
+            if (!keep_values())
+            {
+                // the digits were skipped: their value now
+                s.w = 0;
+                const std::size_t integer_end = accumulate_digits(data, integer_begin, avail, s.w);
+                if (dot_index != std::string::npos)
+                {
+                    static_cast<void>(accumulate_digits(data, integer_end + 1, avail, s.w));
+                }
             }
             value = decimal_to_float<number_float_t>(s);
         }

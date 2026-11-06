@@ -518,6 +518,33 @@ TEST_CASE("contiguous parser")
         }
     }
 
+    SECTION("accept() of floats near the largest value")
+    {
+        // accept() skips digits without their value and computes it only for
+        // a float whose exponent may reach the largest value
+        for (const char* number :
+                {"17976931348623158e292", "17976931348623159e292", "1797693134862315.8e293", "1797693134862315.9e293",
+                 "0.17976931348623158e309", "0.17976931348623159e309", "-17976931348623159e292", "9999999999999999999e289"
+                })
+        {
+            check_both(number);
+            check_both(std::string("[") + number + "]");
+        }
+        CHECK(json::accept("17976931348623158e292"));
+        CHECK_FALSE(json::accept("17976931348623159e292"));
+        CHECK(json::accept("[1797693134862315.8e293]"));
+        CHECK_FALSE(json::accept("[1797693134862315.9e293]"));
+        CHECK(json::accept("0.17976931348623158e309"));
+        CHECK_FALSE(json::accept("0.17976931348623159e309"));
+        CHECK_FALSE(json::accept("-17976931348623159e292"));
+
+        using narrow_json = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int32_t, std::uint32_t, float>;
+        check_same<narrow_json>("34028235e31");
+        check_same<narrow_json>("34028236e31");
+        CHECK(narrow_json::accept("34028235e31"));
+        CHECK_FALSE(narrow_json::accept("34028236e31"));
+    }
+
     SECTION("callbacks, comments and trailing commas take the library parser")
     {
         // (the results are those of the options; the contiguous parser does not support them)
