@@ -23962,7 +23962,7 @@ class contiguous_parser
 #define JSON_CONTIGUOUS_OPEN(is_object)                                      \
     do                                                                       \
     {                                                                        \
-        if (JSON_HEDLEY_UNLIKELY(depth != 0 && (depth % 64) == 0))           \
+        if (JSON_HEDLEY_UNLIKELY(depth != 0 && (depth % 64) == 0)) /* NOLINT(readability/braces) */ \
         {                                                                    \
             outer.push_back(kinds);                                          \
             kinds = 0;                                                       \
@@ -24068,13 +24068,13 @@ class contiguous_parser
         // what may follow a value in an array: a comma and the next value, or the end
 #define JSON_CONTIGUOUS_AFTER_ELEMENT                                \
     JSON_CONTIGUOUS_WS();                                            \
-    if (JSON_HEDLEY_LIKELY(JSON_CONTIGUOUS_CUR() == ','))            \
+    if (JSON_HEDLEY_LIKELY(JSON_CONTIGUOUS_CUR() == ',')) /* NOLINT(readability/braces) */ \
     {                                                                \
         ++p;                                                         \
         JSON_CONTIGUOUS_WS();                                        \
         goto array_value;                                            \
     }                                                                \
-    if (JSON_HEDLEY_LIKELY(JSON_CONTIGUOUS_CUR() == ']'))            \
+    if (JSON_HEDLEY_LIKELY(JSON_CONTIGUOUS_CUR() == ']')) /* NOLINT(readability/braces) */ \
     {                                                                \
         ++p;                                                         \
         if (JSON_HEDLEY_UNLIKELY(!report(sax->end_array())))                 \
@@ -24088,13 +24088,13 @@ class contiguous_parser
         // what may follow a value in an object: a comma and the next member, or the end
 #define JSON_CONTIGUOUS_AFTER_MEMBER                                 \
     JSON_CONTIGUOUS_WS();                                            \
-    if (JSON_HEDLEY_LIKELY(JSON_CONTIGUOUS_CUR() == ','))            \
+    if (JSON_HEDLEY_LIKELY(JSON_CONTIGUOUS_CUR() == ',')) /* NOLINT(readability/braces) */ \
     {                                                                \
         ++p;                                                         \
         JSON_CONTIGUOUS_WS();                                        \
         goto object_key;                                             \
     }                                                                \
-    if (JSON_HEDLEY_LIKELY(JSON_CONTIGUOUS_CUR() == '}'))            \
+    if (JSON_HEDLEY_LIKELY(JSON_CONTIGUOUS_CUR() == '}')) /* NOLINT(readability/braces) */ \
     {                                                                \
         ++p;                                                         \
         if (JSON_HEDLEY_UNLIKELY(!report(sax->end_object())))                \
@@ -24678,6 +24678,7 @@ class json_sax_error_reporter : public json_sax_acceptor<BasicJsonType>
     template<class Exception>
     bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/, const Exception& ex)
     {
+        static_cast<void>(ex); // (unused without exceptions)
         if (allow_exceptions)
         {
             JSON_THROW(ex);

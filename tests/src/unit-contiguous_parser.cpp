@@ -86,10 +86,10 @@ std::string describe_value(const Json& j, int depth = 0)
     return out;
 }
 
+#if !defined(JSON_NOEXCEPTION)
 template<typename Json, typename Parse>
 std::string outcome(Parse parse)
 {
-#if !defined(JSON_NOEXCEPTION)
     try
     {
         return describe_value(parse());
@@ -98,10 +98,8 @@ std::string outcome(Parse parse)
     {
         return std::string("exception: ") + e.what();
     }
-#else
-    return describe_value(parse());
-#endif
 }
+#endif
 
 /// every SAX event with its values, the text of float tokens, and the parse
 /// error with its position, token and message; returns false after
@@ -220,6 +218,8 @@ void check_same(const std::string& text)
     CAPTURE(text)
     const std::list<char> bytes(text.begin(), text.end());
 
+#if !defined(JSON_NOEXCEPTION)
+    // with exceptions: the value, or the same exception for both
     const std::string contiguous = outcome<Json>([&]
     {
         return Json::parse(text);
@@ -229,6 +229,7 @@ void check_same(const std::string& text)
         return Json::parse(bytes.begin(), bytes.end());
     });
     CHECK(contiguous == byte_path);
+#endif
 
     // without exceptions: the value, or discarded for both
     const Json c = Json::parse(text, nullptr, false);
