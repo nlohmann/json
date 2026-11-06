@@ -1457,7 +1457,7 @@ TEST_CASE("deserialization from iterator pairs of std::string and std::vector")
     // these are read as the pointer range they are, also before C++20
     for (const char* text :
             {
-                "", " ", "[1, 2.5, \"a\", true, null, {\"k\": [\"v\"]}]", "[1, 2", "{\"a\" 1}", "\"\xC3\xA4\"", "\"\xC3\"", "[1]x", "1e400"
+                "", " ", R"([1, 2.5, "a", true, null, {"k": ["v"]}])", "[1, 2", R"({"a" 1})", "\"\xC3\xA4\"", "\"\xC3\"", "[1]x", "1e400"
             })
     {
         check_iterator_pairs(text);
@@ -1467,6 +1467,7 @@ TEST_CASE("deserialization from iterator pairs of std::string and std::vector")
     // an empty range is not dereferenced
     std::string empty;
     CHECK_FALSE(json::accept(empty.begin(), empty.end()));
-    CHECK_THROWS_AS(json::parse(empty.begin(), empty.end()), json::parse_error&);
+    json _;
+    CHECK_THROWS_AS(_ = json::parse(empty.begin(), empty.end()), json::parse_error&);
 }
 #endif
