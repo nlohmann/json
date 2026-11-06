@@ -336,7 +336,8 @@ Two details make this portable C++11. The word is loaded with `std::memcpy`, whi
 which, unlike a `reinterpret_cast`, doesn't break the aliasing rules. And the load always produces the bytes in
 little-endian order, so the first byte of the text is the lowest byte of the word everywhere; a big-endian target
 assembles the word from bytes, which compilers fold into a load and a byte swap. Every loop checks that eight bytes
-remain before it loads, and finishes the last zero to seven bytes one at a time, so nothing is read past the input.
+remain before it loads, and finishes the remaining one to seven bytes one at a time, so nothing is read past the
+input.
 
 The same kind of word test now runs in several places:
 
@@ -399,10 +400,12 @@ and needed a stack slot.
 [`json_document`](../../features/json_view.md), the new document type of `json_view.hpp`, also skips the digits after a
 decimal point 16 bytes at a time with SSE2: a compare and a bit mask instead of a branch per digit, about 33% of the
 instructions for a 12-digit fraction. Parsing `canada.json` got 22% faster on x86-64, a file of 10,000 floats 28–32%.
-One row got slower: with GCC 16, `citm_catalog.json` took 8% longer with the same number of instructions. More of its
-hot jumps now crossed a 32-byte boundary, which the microcode fix for Intel's JCC erratum makes slow on our server;
-assembling with `-Wa,-mbranches-within-32B-boundaries` shrinks the loss to about 4%. We didn't change the code, and all
-numbers in this post are measured without that flag.
+
+One row got slower: with GCC 16, `citm_catalog.json` took 8% longer with the same number of instructions, because more
+of its hot jumps now crossed a 32-byte boundary. The microcode fix for Intel's JCC erratum makes that slow on our
+server. Assembling with `-Wa,-mbranches-within-32B-boundaries` shrinks the loss to about 4%, but a header-only library
+can't choose the assembler flags of the programs that include it, so we left the code as it is, and all numbers in this
+post are measured without that flag.
 
 ### Validating UTF-8 16 bytes at a time
 
@@ -727,8 +730,8 @@ The binary readers also stopped taking every element through their general dispa
 MessagePack readers read the numbers, booleans, and nulls that follow in one loop, and the UBJSON and BJData readers do
 the same for arrays with a type marker. Reading an array of a million integers from CBOR or MessagePack got 42–47%
 faster, and `canada.json` 10%. Arrays of one element skip the loop: in 1,000 arrays nested in each other, each entered
-it only to find another array, which cost 6–8%. Now the loop costs nested arrays nothing measurable, and 100,000 arrays
-`[1,2]` up to 1.5%.
+it only to find another array, which cost 6–8%. Now the loop costs nested arrays nothing measurable, and costs 100,000
+arrays `[1,2]` at most 1.5%.
 
 ### Smaller ones
 
@@ -743,9 +746,9 @@ The parser checks for the expected `:` or `,` before it falls into the lexer's g
     starts each token with an empty buffer anyway. In September, moving string values instead of copying them saved
     2–3%. We measured moving keys too, and dropped it. The buffer is sized for the longest token so far, and keys are
     short while values are long. So moving a key hands a large buffer to a short string, and the next value has to grow
-    a new one: 11.9% slower on 40,000 short strings. In October, with much of the lexer around it rewritten, keys were
-    measured again: `parse()` of `twitter.json` got 3.3% faster with Clang and 5.0% with GCC, so keys are moved now too.
-    An idea that lost once is worth measuring again when the code around it changes.
+    a new one: 11.9% slower on 40,000 short strings. In October, with much of the lexer around it rewritten, moving keys
+    was measured again: `parse()` of `twitter.json` got 3.3% faster with Clang and 5.0% with GCC, so keys are moved now
+    too. An idea that lost once is worth measuring again when the code around it changes.
 
 ## <span class="nj-theme">5</span> Read the assembly { #theme-5 }
 
@@ -816,13 +819,16 @@ throw_incompatible_reference_type(obj);   // JSON_HEDLEY_NO_RETURN JSON_HEDLEY_N
 <p class="nj-code-caption" markdown>The same function in 3.13.0: a test and a call of a helper that is never inlined.</p>
 
 That fixed 27 throw sites. Iterator arithmetic got 6× as fast with Clang, and `std::sort` over a `json` array of 10,000
-integers in user code 6–9% faster. The value's own lifecycle had the same problem: the destructor, the copy constructor,
-and [`operator==`](../../api/basic_json/operator_eq.md) contained the code for every type, so they were too big to
-inline even for a number. Clang reported about 380 call sites where they were not inlined. Now the destructor and the
-copy constructor start with an inline test whether the value owns memory, which Clang compiles to one bit test
+integers in user code 6–9% faster.
+
+The value's own lifecycle had the same problem: the destructor, the copy constructor, and
+[`operator==`](../../api/basic_json/operator_eq.md) contained the code for every type, so they were too big to inline
+even for a number. Clang reported about 380 call sites where they were not inlined. Now the destructor and the copy
+constructor start with an inline test whether the value owns memory, which Clang compiles to one bit test
 (`1 << type & 0x10E`), `operator==` with one for two scalars of the same type, and the rest is out of line. `j == 5`
-went from 3.55 ns to 0.65 ns with Clang. It is not free: the probe translation unit grew by 13% at `-O2`, and with GCC,
-`operator==` on large documents got about 7% slower.
+went from 3.55 ns to 0.65 ns with Clang. It is not free: a test file of `extern "C"` wrappers around the library's
+functions, which we compile to check what gets inlined, grew by 13% at `-O2`, and with GCC, `operator==` on large
+documents got about 7% slower.
 
 ### Aliasing
 
@@ -974,9 +980,10 @@ The overloads of [`to_cbor()`](../../api/basic_json/to_cbor.md) and friends that
 that is a template over the sink type, with no virtual call. Byte order is now swapped with `__builtin_bswap*` (or
 `_byteswap_*` with MSVC) instead of `std::reverse` on a byte array: compilers can recognize the reversal as a byte swap
 in a small function, but in the CBOR number path, Clang emitted no `bswap` at all. Writing into a vector also allows
-[`to_bson()`](../../api/basic_json/to_bson.md) to make one pass instead of two: BSON puts the size of every document in
-front of it, so the writer used to walk the value once for the sizes and once to write. It now writes a placeholder and
-fills in the size when the document is complete, 12–20% faster on the M1.
+[`to_bson()`](../../api/basic_json/to_bson.md) to make one pass instead of two, because a vector can be written to at
+any position: BSON puts the size of every document in front of it, so the writer used to walk the value once for the
+sizes and once to write. It now writes a placeholder and fills in the size when the document is complete, 12–20% faster
+on the M1. Streams and other output adapters, which can only append, still take two passes.
 
 ### A cursor instead of `vector::insert()`
 
@@ -1101,9 +1108,11 @@ static void destroy_bounded(basic_json& v, std::size_t depth) noexcept
 <p class="nj-code-caption" markdown>Bounded recursion: recursive down to 128 levels, iterative below.</p>
 
 The first 128 levels run the old recursive code, and only below that does an explicit stack, or the walk below, take
-over. A document nested less deeply pays one comparison per container. Copying and comparing have fixed signatures and
-can't take a depth argument, so they count the levels in a `thread_local` counter, about ten nanoseconds per copy of a
-small object.
+over. A document nested less deeply pays one comparison per container. Copying and comparing recurse through the
+containers: `std::vector`'s and `std::map`'s copy constructors and `operator==` call those of the elements, whose
+signatures are fixed, so no depth argument can be passed down. Passing one would mean copying or comparing element by
+element ourselves, which is what the explicit stack below the limit does. They count the levels in a `thread_local`
+counter, about ten nanoseconds per copy of a small object.
 
 ### Destroying without a stack
 
@@ -1173,18 +1182,18 @@ static_assert(sizeof(node) == 16, "node must stay 16 bytes");
   There are no pointers in the parsed index (edits add links, below); the parser fills in `next` when the container
   closes. `is_container()` is a single subtraction and comparison, `kind - 1u <= 1u`, which is why objects and arrays
   are numbered 1 and 2.
-- **Strings stay in the input.** Only strings with escapes are decoded, into an arena. A document makes a handful of
-  allocations, however many values it has. The price is that the text must outlive the document, unless you let the
-  document own a copy ([`parse_copy()`](../../api/basic_json_document/parse_copy.md), or an rvalue `std::string`).
-  Offsets are 32 bits, which limits a document to 4 GiB.
+- **Strings stay in the input.** Only strings with escapes are decoded, into an arena. A document makes only a handful
+  of allocations, no matter how many values it has. The price is that the text must outlive the document, unless the
+  document owns it: [`parse_copy()`](../../api/basic_json_document/parse_copy.md) copies the text, and parsing an
+  rvalue `std::string` moves it into the document. Offsets are 32 bits, which limits a document to 4 GiB.
 - **Integers are converted while their digits are in the cache,** into the last 8 bytes of their node.
 - **Floats stay text until you read them.** The node records the number of digits before and after the point, and
   reading converts with the same Clinger/Eisel-Lemire code as `json::parse`. We tried converting them during the parse.
   Although parsing `canada.json` and reading every number got 4–7% faster, parsing alone got 36–90% slower, so we
   dropped it. A default `dump()` writes the shortest form of a float, as `json` does;
   [`number_format::source`](../../api/basic_json_view/number_format.md) copies the source text of every number instead.
-- **SIMD and tables** as in theme <a class="nj-theme" href="#theme-2" title="theme 2">2</a>, and `\u` escapes decoded
-  with a table, as yyjson does.
+- **SIMD and tables** as in theme <a class="nj-theme" href="#theme-2" title="theme 2">2</a>, and `\u` escapes are
+  decoded with a table, as in yyjson.
 - **A hash index for big objects,** an idea from [Boost.JSON](https://github.com/boostorg/json). An object with 128 or
   more members gets an open-addressing table after parsing; looking up every key of a 10,000-member object went from
   59.8 ms to 0.16 ms. The hash is not seeded, so crafted keys could make building the table quadratic. Probing is
@@ -1361,7 +1370,7 @@ Some caveats belong next to that:
 
 ### Reading into structs
 
-A view converts into your own types with the same [`from_json()`](../../features/arbitrary_types.md) as `json`,
+A view can be converted into your own types with the same [`from_json()`](../../features/arbitrary_types.md) as `json`,
 including the ones the [`NLOHMANN_DEFINE_TYPE_*`](../../api/macros/nlohmann_define_type_non_intrusive.md) macros
 generate. That is as fast as picking the fields by hand from the view; only for the many small records of
 `jeopardy.json` does it take 23% longer. On the Mac, Glaze, serde_json, and Boost.JSON's `parse_into`, reading into the
@@ -1441,7 +1450,8 @@ without an index (theme <a class="nj-theme" href="#theme-8" title="theme 8">8</a
 at a time (theme <a class="nj-theme" href="#theme-2" title="theme 2">2</a>), Boost.JSON validated the number-heavy files
 up to 1.5× as fast on x86-64.
 
-As a check of the four probes, every *validate* way also ran the 318 files of
+The four probes are broken inputs that tell full validation from less ([Appendix E](#e-comparison-with-other-libraries)
+lists them). As a further check, every *validate* way also ran the 318 files of
 [JSONTestSuite](https://github.com/nst/JSONTestSuite). [Appendix E](#e-comparison-with-other-libraries) lists the
 exceptions, one of them ours. The suite also found that Glaze's generic reader accepts garbage after the value by
 default, so the figures use its strict option.
@@ -1459,7 +1469,7 @@ The pull requests record the ideas that measured worse, which is as useful as th
 | inline `scan_literal()` | Clang's dispatch grew from 233 to 278 instructions and got slower |
 | short-string table for strings up to 64 bytes | lost against 32 |
 | leave the serializer's buffers uninitialized | timings moved 18% apart in opposite directions on two similar workloads, so dropped; done later, when instruction counts showed 170 instructions saved per `dump()` |
-| out-of-line throw helpers for JSON Pointer lookups | no measurable gain, dropped |
+| move the throws of the JSON Pointer lookups out of line too | no measurable gain, dropped; they stay inline |
 | `json_document`: an "all ASCII" flag per string | `dump()` with `ensure_ascii` faster, but parsing 1–13% slower |
 | `json_document`: convert floats while parsing | `canada.json` parse 36–90% slower |
 | `json_document`: note a large object inline in the parse loop | `canada.json` 37% slower |
@@ -1512,7 +1522,7 @@ The [compile-time page](../../integration/compile_times.md) measures these and t
 
 ## Summing up
 
-Hardly any of the techniques in this post is new. What we think made the difference is their combination, under the
+Hardly any of the techniques in this post are new. What we think made the difference is their combination, under the
 conditions of a header-only C++11 library whose API and output had to stay the same.
 
 ## Thanks
