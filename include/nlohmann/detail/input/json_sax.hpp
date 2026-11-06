@@ -904,7 +904,8 @@ class json_sax_dom_parser : public json_sax_dom_error_state
             {
                 hashes.push_back(hasher(element.first));
             }
-            ordered_data.key_indexes.emplace_back(new object_key_index(std::move(hashes)));
+            std::unique_ptr<object_key_index> index(new object_key_index(std::move(hashes))); // NOLINT(cppcoreguidelines-owning-memory,modernize-make-unique): std::make_unique is C++14
+            ordered_data.key_indexes.push_back(std::move(index));
             f.ordered.index = ordered_data.key_indexes.back().get();
         }
 

@@ -73,6 +73,8 @@ COMPILE = [
     ("JSON_NO_AUTOMATIC_UDLS", "parsing TU", -1, -2, False),
     ("JSON_HAS_FILESYSTEM=0 + JSON_NO_IO", "model TU", -8, -11, False),
     ("JSON_HAS_FILESYSTEM=0", "model TU", -5, -9, False),
+    ("JSON_HAS_STD_FORMAT=0", "model TU", -1, -4, False),
+    ("JSON_HAS_RANGES=0", "model TU", -4, -1, False),
     # computed from the ms in "Options without effect on compile times": 1034/1051, 1756/1801, 1055/1051, 1783/1801
     ("JSON_NO_IO", "model TU", round((1034 / 1051 - 1) * 100), round((1756 / 1801 - 1) * 100), True),
     ("JSON_USE_GLOBAL_UDLS=0", "model TU", round((1055 / 1051 - 1) * 100), round((1783 / 1801 - 1) * 100), True),

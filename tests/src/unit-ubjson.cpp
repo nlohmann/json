@@ -2385,6 +2385,18 @@ TEST_CASE("UBJSON optimized arrays of a valueless type are bounded")
         }
     }
 
+    SECTION("a count equal to SIZE_MAX is rejected")
+    {
+        // the reader marks a container without a count by SIZE_MAX, so a
+        // count of that value must not be read as "no count"; UBJSON's
+        // largest count type (int64) can only reach it where size_t is 32 bits
+#if SIZE_MAX == 0xffffffff
+        const std::vector<uint8_t> input = {'[', '#', 'L', 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 'i', 0x01, ']'};
+        CHECK_THROWS_WITH_AS(_ = json::from_ubjson(input), "[json.exception.out_of_range.408] syntax error while parsing UBJSON size: integer value overflow", json::out_of_range&);
+        CHECK(json::from_ubjson(input, true, false).is_discarded());
+#endif
+    }
+
     SECTION("ordinary counts are unaffected")
     {
         CHECK(json::from_ubjson(std::vector<uint8_t>({'[', '$', 'Z', '#', 'i', 3})) == json({nullptr, nullptr, nullptr}));

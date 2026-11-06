@@ -39,7 +39,9 @@ iterator pair over non-contiguous but random-access storage (e.g. `#!cpp std::de
 optimization but not the second, since the byte-scanning fast path requires contiguous storage.
 
 Practically: a file can be passed directly to `parse`, which also avoids the memory for a copy of the file. Reading it
-into a string first is no longer necessary for speed:
+into a string first is no longer necessary for speed (this is for `#!cpp json::parse`; a
+[`json_document`](json_view/index.md) reads a stream into an owned buffer anyway, so for it reading the file into a string
+and borrowing that is the faster way):
 
 ```cpp
 // fast: the stream buffer's get area is scanned in bulk

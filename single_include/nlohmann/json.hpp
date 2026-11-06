@@ -16538,7 +16538,8 @@ class json_sax_dom_parser : public json_sax_dom_error_state
             {
                 hashes.push_back(hasher(element.first));
             }
-            ordered_data.key_indexes.emplace_back(new object_key_index(std::move(hashes)));
+            std::unique_ptr<object_key_index> index(new object_key_index(std::move(hashes))); // NOLINT(cppcoreguidelines-owning-memory,modernize-make-unique): std::make_unique is C++14
+            ordered_data.key_indexes.push_back(std::move(index));
             f.ordered.index = ordered_data.key_indexes.back().get();
         }
 
@@ -18359,8 +18360,8 @@ class binary_reader
     nested document could declare a length that disagrees with where its
     terminator actually falls and quietly hand the bytes in between to the
     enclosing document. A well-formed document is at least 5 bytes (the prefix
-    plus the terminator); the equality also rejects those impossible sizes,
-    since at least 5 bytes are always consumed.
+    plus the terminator); open_bson_document() rejects a smaller size before
+    it is stored, so @a document_size is never negative here.
 
     @param[in] document_start  value of chars_read before the size prefix
     @param[in] document_size   the declared document size
@@ -18368,7 +18369,7 @@ class binary_reader
     */
     bool check_bson_document_size(const std::size_t document_start, const std::int32_t document_size)
     {
-        if (JSON_HEDLEY_UNLIKELY(document_size < 0 || static_cast<std::size_t>(document_size) != chars_read - document_start))
+        if (JSON_HEDLEY_UNLIKELY(static_cast<std::size_t>(document_size) != chars_read - document_start))
         {
             return bson_document_size_error(document_size, chars_read - document_start);
         }
@@ -19039,7 +19040,7 @@ class binary_reader
             {
                 std::uint64_t len{};
                 std::size_t size{};
-                return get_cbor_argument(len) && get_cbor_container_size(len, size, "array") && enter_cbor_array(size);
+                return get_cbor_argument(len) && get_container_size(len, size, "array") && enter_cbor_array(size);
             }
 
             case 0x9F: // array (indefinite length)
@@ -19079,7 +19080,7 @@ class binary_reader
             {
                 std::uint64_t len{};
                 std::size_t size{};
-                return get_cbor_argument(len) && get_cbor_container_size(len, size, "map") && enter_object(size);
+                return get_cbor_argument(len) && get_container_size(len, size, "map") && enter_object(size);
             }
 
             case 0xBF: // map (indefinite length)
@@ -19715,7 +19716,7 @@ class binary_reader
     }
 
     /*!
-    @brief narrow a definite CBOR array/map length to std::size_t
+    @brief narrow a definite CBOR or MessagePack array/map length to std::size_t
 
     A definite length is rejected if it does not fit in std::size_t or if it
     equals detail::unknown_size(), which is reserved to mark an indefinite-
@@ -19728,7 +19729,7 @@ class binary_reader
     @param[in]  context  "array" or "map", for the error message
     @return whether the length is usable
     */
-    bool get_cbor_container_size(const std::uint64_t len, std::size_t& result, const char* context)
+    bool get_container_size(const std::uint64_t len, std::size_t& result, const char* context)
     {
         if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::size_t>(len) || len == detail::unknown_size()))
         {
@@ -20324,7 +20325,8 @@ class binary_reader
             case 0xDD: // array 32
             {
                 std::uint32_t len{};
-                return get_number(len) && enter_msgpack_array(conditional_static_cast<std::size_t>(len));
+                std::size_t size{};
+                return get_number(len) && get_container_size(len, size, "array") && enter_msgpack_array(size);
             }
 
             case 0xDE: // map 16
@@ -20336,7 +20338,8 @@ class binary_reader
             case 0xDF: // map 32
             {
                 std::uint32_t len{};
-                return get_number(len) && enter_object(conditional_static_cast<std::size_t>(len));
+                std::size_t size{};
+                return get_number(len) && get_container_size(len, size, "map") && enter_object(size);
             }
 
             // negative fixint
@@ -21107,16 +21110,13 @@ class binary_reader
         {
             if (size_and_type.second != 0)
             {
-                if (size_and_type.second != 'N')
+                for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    for (std::size_t i = 0; i < size_and_type.first; ++i)
+                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, no_ndarray, size_and_type.second)))
                     {
-                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, no_ndarray, size_and_type.second)))
-                        {
-                            return false;
-                        }
-                        dim.push_back(dimlen);
+                        return false;
                     }
+                    dim.push_back(dimlen);
                 }
             }
             else
@@ -21143,6 +21143,27 @@ class binary_reader
                 get_ignore_noop();
             }
         }
+        return true;
+    }
+
+    /*!
+    @brief store the count of an optimized container (or the length of a string)
+
+    A count equal to npos is rejected: npos marks a container whose count is
+    not known, so a count of that value would be read as "no count" (compare
+    get_container_size()). No container can hold that many elements.
+
+    @param[in]  count   the count read from the input
+    @param[out] result  set to @a count unless it is rejected
+    @return whether @a count is usable
+    */
+    bool store_ubjson_count(const std::size_t count, std::size_t& result)
+    {
+        if (JSON_HEDLEY_UNLIKELY(count == npos))
+        {
+            return out_of_range_error(exception_id::container_too_large, "integer value overflow", "size");
+        }
+        result = count;
         return true;
     }
 
@@ -21176,8 +21197,7 @@ class binary_reader
         {
             return out_of_range_error(exception_id::container_too_large, "integer value overflow", "size");
         }
-        result = static_cast<std::size_t>(number); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): number is not a char
-        return true;
+        return store_ubjson_count(static_cast<std::size_t>(number), result); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): number is not a char
     }
 
     /*!
@@ -21254,8 +21274,7 @@ class binary_reader
                 {
                     return false;
                 }
-                result = conditional_static_cast<std::size_t>(number);
-                return true;
+                return store_ubjson_count(conditional_static_cast<std::size_t>(number), result);
             }
 
             case 'M':
@@ -21273,8 +21292,7 @@ class binary_reader
                 {
                     return out_of_range_error(exception_id::container_too_large, "integer value overflow", "size");
                 }
-                result = detail::conditional_static_cast<std::size_t>(number);
-                return true;
+                return store_ubjson_count(detail::conditional_static_cast<std::size_t>(number), result);
             }
 
             case '[':
@@ -21318,11 +21336,9 @@ class binary_reader
                     // follow the documented _ArrayType_, _ArraySize_, _ArrayData_ order
                     if (ndarray_dtype != 0)
                     {
+                        // every optimized type marker is_valid_optimized_type() accepts for BJData has a name
                         const char* type_name = bjd_type_name(ndarray_dtype);
-                        if (JSON_HEDLEY_UNLIKELY(type_name == nullptr))
-                        {
-                            return unexpected_byte("invalid byte", "type");
-                        }
+                        JSON_ASSERT(type_name != nullptr);
 
                         string_t type_key = "_ArrayType_";
                         string_t type = type_name; // sax->string() takes a reference
@@ -21405,12 +21421,6 @@ class binary_reader
         if (current == '$')
         {
             result.second = get();  // must not ignore 'N', because 'N' maybe the type
-            if (input_format == input_format_t::bjdata
-                    && JSON_HEDLEY_UNLIKELY(is_bjd_excluded_optimized_type(result.second)))
-            {
-                return optimized_type_error();
-            }
-
             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof("type")))
             {
                 return false;
@@ -21438,7 +21448,7 @@ class binary_reader
             // an ndarray was read here only if the flag flipped; when it was
             // seeded true, get_ubjson_size_value() already rejected the nested
             // dimension vector
-            if (input_format == input_format_t::bjdata && is_ndarray && !inside_ndarray)
+            if (is_ndarray && !inside_ndarray)
             {
                 result.second |= (1 << 8); // use bit 8 to indicate ndarray, all UBJSON and BJData markers should be ASCII letters
             }
@@ -21448,7 +21458,7 @@ class binary_reader
         if (current == '#')
         {
             const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
-            if (input_format == input_format_t::bjdata && is_ndarray && !inside_ndarray)
+            if (is_ndarray && !inside_ndarray)
             {
                 return last_byte_error(exception_id::unexpected_byte, "ndarray requires both type and size", "size");
             }
@@ -21622,7 +21632,6 @@ class binary_reader
     JSON_HEDLEY_NEVER_INLINE
     bool parse_ubjson_typed_run(std::size_t& remaining, const char_int_type type, std::true_type /*bulk*/)
     {
-        const bool bjdata = input_format == input_format_t::bjdata;
         switch (type)
         {
             case 'U':
@@ -21636,11 +21645,11 @@ class binary_reader
             case 'L':
                 return parse_ubjson_typed_run<std::int64_t>(remaining);
             case 'u':
-                return !bjdata || parse_ubjson_typed_run<std::uint16_t>(remaining);
+                return parse_ubjson_typed_run<std::uint16_t>(remaining);
             case 'm':
-                return !bjdata || parse_ubjson_typed_run<std::uint32_t>(remaining);
+                return parse_ubjson_typed_run<std::uint32_t>(remaining);
             case 'M':
-                return !bjdata || parse_ubjson_typed_run<std::uint64_t>(remaining);
+                return parse_ubjson_typed_run<std::uint64_t>(remaining);
             case 'd':
                 return parse_ubjson_typed_run<float>(remaining);
             case 'D':
@@ -21721,7 +21730,7 @@ class binary_reader
         // if bit-8 of size_and_type.second is set to 1, encode bjdata ndarray as an object in JData annotated array format (https://github.com/NeuroJSON/jdata):
         // {"_ArrayType_" : "typeid", "_ArraySize_" : [n1, n2, ...], "_ArrayData_" : [v1, v2, ...]}
 
-        if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
+        if ((size_and_type.second & (1 << 8)) != 0)
         {
             size_and_type.second &= ~(static_cast<char_int_type>(1) << 8);  // use bit 8 to indicate ndarray, here we remove the bit to restore the type marker
 
@@ -21780,7 +21789,7 @@ class binary_reader
         }
 
         // If BJData type marker is 'B' decode as binary
-        if (input_format == input_format_t::bjdata && size_and_type.first != npos && size_and_type.second == 'B')
+        if (size_and_type.first != npos && size_and_type.second == 'B')
         {
             binary_t result;
             return get_binary(size_and_type.first, result) && sax->binary(result);
@@ -21829,7 +21838,7 @@ class binary_reader
         }
 
         // do not accept ND-array size in objects in BJData
-        if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
+        if ((size_and_type.second & (1 << 8)) != 0)
         {
             return last_byte_error(exception_id::unexpected_byte, "BJData object does not support ND-array size in optimized format", "object");
         }
@@ -23110,8 +23119,9 @@ class binary_reader
   JSON_PRIVATE_UNLESS_TESTED:
     /*!
     @brief check whether @a marker is a type marker that may follow '$'
-    UBJSON: Z N T F i U I l L d D H C S [ {; BJData: the numeric markers and C
-    (BJData's excluded markers are rejected separately).
+    UBJSON: Z N T F i U I l L d D H C S [ {; BJData: the numeric markers and C.
+    The markers BJData excludes (F H N S T Z [ {) are the ones
+    binary_writer::is_bjdata_excluded_type_marker() lists; keep the two in sync.
     */
     bool is_valid_optimized_type(const char_int_type marker) const noexcept
     {
@@ -23144,20 +23154,6 @@ class binary_reader
             default:
                 return false;
         }
-    }
-
-    /*!
-    @brief whether @a marker is excluded from BJData's optimized ND-array types
-    @return whether @a marker is one of 'F', 'H', 'N', 'S', 'T', 'Z', '[', '{'
-
-    Mirrors binary_writer's @ref binary_writer::is_bjdata_excluded_type_marker
-    "is_bjdata_excluded_type_marker()`, which encodes the same list the other
-    way; keep the two in sync.
-    */
-    static constexpr bool is_bjd_excluded_optimized_type(const char_int_type marker) noexcept
-    {
-        return marker == '[' || marker == '{' || marker == 'S' || marker == 'H'
-               || marker == 'T' || marker == 'F' || marker == 'N' || marker == 'Z';
     }
 
     /*!
@@ -27491,6 +27487,10 @@ inline void copy_short(CharType* dst, const CharType* src, const std::size_t len
 /// the number of characters an empty vector is grown to by output_vector_sink
 constexpr std::size_t min_vector_sink_capacity = 64;
 
+/// the number of characters output_vector_sink makes writable ahead of its
+/// position at a time: 64 KiB of the vector's capacity, not all of it
+constexpr std::size_t vector_sink_window = 65536;
+
 /// @brief non-virtual output sink writing into a std::vector
 ///
 /// This sink is not part of the virtual output_adapter_protocol hierarchy: it is
@@ -27504,7 +27504,8 @@ constexpr std::size_t min_vector_sink_capacity = 64;
 /// encoding them: insert() is an out-of-line call into a routine that can insert
 /// anywhere, and resize() is one as well with libstdc++. The sink therefore keeps
 /// its own write position: it grows the vector geometrically ahead of the
-/// position and copies each write to it, so a write is a capacity check and a
+/// position (making @ref vector_sink_window characters of it writable at a
+/// time) and copies each write to it, so a write is a capacity check and a
 /// short copy. The destructor shrinks the vector to the bytes actually written,
 /// also when a write throws; shrinking a vector never allocates. The sink owns
 /// that trim, so it can be moved but not copied, and the vector must not be used
@@ -27652,9 +27653,17 @@ class output_vector_sink
         // reallocate for every few bytes
         const std::size_t written = position();
         const std::size_t needed = written + length;
-        v->resize((std::max)(min_vector_sink_capacity, needed <= v->capacity()
-                             ? v->capacity()
-                             : (std::max)(needed, v->capacity() * 2)));
+        const std::size_t capacity = (std::max)(min_vector_sink_capacity, needed <= v->capacity()
+                                                ? v->capacity()
+                                                : (std::max)(needed, v->capacity() * 2));
+        v->reserve(capacity);
+        // resize() zeroes the characters it adds. Zeroing all of a doubled
+        // capacity, megabytes of a fresh allocation, at once faults in its
+        // pages and evicts them from the cache before the writer gets there,
+        // so its stores miss again; a window ahead of the position is still
+        // cached when they come (the binary writers on a long array of
+        // numbers: 4-26 % faster on x86, 1-2.5 % on Apple M1)
+        v->resize((std::min)(capacity, (std::max)(needed, written + vector_sink_window)));
         cursor = v->data() + written;
         limit = v->data() + v->size();
     }
@@ -31110,22 +31119,19 @@ class binary_writer
                 // negative fixnum
                 write_number(static_cast<std::int8_t>(j.m_data.m_value.number_integer));
             }
-            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int8_t>::min)() &&
-                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int8_t>::max)())
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int8_t>::min)())
             {
                 // int 8
                 oa.write_character(to_char_type(0xD0));
                 write_number(static_cast<std::int8_t>(j.m_data.m_value.number_integer));
             }
-            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int16_t>::min)() &&
-                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int16_t>::max)())
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int16_t>::min)())
             {
                 // int 16
                 oa.write_character(to_char_type(0xD1));
                 write_number(static_cast<std::int16_t>(j.m_data.m_value.number_integer));
             }
-            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int32_t>::min)() &&
-                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int32_t>::max)())
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int32_t>::min)())
             {
                 // int 32
                 oa.write_character(to_char_type(0xD2));
@@ -32041,7 +32047,7 @@ class binary_writer
     Containers, strings, high-precision numbers, booleans and null cannot be
     declared as the single type of an optimized container in BJData; such a
     container is written unoptimized. The reader rejects them with the same
-    list (binary_reader::is_bjd_excluded_optimized_type()).
+    list (binary_reader::is_valid_optimized_type()).
     */
     static constexpr bool is_bjdata_excluded_type_marker(const CharType marker) noexcept
     {
@@ -33446,7 +33452,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-#include <algorithm> // remove, fill, find, none_of, min
+#include <algorithm> // copy, none_of, min, search
 #include <array> // array
 #include <clocale> // localeconv, lconv
 #include <cmath> // isfinite
@@ -37300,31 +37306,35 @@ class serializer
         // check if the buffer was large enough
         JSON_ASSERT(static_cast<std::size_t>(len) < number_buffer.size());
 
-        // look up the locale's thousands separator and decimal point now,
-        // matching what snprintf_float() just used (see lexer::get_decimal_point())
+        // look up the locale's decimal point now, matching what
+        // snprintf_float() just used (see get_decimal_point() in
+        // number_parse.hpp); it is a string, which can be longer than one
+        // byte (U+066B in ps_AF, #5993).
+        // A thousands separator needs no handling: %g never groups digits.
         const auto* loc = std::localeconv();
         JSON_ASSERT(loc != nullptr);
-        const char thousands_sep = (loc->thousands_sep == nullptr) ? '\0' : *loc->thousands_sep;
-        const char decimal_point = (loc->decimal_point == nullptr) ? '\0' : *loc->decimal_point;
-
-        // erase thousands separators
-        if (thousands_sep != '\0')
-        {
-            // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::remove returns an iterator, see https://github.com/nlohmann/json/issues/3081
-            const auto end = std::remove(number_buffer.begin(), number_buffer.begin() + len, thousands_sep);
-            std::fill(end, number_buffer.end(), '\0');
-            JSON_ASSERT((end - number_buffer.begin()) <= len);
-            len = (end - number_buffer.begin());
-        }
+        const char* const decimal_point = (loc->decimal_point == nullptr) ? "" : loc->decimal_point;
+        const std::size_t decimal_point_len = std::char_traits<char>::length(decimal_point);
 
         // convert decimal point to '.'
-        if (decimal_point != '\0' && decimal_point != '.')
+        if ((decimal_point_len > 1) || (decimal_point_len == 1 && decimal_point[0] != '.'))
         {
-            // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::find returns an iterator, see https://github.com/nlohmann/json/issues/3081
-            const auto dec_pos = std::find(number_buffer.begin(), number_buffer.end(), decimal_point);
-            if (dec_pos != number_buffer.end())
+            const auto first = number_buffer.begin();
+            const auto last = first + len;
+            // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::search returns an iterator, see https://github.com/nlohmann/json/issues/3081
+            const auto dec_pos = std::search(first, last, decimal_point, decimal_point + decimal_point_len);
+            if (dec_pos != last)
             {
                 *dec_pos = '.';
+                if (decimal_point_len > 1)
+                {
+                    // move the fraction and exponent behind the '.' (std::copy
+                    // allows the overlap, as the destination is before the source)
+                    // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::copy returns an iterator, see https://github.com/nlohmann/json/issues/3081
+                    const auto end = std::copy(dec_pos + static_cast<std::ptrdiff_t>(decimal_point_len), last, dec_pos + 1);
+                    *end = '\0';
+                    len = end - first;
+                }
             }
         }
 
