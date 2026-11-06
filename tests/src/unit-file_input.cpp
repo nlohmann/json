@@ -49,6 +49,14 @@ file_ptr open_with(const char* name, const std::string& content)
     return {std::fopen(name, "rb"), &std::fclose};
 }
 
+// the smallest size setvbuf() accepts for _IOFBF: the Microsoft C runtime
+// rejects sizes below 2 as an invalid parameter, which ends the process
+#if defined(_WIN32)
+constexpr int min_full_buffer = 2;
+#else
+constexpr int min_full_buffer = 1;
+#endif
+
 // The stdio lock is recursive, so whether parsing released it can only be
 // seen from another thread: ftrylockfile() fails there while this thread
 // holds the lock. ftrylockfile() is POSIX; elsewhere, the check is skipped.
@@ -258,6 +266,10 @@ TEST_CASE("parsing from a FILE*")
             const bool expected_accept = json::accept(document);
             for (int size = 0; size <= 70; ++size)
             {
+                if (size != 0 && size < min_full_buffer)
+                {
+                    continue;
+                }
                 CAPTURE(document)
                 CAPTURE(size)
                 std::vector<char> buffer(static_cast<std::size_t>(size) + 1);
@@ -315,7 +327,7 @@ TEST_CASE("parsing from a FILE*")
             CHECK(json::sax_parse(f.get(), &sax));
             expected = sax.positions();
         }
-        for (int size = 1; size <= 20; ++size)
+        for (int size = min_full_buffer; size <= 20; ++size)
         {
             CAPTURE(size)
             std::vector<char> buffer(static_cast<std::size_t>(size));
@@ -333,7 +345,7 @@ TEST_CASE("parsing from a FILE*")
     {
         const json value = {{"a string that is longer than the buffer of the file", "and a value that is longer, too"}, {"n", {1, 2}}};
         const std::vector<std::uint8_t> cbor = json::to_cbor(value);
-        for (int size = 1; size <= 20; ++size)
+        for (int size = min_full_buffer; size <= 20; ++size)
         {
             CAPTURE(size)
             std::vector<char> buffer(static_cast<std::size_t>(size));
