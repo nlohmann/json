@@ -22905,7 +22905,8 @@ class binary_reader
     {
         // a string that is in the block of input as a whole is appended from
         // it, without the zero-filling resize() below
-        if (append_from_block(len, result, std::integral_constant < bool, bulk_scan && std::is_same<ContainerType, string_t>::value > {}))
+        constexpr bool from_block = bulk_scan && std::is_same<ContainerType, string_t>::value;
+        if (append_from_block(len, result, std::integral_constant<bool, from_block> {}))
         {
             return true;
         }
