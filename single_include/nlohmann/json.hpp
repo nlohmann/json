@@ -10282,6 +10282,55 @@ struct iterator_input_adapter_factory<IteratorType, SentinelType, enable_if_t<is
     }
 };
 
+/*!
+@brief whether @a IteratorType is an iterator of std::string or of a
+       std::vector of 1-byte elements
+
+Their elements are contiguous, but before C++20 that cannot be detected from
+the iterator type (std::contiguous_iterator), so an iterator pair of them would
+be read one character at a time through the iterators. They are read as the
+pointer range they are instead, as the containers themselves are (see the
+container overload of input_adapter()). The types are matched exactly, so no
+other iterator can be mistaken for one. (std::basic_string is only matched for
+char: other character types need std::char_traits specializations that the
+standard library need not have.)
+*/
+template < typename IteratorType, typename CharType, bool IsByte = sizeof(CharType) == 1 && std::is_integral<CharType>::value && !std::is_same<CharType, bool>::value >
+struct is_std_contiguous_byte_iterator_impl : std::false_type {};
+
+// (the containers are only named for byte types)
+template<typename IteratorType, typename CharType>
+struct is_std_contiguous_byte_iterator_impl<IteratorType, CharType, true>
+    : std::integral_constant < bool, !std::is_pointer<IteratorType>::value
+  && (std::is_same<IteratorType, typename std::vector<CharType>::iterator>::value
+      || std::is_same<IteratorType, typename std::vector<CharType>::const_iterator>::value
+      || std::is_same<IteratorType, std::string::iterator>::value
+      || std::is_same<IteratorType, std::string::const_iterator>::value) > {};
+
+template<typename IteratorType>
+struct is_std_contiguous_byte_iterator
+    : is_std_contiguous_byte_iterator_impl<IteratorType, typename std::remove_cv<typename std::iterator_traits<IteratorType>::value_type>::type> {};
+
+template<typename IteratorType>
+struct iterator_input_adapter_factory<IteratorType, IteratorType, enable_if_t<is_std_contiguous_byte_iterator<IteratorType>::value>>
+{
+    using iterator_type = IteratorType;
+    using sentinel_type = IteratorType;
+    using char_type = typename std::remove_cv<typename std::iterator_traits<iterator_type>::value_type>::type;
+    using adapter_type = iterator_input_adapter<const char_type*>;
+
+    static adapter_type create(IteratorType first, IteratorType last)
+    {
+        if (first == last)
+        {
+            // (an empty range must not be dereferenced)
+            return adapter_type(nullptr, nullptr);
+        }
+        const char_type* const begin = std::addressof(*first);
+        return adapter_type(begin, begin + (last - first));
+    }
+};
+
 // General purpose iterator-based input (iterator+sentinel pair; SentinelType
 // defaults to IteratorType for the common same-type case, but may differ for
 // C++20 ranges-style iterator+sentinel pairs). Only enable for types that can

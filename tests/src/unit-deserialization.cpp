@@ -32,6 +32,7 @@ using nlohmann::json;
 
 #include <iostream>
 #include <iterator>
+#include <list>
 #include <sstream>
 #include <string>
 #include <valarray>
@@ -1407,5 +1408,65 @@ TEST_CASE("indentation runs of every length around the 8-byte skip")
     // and against fixed expectations, in case both paths broke the same way
     CHECK(parse_result(indented("[\n~x]", std::string(16, ' ')), true) == "19 [json.exception.parse_error.101] parse error at line 2, column 17: syntax error while parsing value - invalid literal; last read: '[<U+000A>                x'");
     CHECK(parse_result(indented("[\n~1]", std::string(17, ' ')), true) == "[1]");
+}
+#endif
+
+#if !defined(JSON_NOEXCEPTION)
+namespace
+{
+/// the value of parsing [first, last), or the message of the exception
+template<typename Iterator>
+std::string outcome_of(Iterator first, Iterator last)
+{
+    try
+    {
+        return json::parse(first, last).dump();
+    }
+    catch (const json::exception& e)
+    {
+        return e.what();
+    }
+}
+
+/// a std::string, std::vector<char>, <unsigned char> and <signed char> as
+/// iterator pairs: the same as the byte path (std::list iterators)
+void check_iterator_pairs(const std::string& text)
+{
+    CAPTURE(text)
+    const std::list<char> bytes(text.begin(), text.end());
+    const std::string expected = outcome_of(bytes.begin(), bytes.end());
+    const bool expected_accept = json::accept(bytes.begin(), bytes.end());
+
+    std::string s = text;
+    CHECK(outcome_of(s.begin(), s.end()) == expected);
+    CHECK(outcome_of(s.cbegin(), s.cend()) == expected);
+    CHECK(json::accept(s.cbegin(), s.cend()) == expected_accept);
+
+    const std::vector<char> vc(text.begin(), text.end());
+    CHECK(outcome_of(vc.begin(), vc.end()) == expected);
+    const std::vector<unsigned char> vu(text.begin(), text.end());
+    CHECK(outcome_of(vu.begin(), vu.end()) == expected);
+    CHECK(json::accept(vu.begin(), vu.end()) == expected_accept);
+    const std::vector<signed char> vs(text.begin(), text.end());
+    CHECK(outcome_of(vs.begin(), vs.end()) == expected);
+}
+}  // namespace
+
+TEST_CASE("deserialization from iterator pairs of std::string and std::vector")
+{
+    // these are read as the pointer range they are, also before C++20
+    for (const char* text :
+            {
+                "", " ", "[1, 2.5, \"a\", true, null, {\"k\": [\"v\"]}]", "[1, 2", "{\"a\" 1}", "\"\xC3\xA4\"", "\"\xC3\"", "[1]x", "1e400"
+            })
+    {
+        check_iterator_pairs(text);
+    }
+    check_iterator_pairs(std::string("[1]" "\0" "x", 5));
+
+    // an empty range is not dereferenced
+    std::string empty;
+    CHECK_FALSE(json::accept(empty.begin(), empty.end()));
+    CHECK_THROWS_AS(json::parse(empty.begin(), empty.end()), json::parse_error&);
 }
 #endif
