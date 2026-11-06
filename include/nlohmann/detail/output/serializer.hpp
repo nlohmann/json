@@ -724,10 +724,8 @@ class serializer
         constexpr std::uint64_t ones = 0x0101010101010101ull;
         const std::uint64_t q = v ^ 0x2222222222222222ull; // '"'
         const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull; // '\\'
-        return (((q - ones) & ~q) | ((b - ones) & ~b)         // == '"', == '\\'
-                | ((v - 0x2020202020202020ull) & ~v)          // < 0x20
-                | v | (v + ones))                             // >= 0x7F
-               & 0x8080808080808080ull;
+        // (see swar_string_special(): the bytes from 0x80 are flagged anyway)
+        return ((q - ones) | (b - ones) | (v - 0x2020202020202020ull) | v | (v + ones)) & 0x8080808080808080ull;
     }
 
     template<typename WordType>
