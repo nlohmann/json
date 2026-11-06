@@ -48,8 +48,8 @@ The default value is `0`: streams are scanned in bulk.
 !!! note "Performance"
 
     Parsing from a `std::ifstream` or `std::istringstream` is typically 1.5 to 2 times as fast as before, and reading
-    many small values from one stream with `operator>>` 1.4 to 4 times as fast. Parsing from a stream is then within
-    about 10 to 20 % of first reading the whole file into a `std::string` and parsing that.
+    many small values from one stream with `operator>>` 1.4 to 4 times as fast. Parsing from a stream then takes about
+    1.15 to 1.45 times as long as first reading the whole file into a `std::string` and parsing that.
 
     A stream buffer without a get area (one that only overrides `underflow()` and `uflow()` and hands out every
     character from there) offers nothing to scan in bulk, so it is read one character at a time as before.
