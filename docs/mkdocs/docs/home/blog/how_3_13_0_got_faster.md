@@ -1108,11 +1108,12 @@ static void destroy_bounded(basic_json& v, std::size_t depth) noexcept
 <p class="nj-code-caption" markdown>Bounded recursion: recursive down to 128 levels, iterative below.</p>
 
 The first 128 levels run the old recursive code, and only below that does an explicit stack, or the walk below, take
-over. A document nested less deeply pays one comparison per container. Copying and comparing recurse through the
-containers: `std::vector`'s and `std::map`'s copy constructors and `operator==` call those of the elements, whose
-signatures are fixed, so no depth argument can be passed down. Passing one would mean copying or comparing element by
-element ourselves, which is what the explicit stack below the limit does. They count the levels in a `thread_local`
-counter, about ten nanoseconds per copy of a small object.
+over. A document nested less deeply pays one comparison per container. Comparing walks `std::vector` and `std::map`
+itself and passes the depth as an argument. Copying can't do that cheaply: the containers' copy constructors call ours
+for every element, and a copy that inserts element by element so that it can pass the depth measured 4–16% slower,
+because `std::map`'s own copy clones its tree without comparing a single key. So copying counts the levels in a
+`thread_local` counter instead, about ten nanoseconds per copy of a small object, and so does comparing for custom
+container types.
 
 ### Destroying without a stack
 
