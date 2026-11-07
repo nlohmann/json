@@ -229,5 +229,13 @@ TEST_CASE("convenience functions")
 
             CHECK(str.impl == expected);
         }
+
+        SECTION("embedded null byte")
+        {
+            const std::string middle("a\0b", 3);
+            const std::string expected_with_null("xa\0by", 5);
+
+            CHECK(concat("x", middle, "y") == expected_with_null);
+        }
     }
 }
