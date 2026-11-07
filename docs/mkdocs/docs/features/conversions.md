@@ -48,7 +48,7 @@ which avoids repeating it:
     [`number_token()`](../api/basic_json_view/number_token.md) returns a number exactly as it was written. Every other
     type is obtained from a subtree that is built on demand with
     [`materialize()`](../api/basic_json_view/materialize.md). See
-    [Zero-copy JSON views](json_view.md#getting-values-out-without-copying).
+    [Zero-copy JSON views](json_view/reading.md#getting-values-out-without-copying).
 
 The library already knows how to convert to and from the scalar types and the STL containers (such as
 `#!cpp std::vector`, `#!cpp std::map`, `#!cpp std::array`, `#!cpp std::optional`, and many more). Converting a JSON
@@ -269,7 +269,7 @@ The conversions above are built in for standard types. To make the same syntax w
 - [`get_ref`](../api/basic_json/get_ref.md) - / [`get_ptr`](../api/basic_json/get_ptr.md) - access the stored value without copying
 - [Arbitrary types conversions](arbitrary_types.md) - support your own types
 - [`JSON_USE_IMPLICIT_CONVERSIONS`](../api/macros/json_use_implicit_conversions.md) - toggle implicit conversions
-- [Zero-copy JSON views](json_view.md) - get values out of a document or a view
+- [Zero-copy JSON views](json_view/index.md) - get values out of a document or a view
 - [`adl_serializer`](../api/adl_serializer/index.md) - the default serializer behind the conversions
 - [`type`](../api/basic_json/type.md) - query the type of a value
 - [`JSON_DISABLE_TUPLE_REFERENCE_CONVERSION`](../api/macros/json_disable_tuple_reference_conversion.md) - toggle conversion to tuples of references

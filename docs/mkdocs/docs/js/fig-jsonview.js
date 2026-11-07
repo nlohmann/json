@@ -1,4 +1,4 @@
-/* figures: jsonview -- stepper for the edit frames on features/json_view.md.
+/* figures: jsonview -- stepper for the edit frames on features/json_view/editing.md.
    Without JS the frames (.nj-jsonview-step) show one below the other; with JS one frame at a time, with
    previous/next and one button per step. Never advances on its own. */
 (function () {

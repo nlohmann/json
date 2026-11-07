@@ -50,7 +50,7 @@ Besides `basic_json`, the library offers a second way to hold a parsed JSON text
 [`basic_json_document`](../basic_json_document/index.md), which owns or borrows the text and holds a flat index of the
 values in it, and a [`basic_json_view`](../basic_json_view/index.md), a read-only handle to one value of such a document.
 Both are defined in the header `<nlohmann/json_view.hpp>`; see
-[Zero-copy JSON views](../../features/json_view.md) for the concept and the trade-offs.
+[Zero-copy JSON views](../../features/json_view/index.md) for the concept and the trade-offs.
 
 - [**json_document**](../json_document.md) / [**ordered_json_document**](../ordered_json_document.md) - read-only
   documents of the `basic_json` specialization they belong to
@@ -363,7 +363,7 @@ Access to the JSON value
   specification of the JSON data interchange format
 - [`basic_json_document`](../basic_json_document/index.md) - / [`basic_json_view`](../basic_json_view/index.md) - parse a JSON
   text into a flat index and read it through a view
-- [Zero-copy JSON views](../../features/json_view.md) - when to use a document and a view instead of a `basic_json`
+- [Zero-copy JSON views](../../features/json_view/index.md) - when to use a document and a view instead of a `basic_json`
 - [Types](../../features/types/index.md) - how JSON values are stored and which types exist
 - [Converting values](../../features/conversions.md) - get values out of a JSON value and put values in
 - [Creating JSON values](../../features/creating_values.md) - all the ways to build a JSON value

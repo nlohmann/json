@@ -91,7 +91,7 @@ big-endian reader could not interpret correctly.
 - [`load`](load.md) - read an image written by `save()`
 - [`owns_source`](owns_source.md) - return whether the document holds its own copy of the text
 - [`basic_json_view::dump`](../basic_json_view/dump.md) - serialize the document to JSON text instead of an image
-- [Images](../../features/json_view.md#images) - why and when to use images
+- [Images](../../features/json_view/images.md) - why and when to use images
 
 ## Version history
 

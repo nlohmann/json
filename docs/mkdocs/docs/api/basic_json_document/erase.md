@@ -123,7 +123,7 @@ by an erase, not only those at or after the removed element, since the container
 - [`root`](root.md) - the view of the root value, the starting point of overload 3
 - [`BasicJsonType::erase`](../basic_json/erase.md) - the corresponding function of `basic_json`
 - [Edits](index.md#edits) - what an edit guarantees, for every overload
-- [Zero-copy JSON views](../../features/json_view.md#editing-a-document) - what an edit guarantees and costs
+- [Zero-copy JSON views](../../features/json_view/editing.md) - what an edit guarantees and costs
 
 ## Version history
 
