@@ -80,8 +80,16 @@ them faster than others:
 | `#!cpp FILE*`                                                                              | with glibc and the Apple C library, the characters the `FILE` holds in its buffer are scanned in bulk like a stream's; elsewhere one character at a time; the file is locked once for the whole parse |
 | other iterator ranges (e.g., `#!cpp std::list<char>`, `#!cpp std::istreambuf_iterator<char>`), wide strings | one character at a time                                                             |
 
-Parsing a file from a `#!cpp std::ifstream` is therefore only about 10 to 20 % slower than reading the whole file into a
-`#!cpp std::string` first and parsing that, and it needs no memory for a copy of the file. The stream is never read
+Input in one block of memory is read even faster with the default options (no
+[parser callback](../../api/basic_json/parser_callback_t.md), no comments, no trailing commas, and for `sax_parse()`
+`strict = true`): `parse()`, `accept()`, and `sax_parse()` then read the grammar and the tokens in one loop over the
+memory. Only after an error do `parse()` and `sax_parse()` read the input again, to report the error exactly as before.
+This faster path is not used when [`JSON_DIAGNOSTIC_POSITIONS`](../../api/macros/json_diagnostic_positions.md) is
+enabled, because the positions are recorded by the default parser: the input is then parsed as before, at the same speed
+as before.
+
+Parsing a file from a `#!cpp std::ifstream` therefore takes about 1.15 to 1.45 times as long as reading the whole file
+into a `#!cpp std::string` first and parsing that, but it needs no memory for a copy of the file. The stream is never read
 ahead: after parsing, it is positioned exactly as if every character had been read one at a time, so
 [`operator>>`](../../api/operator_gtgt.md) can still read several values from one stream (see also
 [JSON Lines](json_lines.md)).
