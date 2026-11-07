@@ -46,6 +46,13 @@ using NLOHMANN_JSON_NAMESPACE::ordered_json_view;
 using NLOHMANN_JSON_NAMESPACE::ordered_map;
 using NLOHMANN_JSON_NAMESPACE::to_string;
 
+#if JSON_HAS_REFLECTION
+using NLOHMANN_JSON_NAMESPACE::flatten;
+using NLOHMANN_JSON_NAMESPACE::reflectable;
+using NLOHMANN_JSON_NAMESPACE::rename;
+using NLOHMANN_JSON_NAMESPACE::transient;
+#endif
+
 inline namespace literals
 {
 inline namespace json_literals

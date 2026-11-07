@@ -1263,6 +1263,36 @@ do not throw.
     This exception was added in version 3.13.0. Before that, debug builds aborted on an assertion and release builds
     wrote a `$` marker without `#`, which [`from_ubjson`](../api/basic_json/from_ubjson.md) then rejected.
 
+## Serde errors
+
+This exception is thrown when the reflection-based [`deserialize`](../api/basic_json/deserialize.md) function cannot map
+a value. It is only available when [`JSON_HAS_REFLECTION`](../api/macros/json_has_reflection.md) evaluates to `1`.
+
+Exceptions have ids 6xx.
+
+### json.exception.deserialization_error.601
+
+A member that is itself a struct was expected to be a JSON object during [`deserialize`](../api/basic_json/deserialize.md),
+but the corresponding key holds another type. (A key that is absent or `#!json null` is not an error; the member is left
+at its default.)
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.deserialization_error.601] member 'spells' must be a JSON object
+    ```
+
+### json.exception.deserialization_error.602
+
+An enum member was read during [`deserialize`](../api/basic_json/deserialize.md) from a string that matches no
+enumerator name.
+
+!!! failure "Example message"
+
+    ```
+    [json.exception.deserialization_error.602] member 'element' is not a known enumerator name
+    ```
+
 ## See also
 
 - [`exception`](../api/basic_json/exception.md) - base class of all exceptions thrown by the library
@@ -1271,6 +1301,7 @@ do not throw.
 - [`type_error`](../api/basic_json/type_error.md) - exceptions indicating a wrong type
 - [`out_of_range`](../api/basic_json/out_of_range.md) - exceptions indicating access out of range
 - [`other_error`](../api/basic_json/other_error.md) - exceptions indicating other library errors
+- [`deserialization_error`](../api/basic_json/deserialization_error.md) - exceptions indicating a failed reflection-based conversion
 - [`JSON_NOEXCEPTION`](../api/macros/json_noexception.md) - switch off exceptions
 - [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) - extended exception messages with the path of the failing value
 - [Working Without Exceptions](../features/no_exceptions.md) - use the library without exceptions

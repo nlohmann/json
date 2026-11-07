@@ -94,6 +94,7 @@ cc_library(
         "include/nlohmann/json.hpp",
         "include/nlohmann/json_fwd.hpp",
         "include/nlohmann/json_literals.hpp",
+        "include/nlohmann/json_serde.hpp",
         "include/nlohmann/json_view.hpp",
         "include/nlohmann/ordered_map.hpp",
         "include/nlohmann/thirdparty/hedley/hedley.hpp",

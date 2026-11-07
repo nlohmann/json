@@ -34,6 +34,7 @@ C++ types, and finally serialize it again.
 - [Converting values](conversions.md) — get values out with [`get`](../api/basic_json/get.md)/[`get_to`](../api/basic_json/get_to.md),
   and understand implicit conversions.
 - [Arbitrary types conversions](arbitrary_types.md) — teach the library about your own structs and classes.
+- [Reflection](reflection.md) — serialize and deserialize your structs automatically with reflection, without macros.
 - [Recipes for common types](type_recipes.md) — convert smart pointers, `std::variant`, `std::chrono` types, and class
   hierarchies, which the library deliberately leaves to you.
 - [Specializing enum conversion](enum_conversion.md) — map enums to strings instead of integers.

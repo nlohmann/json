@@ -138,6 +138,7 @@ The class satisfies the following concept requirements:
     - [**type_error**](type_error.md) - exception indicating executing a member function with a wrong type
     - [**out_of_range**](out_of_range.md) - exception indicating access out of the defined range
     - [**other_error**](other_error.md) - exception indicating other library errors
+    - [**deserialization_error**](deserialization_error.md) - exception indicating a failed reflection-based deserialization conversion
 
 ### Container types
 
@@ -287,6 +288,13 @@ Access to the JSON value
 - [**parse**](parse.md) (_static_) - deserialize from a compatible input
 - [**accept**](accept.md) (_static_) - check if the input is valid JSON
 - [**sax_parse**](sax_parse.md) (_static_) - generate SAX events
+
+### Reflection-based serde
+
+Available when [`JSON_HAS_REFLECTION`](../macros/json_has_reflection.md) evaluates to `1`.
+
+- [**serialize**](serialize.md) (_static_) - map an object to a JSON value via reflection
+- [**deserialize**](deserialize.md) - map a JSON value into an object via reflection
 
 ### JSON Pointer functions
 

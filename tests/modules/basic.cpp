@@ -9,6 +9,12 @@
 import std;
 import nlohmann.json;
 
+using nlohmann::adl_serializer;
+using nlohmann::json;
+using nlohmann::json_document;
+using nlohmann::json_pointer;
+using nlohmann::ordered_json;
+using nlohmann::ordered_map;
 using namespace nlohmann::literals;
 
 // Exercise the surface exported by the nlohmann.json module so that a missing
@@ -22,27 +28,27 @@ using namespace nlohmann::literals;
 int main()
 {
     // basic_json / json: parsing and value access
-    nlohmann::json j = nlohmann::json::parse(R"({"a": 1, "list": [1, 2, 3]})");
+    json j = json::parse(R"({"a": 1, "list": [1, 2, 3]})");
     const int a = j["a"].get<int>();
 
     // json_pointer and operator""_json_pointer
-    nlohmann::json_pointer<std::string> ptr = "/list/2"_json_pointer;
+    json_pointer<std::string> ptr = "/list/2"_json_pointer;
     const int last = j[ptr].get<int>();
 
     // operator""_json literal
-    const nlohmann::json lit = R"([1, 2, 3])"_json;
+    const json lit = R"([1, 2, 3])"_json;
 
     // ordered_json
-    nlohmann::ordered_json oj;
+    ordered_json oj;
     oj["b"] = 2;
     const int b = oj["b"].get<int>();
 
     // ordered_map alias
-    nlohmann::ordered_map<std::string, int> m;
+    ordered_map<std::string, int> m;
     m["x"] = 1;
 
     // adl_serializer (reference the exported template)
-    using serializer = nlohmann::adl_serializer<int, void>;
+    using serializer = adl_serializer<int, void>;
     static_cast<void>(sizeof(serializer));
 
     // to_string
@@ -53,7 +59,7 @@ int main()
     os << j << oj << lit;
 
     // json_document / json_view (json_view.hpp): zero-copy parse of a literal
-    const nlohmann::json_document doc = nlohmann::json_document::parse(R"({"a": 1, "list": [1, 2, 3]})");
+    const json_document doc = json_document::parse(R"({"a": 1, "list": [1, 2, 3]})");
     const std::size_t doc_size = doc.root().size();
 
     // use every result so the references cannot be optimized away

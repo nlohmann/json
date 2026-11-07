@@ -141,6 +141,7 @@ nav:
       - features/no_exceptions.md
       - features/object_order.md
       - features/performance.md
+      - features/reflection.md
       - Parsing:
           - features/parsing/index.md
           - features/parsing/json_lines.md
@@ -191,6 +192,8 @@ nav:
           - 'crbegin': api/basic_json/crbegin.md
           - 'crend': api/basic_json/crend.md
           - 'default_object_comparator_t': api/basic_json/default_object_comparator_t.md
+          - 'deserialization_error': api/basic_json/deserialization_error.md
+          - 'deserialize': api/basic_json/deserialize.md
           - 'diff': api/basic_json/diff.md
           - 'dump': api/basic_json/dump.md
           - 'emplace': api/basic_json/emplace.md
@@ -272,6 +275,7 @@ nav:
           - 'rbegin': api/basic_json/rbegin.md
           - 'rend': api/basic_json/rend.md
           - 'sax_parse': api/basic_json/sax_parse.md
+          - 'serialize': api/basic_json/serialize.md
           - 'size': api/basic_json/size.md
           - 'start_pos': api/basic_json/start_pos.md
           - 'string_t': api/basic_json/string_t.md
@@ -296,6 +300,7 @@ nav:
           - 'Overview': api/basic_json_document/index.md
           - '(Constructor)': api/basic_json_document/basic_json_document.md
           - 'accept': api/basic_json_document/accept.md
+          - 'deserialize': api/basic_json_document/deserialize.md
           - 'erase': api/basic_json_document/erase.md
           - 'insert': api/basic_json_document/insert.md
           - 'is_discarded': api/basic_json_document/is_discarded.md
@@ -322,6 +327,7 @@ nav:
           - 'cend': api/basic_json_view/cend.md
           - 'contains': api/basic_json_view/contains.md
           - 'count': api/basic_json_view/count.md
+          - 'deserialize': api/basic_json_view/deserialize.md
           - 'dump': api/basic_json_view/dump.md
           - 'empty': api/basic_json_view/empty.md
           - 'end': api/basic_json_view/end.md
@@ -436,6 +442,7 @@ nav:
           - 'JSON_HAS_EXPERIMENTAL_FILESYSTEM, JSON_HAS_FILESYSTEM': api/macros/json_has_filesystem.md
           - 'JSON_HAS_RANGE_VIEW_CONVERSION': api/macros/json_has_range_view_conversion.md
           - 'JSON_HAS_RANGES': api/macros/json_has_ranges.md
+          - 'JSON_HAS_REFLECTION': api/macros/json_has_reflection.md
           - 'JSON_HAS_STATIC_RTTI': api/macros/json_has_static_rtti.md
           - 'JSON_HAS_STD_FORMAT': api/macros/json_has_std_format.md
           - 'JSON_HAS_THREE_WAY_COMPARISON': api/macros/json_has_three_way_comparison.md
