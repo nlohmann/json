@@ -104,3 +104,72 @@
         init();
     }
 })();
+
+/* figures: the tooltips of the heatmaps in home/blog/how_3_13_0_got_faster.md (perf_blog_usecases_*.svg). Each
+   cell is a focusable <g data-tip>: its lines (the first one the heading) are shown on hover, keyboard focus or tap.
+   Without JS, the figure's <desc> and the tables in the appendix carry the same numbers. */
+(function () {
+    "use strict";
+
+    var tip = null;
+    var current = null;
+
+    function show(cell) {
+        if (!tip) {
+            tip = document.createElement("div");
+            tip.className = "nj-heat-tip";
+            tip.setAttribute("role", "tooltip");
+            tip.hidden = true;
+            document.body.appendChild(tip);
+        }
+        if (current) current.classList.remove("nj-heat-on");
+        current = cell;
+        cell.classList.add("nj-heat-on");
+        var lines = (cell.getAttribute("data-tip") || "").split("\n");
+        tip.textContent = "";
+        lines.forEach(function (line, i) {
+            var el = document.createElement(i === 0 ? "strong" : "div");
+            el.textContent = line;
+            tip.appendChild(el);
+        });
+        tip.hidden = false;
+        var r = cell.getBoundingClientRect();
+        var w = tip.offsetWidth, h = tip.offsetHeight;
+        var x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), document.documentElement.clientWidth - w - 8);
+        var y = r.bottom + 8 + h > window.innerHeight ? r.top - h - 8 : r.bottom + 8;
+        tip.style.left = (x + window.scrollX) + "px";
+        tip.style.top = (y + window.scrollY) + "px";
+    }
+
+    function hide() {
+        if (current) current.classList.remove("nj-heat-on");
+        current = null;
+        if (tip) tip.hidden = true;
+    }
+
+    function init() {
+        hide();
+        Array.prototype.forEach.call(document.querySelectorAll("svg.nj-charts--heat .nj-heat-cell"), function (cell) {
+            if (cell.dataset.njHeatReady) return;
+            cell.dataset.njHeatReady = "1";
+            cell.addEventListener("mouseenter", function () { show(cell); });
+            cell.addEventListener("mouseleave", hide);
+            cell.addEventListener("focus", function () { show(cell); });
+            cell.addEventListener("blur", hide);
+            // a tap also focuses the cell; a tap elsewhere or Escape hides the tooltip
+            cell.addEventListener("click", function (ev) { ev.stopPropagation(); show(cell); });
+        });
+    }
+
+    document.addEventListener("click", hide);
+    document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") hide(); });
+    window.addEventListener("scroll", hide, { passive: true });
+
+    if (typeof document$ !== "undefined" && document$ && typeof document$.subscribe === "function") {
+        document$.subscribe(init);
+    } else if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
+    }
+})();

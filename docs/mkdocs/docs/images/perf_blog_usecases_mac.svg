@@ -1,0 +1,379 @@
+<svg class="nj-fig nj-charts nj-charts--blog nj-charts--heat" viewBox="0 0 784 510" role="img" aria-labelledby="nj-blog-uc-mac nj-blog-uc-mac-d" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-blog-uc-mac">Use cases: time of each library relative to the fastest, Apple M1 Max</title>
+<desc id="nj-blog-uc-mac-d">Table of relative times, libraries by use case. nlohmann/json json_document validate: 1.00; nlohmann/json json_document sum: 1.00; nlohmann/json json_document select: 1.00; nlohmann/json json_document edit: 1.00 (0.85 doing less, N); nlohmann/json json_document minify: 1.00 (0.85 doing less, N); nlohmann/json json_document write: 1.00 (0.71 doing less, N); yyjson validate: 1.37; yyjson sum: 1.11; yyjson select: 1.25; yyjson edit: 1.45; yyjson minify: 1.23 (1.16 doing less, N); yyjson write: 1.26; simdjson validate: 1.52; simdjson sum: 1.20; simdjson select: 1.33 (0.75 doing less, P); simdjson edit: n/a; simdjson minify: 1.73 (0.18 doing less, P); simdjson write: 2.41; sonic-rs (Rust) validate: 1.93; sonic-rs (Rust) sum: 1.53; sonic-rs (Rust) select: 1.83; sonic-rs (Rust) edit: 2.08; sonic-rs (Rust) minify: 1.93; sonic-rs (Rust) write: 2.38; sonic-cpp validate: no fully validating way (2.53 doing less, U); sonic-cpp sum: no fully validating way (1.86 doing less, U); sonic-cpp select: no fully validating way (2.31 doing less, U); sonic-cpp edit: no fully validating way (1.68 doing less, U); sonic-cpp minify: no fully validating way (2.03 doing less, U); sonic-cpp write: 1.59; simd-json (Rust) validate: 2.07; simd-json (Rust) sum: 1.62; simd-json (Rust) select: 2.38; simd-json (Rust) edit: 2.84; simd-json (Rust) minify: 3.40; simd-json (Rust) write: 3.10; Glaze validate: 2.04; Glaze sum: 3.85; Glaze select: 1.79 (0.82 doing less, P); Glaze edit: 4.41; Glaze minify: 5.19 (1.03 doing less, P); Glaze write: 2.23; Boost.J&#8203;SON validate: 2.56; Boost.J&#8203;SON sum: 1.99; Boost.J&#8203;SON select: 3.27; Boost.J&#8203;SON edit: 3.21; Boost.J&#8203;SON minify: 3.87; Boost.J&#8203;SON write: 3.75; serde_json (Rust) validate: 2.46 (2.23 doing less, U); serde_json (Rust) sum: 2.59; serde_json (Rust) select: 2.39 (2.24 doing less, U); serde_json (Rust) edit: 4.99; serde_json (Rust) minify: 5.85; serde_json (Rust) write: 2.95; nlohmann/json json validate: 2.71; nlohmann/json json sum: 1.96; nlohmann/json json select: 6.87; nlohmann/json json edit: 3.73; nlohmann/json json minify: 4.89; nlohmann/json json write: 2.10; RapidJSON validate: 4.72 (3.09 doing less, U); RapidJSON sum: 4.15 (2.85 doing less, U); RapidJSON select: 5.91 (3.82 doing less, U); RapidJSON edit: 4.82 (3.77 doing less, U); RapidJSON minify: 4.86 (3.60 doing less, U N); RapidJSON write: 5.88.</desc>
+<text class="nj-charts-tick" x="270" y="34">validate</text>
+<text class="nj-charts-tick" x="362" y="34">sum</text>
+<text class="nj-charts-tick" x="454" y="34">select</text>
+<text class="nj-charts-tick" x="546" y="34">edit</text>
+<text class="nj-charts-tick" x="638" y="34">minify</text>
+<text class="nj-charts-tick" x="730" y="34">write</text>
+<text class="nj-charts-rowlabel nj-charts-name-json" x="216" y="66" text-anchor="end">nlohmann/json json_document</text>
+<g class="nj-heat-cell" tabindex="0" data-tip="nlohmann/json json_document · validate&#10;1.00× the time of the fastest library (fully validating)&#10;way: accept&#10;twitter.json: 170 µs&#10;citm_catalog.json: 313 µs&#10;canada.json: 886 µs&#10;jeopardy.json: 20,873 µs">
+<rect class="nj-heat-0" x="225" y="45" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="270" y="66" text-anchor="middle">1.00</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="nlohmann/json json_document · sum&#10;1.00× the time of the fastest library (fully validating)&#10;way: parse&#10;twitter.json: 224 µs&#10;citm_catalog.json: 485 µs&#10;canada.json: 1,816 µs&#10;jeopardy.json: 28,987 µs">
+<rect class="nj-heat-0" x="317" y="45" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="362" y="66" text-anchor="middle">1.00</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="nlohmann/json json_document · select&#10;1.00× the time of the fastest library (fully validating)&#10;way: parse&#10;twitter.json: 184 µs&#10;citm_catalog.json: 363 µs&#10;canada.json: 956 µs&#10;jeopardy.json: 24,991 µs">
+<rect class="nj-heat-0" x="409" y="45" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="454" y="66" text-anchor="middle">1.00</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="nlohmann/json json_document · edit&#10;1.00× the time of the fastest library (fully validating)&#10;way: editable&#10;twitter.json: 291 µs&#10;citm_catalog.json: 560 µs&#10;canada.json: 2,765 µs&#10;jeopardy.json: 58,057 µs">
+<rect class="nj-heat-0" x="501" y="45" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="523.5" y="66" text-anchor="middle">1.00</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="nlohmann/json json_document · edit, checking less&#10;0.85× the time of the fastest fully validating library&#10;twitter.json: 283 µs · editable (source numbers) (validates fully)&#10;citm_catalog.json: 560 µs · editable (validates fully)&#10;canada.json: 1,484 µs · editable (source numbers) (validates fully)&#10;jeopardy.json: 57,635 µs · editable (source numbers) (validates fully)&#10;copies each number&#x27;s text instead of formatting it (number_format::source)">
+<rect class="nj-heat-0" x="547" y="45" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="568.5" y="60" text-anchor="middle">0.85</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="568.5" y="73" text-anchor="middle">N</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="nlohmann/json json_document · minify&#10;1.00× the time of the fastest library (fully validating)&#10;way: parse + dump&#10;twitter.json: 259 µs&#10;citm_catalog.json: 493 µs&#10;canada.json: 2,582 µs&#10;jeopardy.json: 37,882 µs">
+<rect class="nj-heat-0" x="593" y="45" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="615.5" y="66" text-anchor="middle">1.00</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="nlohmann/json json_document · minify, checking less&#10;0.85× the time of the fastest fully validating library&#10;twitter.json: 252 µs · parse + dump (source numbers) (validates fully)&#10;citm_catalog.json: 493 µs · parse + dump (validates fully)&#10;canada.json: 1,360 µs · parse + dump (source numbers) (validates fully)&#10;jeopardy.json: 37,817 µs · parse + dump (source numbers) (validates fully)&#10;copies each number&#x27;s text instead of formatting it (number_format::source)">
+<rect class="nj-heat-0" x="639" y="45" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="660.5" y="60" text-anchor="middle">0.85</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="660.5" y="73" text-anchor="middle">N</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="nlohmann/json json_document · write&#10;1.00× the time of the fastest library (fully validating)&#10;way: dump&#10;twitter.json: 74.3 µs&#10;citm_catalog.json: 134 µs&#10;canada.json: 1,621 µs&#10;jeopardy.json: 14,757 µs">
+<rect class="nj-heat-0" x="685" y="45" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="707.5" y="66" text-anchor="middle">1.00</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="nlohmann/json json_document · write, checking less&#10;0.71× the time of the fastest fully validating library&#10;twitter.json: 74.3 µs · dump (validates fully)&#10;citm_catalog.json: 134 µs · dump (validates fully)&#10;canada.json: 401 µs · dump (source numbers) (validates fully)&#10;jeopardy.json: 14,757 µs · dump (validates fully)&#10;copies each number&#x27;s text instead of formatting it (number_format::source)">
+<rect class="nj-heat-0" x="731" y="45" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="752.5" y="60" text-anchor="middle">0.71</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="752.5" y="73" text-anchor="middle">N</text>
+</g>
+<text class="nj-charts-rowlabel " x="216" y="102" text-anchor="end">yyjson</text>
+<g class="nj-heat-cell" tabindex="0" data-tip="yyjson · validate&#10;1.37× the time of the fastest library (fully validating)&#10;way: insitu (copy untimed)&#10;twitter.json: 172 µs&#10;citm_catalog.json: 451 µs&#10;canada.json: 1,457 µs&#10;jeopardy.json: 30,240 µs">
+<rect class="nj-heat-1" x="225" y="81" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="270" y="102" text-anchor="middle">1.37</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="yyjson · sum&#10;1.11× the time of the fastest library (fully validating)&#10;way: insitu (copy untimed)&#10;twitter.json: 219 µs&#10;citm_catalog.json: 551 µs&#10;canada.json: 1,906 µs&#10;jeopardy.json: 37,512 µs">
+<rect class="nj-heat-0" x="317" y="81" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="362" y="102" text-anchor="middle">1.11</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="yyjson · select&#10;1.25× the time of the fastest library (fully validating)&#10;way: insitu (copy untimed)&#10;twitter.json: 178 µs&#10;citm_catalog.json: 456 µs&#10;canada.json: 1,461 µs&#10;jeopardy.json: 32,514 µs">
+<rect class="nj-heat-1" x="409" y="81" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="454" y="102" text-anchor="middle">1.25</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="yyjson · edit&#10;1.45× the time of the fastest library (fully validating)&#10;way: insitu (copy untimed) + mut copy&#10;twitter.json: 427 µs&#10;citm_catalog.json: 882 µs&#10;canada.json: 3,642 µs&#10;jeopardy.json: 84,239 µs">
+<rect class="nj-heat-1" x="501" y="81" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="546" y="102" text-anchor="middle">1.45</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="yyjson · minify&#10;1.23× the time of the fastest library (fully validating)&#10;way: insitu (copy untimed) + write&#10;twitter.json: 279 µs&#10;citm_catalog.json: 625 µs&#10;canada.json: 3,196 µs&#10;jeopardy.json: 50,821 µs">
+<rect class="nj-heat-1" x="593" y="81" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="615.5" y="102" text-anchor="middle">1.23</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="yyjson · minify, checking less&#10;1.16× the time of the fastest fully validating library&#10;twitter.json: 279 µs · insitu (copy untimed) + write (validates fully)&#10;citm_catalog.json: 625 µs · insitu (copy untimed) + write (validates fully)&#10;canada.json: 2,550 µs · read (raw numbers) + write (validates fully)&#10;jeopardy.json: 50,821 µs · insitu (copy untimed) + write (validates fully)&#10;copies each number&#x27;s text instead of formatting it (YYJSON_READ_NUMBER_AS_RAW)">
+<rect class="nj-heat-1" x="639" y="81" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="660.5" y="96" text-anchor="middle">1.16</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="660.5" y="109" text-anchor="middle">N</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="yyjson · write&#10;1.26× the time of the fastest library (fully validating)&#10;way: write&#10;twitter.json: 103 µs&#10;citm_catalog.json: 169 µs&#10;canada.json: 1,731 µs&#10;jeopardy.json: 20,087 µs">
+<rect class="nj-heat-1" x="685" y="81" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="730" y="102" text-anchor="middle">1.26</text>
+</g>
+<text class="nj-charts-rowlabel " x="216" y="138" text-anchor="end">simdjson</text>
+<g class="nj-heat-cell" tabindex="0" data-tip="simdjson · validate&#10;1.52× the time of the fastest library (fully validating)&#10;way: D&#8203;OM&#10;twitter.json: 212 µs&#10;citm_catalog.json: 452 µs&#10;canada.json: 1,888 µs&#10;jeopardy.json: 28,843 µs">
+<rect class="nj-heat-2" x="225" y="117" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="270" y="138" text-anchor="middle">1.52</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="simdjson · sum&#10;1.20× the time of the fastest library (fully validating)&#10;twitter.json: 249 µs · D&#8203;OM&#10;citm_catalog.json: 571 µs · On-Demand&#10;canada.json: 2,374 µs · On-Demand&#10;jeopardy.json: 35,111 µs · D&#8203;OM">
+<rect class="nj-heat-1" x="317" y="117" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="362" y="138" text-anchor="middle">1.20</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="simdjson · select&#10;1.33× the time of the fastest library (fully validating)&#10;way: D&#8203;OM&#10;twitter.json: 196 µs&#10;citm_catalog.json: 450 µs&#10;canada.json: 1,886 µs&#10;jeopardy.json: 30,504 µs">
+<rect class="nj-heat-1" x="409" y="117" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="431.5" y="138" text-anchor="middle">1.33</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="simdjson · select, checking less&#10;0.75× the time of the fastest fully validating library&#10;twitter.json: 127 µs · On-Demand structs&#10;citm_catalog.json: 354 µs · On-Demand&#10;canada.json: 566 µs · On-Demand (key selectors)&#10;jeopardy.json: 19,562 µs · On-Demand&#10;reads lazily: On-Demand reads only what you ask for and steps over the rest by matching brackets">
+<rect class="nj-heat-0" x="455" y="117" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="476.5" y="132" text-anchor="middle">0.75</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="476.5" y="145" text-anchor="middle">P</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="simdjson · edit&#10;simdjson&#x27;s documents are read-only: it has no A&#8203;PI to change a value and write the result">
+<rect class="nj-heat-na" x="501" y="117" width="90" height="34" rx="3"/>
+<text class="nj-charts-tick" x="546" y="138">n/a</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="simdjson · minify&#10;1.73× the time of the fastest library (fully validating)&#10;way: D&#8203;OM + to_string&#10;twitter.json: 423 µs&#10;citm_catalog.json: 848 µs&#10;canada.json: 5,120 µs&#10;jeopardy.json: 61,059 µs">
+<rect class="nj-heat-2" x="593" y="117" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="615.5" y="138" text-anchor="middle">1.73</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="simdjson · minify, checking less&#10;0.18× the time of the fastest fully validating library&#10;way: minify&#10;twitter.json: 62.3 µs&#10;citm_catalog.json: 171 µs&#10;canada.json: 227 µs&#10;jeopardy.json: 5,762 µs&#10;simdjson::minify() only removes whitespace, without parsing the values">
+<rect class="nj-heat-0" x="639" y="117" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="660.5" y="132" text-anchor="middle">0.18</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="660.5" y="145" text-anchor="middle">P</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="simdjson · write&#10;2.41× the time of the fastest library (fully validating)&#10;way: to_string&#10;twitter.json: 199 µs&#10;citm_catalog.json: 385 µs&#10;canada.json: 3,241 µs&#10;jeopardy.json: 32,208 µs">
+<rect class="nj-heat-2" x="685" y="117" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="730" y="138" text-anchor="middle">2.41</text>
+</g>
+<text class="nj-charts-rowlabel " x="216" y="174" text-anchor="end">sonic-rs (Rust)</text>
+<g class="nj-heat-cell" tabindex="0" data-tip="sonic-rs (Rust) · validate&#10;1.93× the time of the fastest library (fully validating)&#10;way: Value&#10;twitter.json: 326 µs&#10;citm_catalog.json: 681 µs&#10;canada.json: 1,939 µs&#10;jeopardy.json: 31,450 µs">
+<rect class="nj-heat-2" x="225" y="153" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="270" y="174" text-anchor="middle">1.93</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="sonic-rs (Rust) · sum&#10;1.53× the time of the fastest library (fully validating)&#10;way: visitor&#10;twitter.json: 364 µs&#10;citm_catalog.json: 778 µs&#10;canada.json: 2,703 µs&#10;jeopardy.json: 41,361 µs">
+<rect class="nj-heat-2" x="317" y="153" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="362" y="174" text-anchor="middle">1.53</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="sonic-rs (Rust) · select&#10;1.83× the time of the fastest library (fully validating)&#10;way: Value&#10;twitter.json: 333 µs&#10;citm_catalog.json: 691 µs&#10;canada.json: 1,936 µs&#10;jeopardy.json: 40,660 µs">
+<rect class="nj-heat-2" x="409" y="153" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="454" y="174" text-anchor="middle">1.83</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="sonic-rs (Rust) · edit&#10;2.08× the time of the fastest library (fully validating)&#10;way: Value&#10;twitter.json: 634 µs&#10;citm_catalog.json: 1,257 µs&#10;canada.json: 4,396 µs&#10;jeopardy.json: 140,936 µs">
+<rect class="nj-heat-2" x="501" y="153" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="546" y="174" text-anchor="middle">2.08</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="sonic-rs (Rust) · minify&#10;1.93× the time of the fastest library (fully validating)&#10;way: Value&#10;twitter.json: 535 µs&#10;citm_catalog.json: 1,134 µs&#10;canada.json: 4,377 µs&#10;jeopardy.json: 64,832 µs">
+<rect class="nj-heat-2" x="593" y="153" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="638" y="174" text-anchor="middle">1.93</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="sonic-rs (Rust) · write&#10;2.38× the time of the fastest library (fully validating)&#10;way: Value&#10;twitter.json: 212 µs&#10;citm_catalog.json: 446 µs&#10;canada.json: 2,419 µs&#10;jeopardy.json: 33,366 µs">
+<rect class="nj-heat-2" x="685" y="153" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="730" y="174" text-anchor="middle">2.38</text>
+</g>
+<text class="nj-charts-rowlabel " x="216" y="210" text-anchor="end">sonic-cpp</text>
+<g class="nj-heat-cell" tabindex="0" data-tip="sonic-cpp · validate, checking less&#10;2.53× the time of the fastest fully validating library&#10;way: Document&#10;twitter.json: 382 µs&#10;citm_catalog.json: 985 µs&#10;canada.json: 2,578 µs&#10;jeopardy.json: 41,617 µs&#10;trusts U&#8203;TF-8: sonic-cpp 1.0.2 doesn&#x27;t check it">
+<rect class="nj-heat-3" x="225" y="189" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="270" y="204" text-anchor="middle">2.53</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="270" y="217" text-anchor="middle">U</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="sonic-cpp · sum, checking less&#10;1.86× the time of the fastest fully validating library&#10;way: Document&#10;twitter.json: 428 µs&#10;citm_catalog.json: 1,087 µs&#10;canada.json: 2,993 µs&#10;jeopardy.json: 48,688 µs&#10;trusts U&#8203;TF-8: sonic-cpp 1.0.2 doesn&#x27;t check it">
+<rect class="nj-heat-2" x="317" y="189" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="362" y="204" text-anchor="middle">1.86</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="362" y="217" text-anchor="middle">U</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="sonic-cpp · select, checking less&#10;2.31× the time of the fastest fully validating library&#10;way: Document&#10;twitter.json: 385 µs&#10;citm_catalog.json: 990 µs&#10;canada.json: 2,586 µs&#10;jeopardy.json: 45,858 µs&#10;trusts U&#8203;TF-8: sonic-cpp 1.0.2 doesn&#x27;t check it">
+<rect class="nj-heat-2" x="409" y="189" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="454" y="204" text-anchor="middle">2.31</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="454" y="217" text-anchor="middle">U</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="sonic-cpp · edit, checking less&#10;1.68× the time of the fastest fully validating library&#10;way: Document&#10;twitter.json: 486 µs&#10;citm_catalog.json: 1,224 µs&#10;canada.json: 5,638 µs&#10;jeopardy.json: 62,688 µs&#10;trusts U&#8203;TF-8: sonic-cpp 1.0.2 doesn&#x27;t check it">
+<rect class="nj-heat-2" x="501" y="189" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="546" y="204" text-anchor="middle">1.68</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="546" y="217" text-anchor="middle">U</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="sonic-cpp · minify, checking less&#10;2.03× the time of the fastest fully validating library&#10;way: Document + Serialize&#10;twitter.json: 500 µs&#10;citm_catalog.json: 1,220 µs&#10;canada.json: 5,676 µs&#10;jeopardy.json: 61,236 µs&#10;trusts U&#8203;TF-8: sonic-cpp 1.0.2 doesn&#x27;t check it">
+<rect class="nj-heat-2" x="593" y="189" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="638" y="204" text-anchor="middle">2.03</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="638" y="217" text-anchor="middle">U</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="sonic-cpp · write&#10;1.59× the time of the fastest library (fully validating)&#10;way: Serialize&#10;twitter.json: 108 µs&#10;citm_catalog.json: 230 µs&#10;canada.json: 3,093 µs&#10;jeopardy.json: 19,651 µs">
+<rect class="nj-heat-2" x="685" y="189" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="730" y="210" text-anchor="middle">1.59</text>
+</g>
+<text class="nj-charts-rowlabel " x="216" y="246" text-anchor="end">simd-json (Rust)</text>
+<g class="nj-heat-cell" tabindex="0" data-tip="simd-json (Rust) · validate&#10;2.07× the time of the fastest library (fully validating)&#10;way: tape (copy)&#10;twitter.json: 289 µs&#10;citm_catalog.json: 698 µs&#10;canada.json: 2,278 µs&#10;jeopardy.json: 38,874 µs&#10;(copy): parses in place, on a copy of the input that is part of the time">
+<rect class="nj-heat-2" x="225" y="225" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="270" y="246" text-anchor="middle">2.07</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="simd-json (Rust) · sum&#10;1.62× the time of the fastest library (fully validating)&#10;way: visitor (copy)&#10;twitter.json: 354 µs&#10;citm_catalog.json: 866 µs&#10;canada.json: 2,717 µs&#10;jeopardy.json: 47,518 µs&#10;(copy): parses in place, on a copy of the input that is part of the time">
+<rect class="nj-heat-2" x="317" y="225" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="362" y="246" text-anchor="middle">1.62</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="simd-json (Rust) · select&#10;2.38× the time of the fastest library (fully validating)&#10;way: structs (copy)&#10;twitter.json: 364 µs&#10;citm_catalog.json: 914 µs&#10;canada.json: 2,657 µs&#10;jeopardy.json: 57,697 µs&#10;(copy): parses in place, on a copy of the input that is part of the time">
+<rect class="nj-heat-2" x="409" y="225" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="454" y="246" text-anchor="middle">2.38</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="simd-json (Rust) · edit&#10;2.84× the time of the fastest library (fully validating)&#10;way: borrowed (copy)&#10;twitter.json: 948 µs&#10;citm_catalog.json: 2,102 µs&#10;canada.json: 7,654 µs&#10;jeopardy.json: 110,693 µs&#10;(copy): parses in place, on a copy of the input that is part of the time">
+<rect class="nj-heat-3" x="501" y="225" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="546" y="246" text-anchor="middle">2.84</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="simd-json (Rust) · minify&#10;3.40× the time of the fastest library (fully validating)&#10;way: borrowed (copy)&#10;twitter.json: 952 µs&#10;citm_catalog.json: 2,111 µs&#10;canada.json: 7,658 µs&#10;jeopardy.json: 108,130 µs&#10;(copy): parses in place, on a copy of the input that is part of the time">
+<rect class="nj-heat-3" x="593" y="225" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="638" y="246" text-anchor="middle">3.40</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="simd-json (Rust) · write&#10;3.10× the time of the fastest library (fully validating)&#10;way: borrowed&#10;twitter.json: 355 µs&#10;citm_catalog.json: 478 µs&#10;canada.json: 2,728 µs&#10;jeopardy.json: 47,412 µs">
+<rect class="nj-heat-3" x="685" y="225" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="730" y="246" text-anchor="middle">3.10</text>
+</g>
+<text class="nj-charts-rowlabel " x="216" y="282" text-anchor="end">Glaze</text>
+<g class="nj-heat-cell" tabindex="0" data-tip="Glaze · validate&#10;2.04× the time of the fastest library (fully validating)&#10;way: validate_json&#10;twitter.json: 331 µs&#10;citm_catalog.json: 862 µs&#10;canada.json: 1,326 µs&#10;jeopardy.json: 45,192 µs">
+<rect class="nj-heat-2" x="225" y="261" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="270" y="282" text-anchor="middle">2.04</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="Glaze · sum&#10;3.85× the time of the fastest library (fully validating)&#10;way: generic (double, strict)&#10;twitter.json: 968 µs&#10;citm_catalog.json: 2,049 µs&#10;canada.json: 6,331 µs&#10;jeopardy.json: 99,763 µs">
+<rect class="nj-heat-3" x="317" y="261" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="362" y="282" text-anchor="middle">3.85</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="Glaze · select&#10;1.79× the time of the fastest library (fully validating)&#10;way: structs (validate_skipped)&#10;twitter.json: 311 µs&#10;citm_catalog.json: 854 µs&#10;canada.json: 1,316 µs&#10;jeopardy.json: 46,924 µs">
+<rect class="nj-heat-2" x="409" y="261" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="431.5" y="282" text-anchor="middle">1.79</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="Glaze · select, checking less&#10;0.82× the time of the fastest fully validating library&#10;way: structs&#10;twitter.json: 241 µs&#10;citm_catalog.json: 255 µs&#10;canada.json: 313 µs&#10;jeopardy.json: 37,578 µs&#10;reads into structs and steps over fields it doesn&#x27;t know without checking them (validate_skipped checks them too)">
+<rect class="nj-heat-0" x="455" y="261" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="476.5" y="276" text-anchor="middle">0.82</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="476.5" y="289" text-anchor="middle">P</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="Glaze · edit&#10;4.41× the time of the fastest library (fully validating)&#10;way: generic (strict)&#10;twitter.json: 1,539 µs&#10;citm_catalog.json: 3,235 µs&#10;canada.json: 11,083 µs&#10;jeopardy.json: 178,333 µs">
+<rect class="nj-heat-3" x="501" y="261" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="546" y="282" text-anchor="middle">4.41</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="Glaze · minify&#10;5.19× the time of the fastest library (fully validating)&#10;way: generic (strict)&#10;twitter.json: 1,505 µs&#10;citm_catalog.json: 3,225 µs&#10;canada.json: 11,092 µs&#10;jeopardy.json: 168,855 µs">
+<rect class="nj-heat-4" x="593" y="261" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="615.5" y="282" text-anchor="middle">5.19</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="Glaze · minify, checking less&#10;1.03× the time of the fastest fully validating library&#10;way: minify_json&#10;twitter.json: 281 µs&#10;citm_catalog.json: 729 µs&#10;canada.json: 1,722 µs&#10;jeopardy.json: 39,976 µs&#10;minify_json only removes whitespace, without parsing the values">
+<rect class="nj-heat-0" x="639" y="261" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="660.5" y="276" text-anchor="middle">1.03</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="660.5" y="289" text-anchor="middle">P</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="Glaze · write&#10;2.23× the time of the fastest library (fully validating)&#10;twitter.json: 216 µs · generic&#10;citm_catalog.json: 469 µs · generic&#10;canada.json: 1,720 µs · generic (strict)&#10;jeopardy.json: 33,934 µs · generic">
+<rect class="nj-heat-2" x="685" y="261" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="730" y="282" text-anchor="middle">2.23</text>
+</g>
+<text class="nj-charts-rowlabel " x="216" y="318" text-anchor="end">Boost.J&#8203;SON</text>
+<g class="nj-heat-cell" tabindex="0" data-tip="Boost.J&#8203;SON · validate&#10;2.56× the time of the fastest library (fully validating)&#10;way: S&#8203;AX (numbers: none)&#10;twitter.json: 535 µs&#10;citm_catalog.json: 994 µs&#10;canada.json: 1,467 µs&#10;jeopardy.json: 53,939 µs">
+<rect class="nj-heat-3" x="225" y="297" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="270" y="318" text-anchor="middle">2.56</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="Boost.J&#8203;SON · sum&#10;1.99× the time of the fastest library (fully validating)&#10;way: S&#8203;AX&#10;twitter.json: 535 µs&#10;citm_catalog.json: 1,010 µs&#10;canada.json: 3,067 µs&#10;jeopardy.json: 53,704 µs">
+<rect class="nj-heat-2" x="317" y="297" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="362" y="318" text-anchor="middle">1.99</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="Boost.J&#8203;SON · select&#10;3.27× the time of the fastest library (fully validating)&#10;twitter.json: 617 µs · parse_into structs&#10;citm_catalog.json: 1,205 µs · parse_into structs&#10;canada.json: 3,650 µs · parse&#10;jeopardy.json: 67,255 µs · parse_into structs">
+<rect class="nj-heat-3" x="409" y="297" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="454" y="318" text-anchor="middle">3.27</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="Boost.J&#8203;SON · edit&#10;3.21× the time of the fastest library (fully validating)&#10;way: parse&#10;twitter.json: 1,368 µs&#10;citm_catalog.json: 1,992 µs&#10;canada.json: 6,573 µs&#10;jeopardy.json: 155,237 µs">
+<rect class="nj-heat-3" x="501" y="297" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="546" y="318" text-anchor="middle">3.21</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="Boost.J&#8203;SON · minify&#10;3.87× the time of the fastest library (fully validating)&#10;way: parse + serialize&#10;twitter.json: 1,393 µs&#10;citm_catalog.json: 1,986 µs&#10;canada.json: 6,542 µs&#10;jeopardy.json: 154,677 µs">
+<rect class="nj-heat-3" x="593" y="297" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="638" y="318" text-anchor="middle">3.87</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="Boost.J&#8203;SON · write&#10;3.75× the time of the fastest library (fully validating)&#10;way: serialize&#10;twitter.json: 507 µs&#10;citm_catalog.json: 508 µs&#10;canada.json: 2,923 µs&#10;jeopardy.json: 62,583 µs">
+<rect class="nj-heat-3" x="685" y="297" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="730" y="318" text-anchor="middle">3.75</text>
+</g>
+<text class="nj-charts-rowlabel " x="216" y="354" text-anchor="end">serde_json (Rust)</text>
+<g class="nj-heat-cell" tabindex="0" data-tip="serde_json (Rust) · validate&#10;2.46× the time of the fastest library (fully validating)&#10;way: from_utf8 + IgnoredAny&#10;twitter.json: 452 µs&#10;citm_catalog.json: 1,103 µs&#10;canada.json: 1,556 µs&#10;jeopardy.json: 46,517 µs">
+<rect class="nj-heat-2" x="225" y="333" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="247.5" y="354" text-anchor="middle">2.46</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="serde_json (Rust) · validate, checking less&#10;2.23× the time of the fastest fully validating library&#10;way: IgnoredAny&#10;twitter.json: 354 µs&#10;citm_catalog.json: 1,047 µs&#10;canada.json: 1,451 µs&#10;jeopardy.json: 44,984 µs&#10;trusts U&#8203;TF-8 in the strings it skips (from_slice); strings it reads are checked">
+<rect class="nj-heat-2" x="271" y="333" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="292.5" y="348" text-anchor="middle">2.23</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="292.5" y="361" text-anchor="middle">U</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="serde_json (Rust) · sum&#10;2.59× the time of the fastest library (fully validating)&#10;way: visitor&#10;twitter.json: 652 µs&#10;citm_catalog.json: 1,242 µs&#10;canada.json: 4,772 µs&#10;jeopardy.json: 66,568 µs">
+<rect class="nj-heat-3" x="317" y="333" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="362" y="354" text-anchor="middle">2.59</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="serde_json (Rust) · select&#10;2.39× the time of the fastest library (fully validating)&#10;way: from_utf8 + structs&#10;twitter.json: 480 µs&#10;citm_catalog.json: 1,125 µs&#10;canada.json: 1,560 µs&#10;jeopardy.json: 62,378 µs">
+<rect class="nj-heat-2" x="409" y="333" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="431.5" y="354" text-anchor="middle">2.39</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="serde_json (Rust) · select, checking less&#10;2.24× the time of the fastest fully validating library&#10;twitter.json: 410 µs · structs&#10;citm_catalog.json: 1,084 µs · structs&#10;canada.json: 1,455 µs · structs&#10;jeopardy.json: 62,378 µs · from_utf8 + structs (validates fully)&#10;trusts U&#8203;TF-8 in the strings it skips (from_slice); strings it reads are checked">
+<rect class="nj-heat-2" x="455" y="333" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="476.5" y="348" text-anchor="middle">2.24</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="476.5" y="361" text-anchor="middle">U</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="serde_json (Rust) · edit&#10;4.99× the time of the fastest library (fully validating)&#10;way: Value&#10;twitter.json: 2,009 µs&#10;citm_catalog.json: 3,316 µs&#10;canada.json: 9,666 µs&#10;jeopardy.json: 251,931 µs">
+<rect class="nj-heat-3" x="501" y="333" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="546" y="354" text-anchor="middle">4.99</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="serde_json (Rust) · minify&#10;5.85× the time of the fastest library (fully validating)&#10;way: Value&#10;twitter.json: 2,004 µs&#10;citm_catalog.json: 3,290 µs&#10;canada.json: 9,792 µs&#10;jeopardy.json: 227,369 µs">
+<rect class="nj-heat-4" x="593" y="333" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="638" y="354" text-anchor="middle">5.85</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="serde_json (Rust) · write&#10;2.95× the time of the fastest library (fully validating)&#10;way: Value&#10;twitter.json: 322 µs&#10;citm_catalog.json: 490 µs&#10;canada.json: 2,286 µs&#10;jeopardy.json: 49,967 µs">
+<rect class="nj-heat-3" x="685" y="333" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="730" y="354" text-anchor="middle">2.95</text>
+</g>
+<text class="nj-charts-rowlabel nj-charts-name-json" x="216" y="390" text-anchor="end">nlohmann/json json</text>
+<g class="nj-heat-cell" tabindex="0" data-tip="nlohmann/json json · validate&#10;2.71× the time of the fastest library (fully validating)&#10;way: accept&#10;twitter.json: 451 µs&#10;citm_catalog.json: 888 µs&#10;canada.json: 2,405 µs&#10;jeopardy.json: 55,286 µs">
+<rect class="nj-heat-3" x="225" y="369" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="270" y="390" text-anchor="middle">2.71</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="nlohmann/json json · sum&#10;1.96× the time of the fastest library (fully validating)&#10;way: sax&#10;twitter.json: 465 µs&#10;citm_catalog.json: 925 µs&#10;canada.json: 3,072 µs&#10;jeopardy.json: 64,089 µs">
+<rect class="nj-heat-2" x="317" y="369" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="362" y="390" text-anchor="middle">1.96</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="nlohmann/json json · select&#10;6.87× the time of the fastest library (fully validating)&#10;twitter.json: 1,360 µs · structs (from_json)&#10;citm_catalog.json: 2,416 µs · parse&#10;canada.json: 6,047 µs · structs (from_json)&#10;jeopardy.json: 179,533 µs · parse">
+<rect class="nj-heat-4" x="409" y="369" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="454" y="390" text-anchor="middle">6.87</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="nlohmann/json json · edit&#10;3.73× the time of the fastest library (fully validating)&#10;twitter.json: 1,273 µs · ordered_json&#10;citm_catalog.json: 2,344 µs · ordered_json&#10;canada.json: 8,334 µs · parse&#10;jeopardy.json: 203,232 µs · ordered_json">
+<rect class="nj-heat-3" x="501" y="369" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="546" y="390" text-anchor="middle">3.73</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="nlohmann/json json · minify&#10;4.89× the time of the fastest library (fully validating)&#10;way: parse + dump&#10;twitter.json: 1,600 µs&#10;citm_catalog.json: 2,706 µs&#10;canada.json: 8,389 µs&#10;jeopardy.json: 197,745 µs">
+<rect class="nj-heat-3" x="593" y="369" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="638" y="390" text-anchor="middle">4.89</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="nlohmann/json json · write&#10;2.10× the time of the fastest library (fully validating)&#10;way: dump&#10;twitter.json: 223 µs&#10;citm_catalog.json: 287 µs&#10;canada.json: 2,276 µs&#10;jeopardy.json: 31,825 µs">
+<rect class="nj-heat-2" x="685" y="369" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="730" y="390" text-anchor="middle">2.10</text>
+</g>
+<text class="nj-charts-rowlabel " x="216" y="426" text-anchor="end">RapidJSON</text>
+<g class="nj-heat-cell" tabindex="0" data-tip="RapidJSON · validate&#10;4.72× the time of the fastest library (fully validating)&#10;twitter.json: 1,307 µs · insitu (copy untimed)&#10;citm_catalog.json: 1,397 µs · S&#8203;AX (string stream, default precision)&#10;canada.json: 1,982 µs · S&#8203;AX (string stream, default precision)&#10;jeopardy.json: 134,679 µs · S&#8203;AX (string stream, default precision)">
+<rect class="nj-heat-3" x="225" y="405" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="247.5" y="426" text-anchor="middle">4.72</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="RapidJSON · validate, checking less&#10;3.09× the time of the fastest fully validating library&#10;twitter.json: 686 µs · insitu (copy untimed) (no encoding check)&#10;citm_catalog.json: 1,032 µs · S&#8203;AX (string stream, default precision) (no encoding check)&#10;canada.json: 1,982 µs · S&#8203;AX (string stream, default precision) (validates fully)&#10;jeopardy.json: 63,589 µs · insitu (copy untimed) (no encoding check)&#10;trusts U&#8203;TF-8: RapidJSON&#x27;s default (kParseValidateEncodingFlag checks it)">
+<rect class="nj-heat-3" x="271" y="405" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="292.5" y="420" text-anchor="middle">3.09</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="292.5" y="433" text-anchor="middle">U</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="RapidJSON · sum&#10;4.15× the time of the fastest library (fully validating)&#10;twitter.json: 1,329 µs · S&#8203;AX&#10;citm_catalog.json: 1,455 µs · S&#8203;AX (string stream)&#10;canada.json: 6,453 µs · S&#8203;AX (string stream)&#10;jeopardy.json: 136,103 µs · S&#8203;AX (string stream)">
+<rect class="nj-heat-3" x="317" y="405" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="339.5" y="426" text-anchor="middle">4.15</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="RapidJSON · sum, checking less&#10;2.85× the time of the fastest fully validating library&#10;twitter.json: 735 µs · S&#8203;AX (string stream) (no encoding check)&#10;citm_catalog.json: 1,136 µs · S&#8203;AX (string stream) (no encoding check)&#10;canada.json: 6,453 µs · S&#8203;AX (string stream) (validates fully)&#10;jeopardy.json: 69,604 µs · insitu (copy untimed) (no encoding check)&#10;trusts U&#8203;TF-8: RapidJSON&#x27;s default (kParseValidateEncodingFlag checks it)">
+<rect class="nj-heat-3" x="363" y="405" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="384.5" y="420" text-anchor="middle">2.85</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="384.5" y="433" text-anchor="middle">U</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="RapidJSON · select&#10;5.91× the time of the fastest library (fully validating)&#10;twitter.json: 1,304 µs · insitu (copy untimed)&#10;citm_catalog.json: 1,554 µs · insitu (copy untimed)&#10;canada.json: 6,776 µs · Document (string stream)&#10;jeopardy.json: 141,509 µs · insitu (copy untimed)">
+<rect class="nj-heat-4" x="409" y="405" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="431.5" y="426" text-anchor="middle">5.91</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="RapidJSON · select, checking less&#10;3.82× the time of the fastest fully validating library&#10;twitter.json: 679 µs · insitu (copy untimed) (no encoding check)&#10;citm_catalog.json: 1,126 µs · insitu (copy untimed) (no encoding check)&#10;canada.json: 6,776 µs · Document (string stream) (validates fully)&#10;jeopardy.json: 65,625 µs · insitu (copy untimed) (no encoding check)&#10;trusts U&#8203;TF-8: RapidJSON&#x27;s default (kParseValidateEncodingFlag checks it)">
+<rect class="nj-heat-3" x="455" y="405" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="476.5" y="420" text-anchor="middle">3.82</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="476.5" y="433" text-anchor="middle">U</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="RapidJSON · edit&#10;4.82× the time of the fastest library (fully validating)&#10;twitter.json: 1,922 µs · Document&#10;citm_catalog.json: 2,388 µs · insitu (copy untimed)&#10;canada.json: 13,836 µs · Document (string stream)&#10;jeopardy.json: 221,270 µs · insitu (copy untimed)">
+<rect class="nj-heat-3" x="501" y="405" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="523.5" y="426" text-anchor="middle">4.82</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="RapidJSON · edit, checking less&#10;3.77× the time of the fastest fully validating library&#10;way: insitu (copy untimed) (no encoding check)&#10;twitter.json: 1,344 µs&#10;citm_catalog.json: 1,964 µs&#10;canada.json: 13,794 µs&#10;jeopardy.json: 144,741 µs&#10;trusts U&#8203;TF-8: RapidJSON&#x27;s default (kParseValidateEncodingFlag checks it)">
+<rect class="nj-heat-3" x="547" y="405" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="568.5" y="420" text-anchor="middle">3.77</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="568.5" y="433" text-anchor="middle">U</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="RapidJSON · minify&#10;4.86× the time of the fastest library (fully validating)&#10;twitter.json: 1,525 µs · S&#8203;AX to Writer&#10;citm_catalog.json: 1,808 µs · S&#8203;AX to Writer (string stream)&#10;canada.json: 14,460 µs · Document + Writer&#10;jeopardy.json: 174,558 µs · S&#8203;AX to Writer (string stream)">
+<rect class="nj-heat-3" x="593" y="405" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="615.5" y="426" text-anchor="middle">4.86</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="RapidJSON · minify, checking less&#10;3.60× the time of the fastest fully validating library&#10;twitter.json: 1,058 µs · S&#8203;AX to Writer (string stream) (no encoding check)&#10;citm_catalog.json: 1,485 µs · S&#8203;AX to Writer (string stream) (no encoding check)&#10;canada.json: 10,908 µs · S&#8203;AX to Writer (raw numbers) (no encoding check)&#10;jeopardy.json: 123,119 µs · S&#8203;AX to Writer (string stream) (no encoding check)&#10;trusts U&#8203;TF-8: RapidJSON&#x27;s default (kParseValidateEncodingFlag checks it)&#10;copies each number&#x27;s text instead of formatting it (kParseNumbersAsStringsFlag)">
+<rect class="nj-heat-3" x="639" y="405" width="44" height="34" rx="3"/>
+<text class="nj-charts-cell" x="660.5" y="420" text-anchor="middle">3.60</text>
+<text class="nj-charts-cell nj-charts-cell--small" x="660.5" y="433" text-anchor="middle">U N</text>
+</g>
+<g class="nj-heat-cell" tabindex="0" data-tip="RapidJSON · write&#10;5.88× the time of the fastest library (fully validating)&#10;way: Writer&#10;twitter.json: 603 µs&#10;citm_catalog.json: 830 µs&#10;canada.json: 6,995 µs&#10;jeopardy.json: 81,150 µs">
+<rect class="nj-heat-4" x="685" y="405" width="90" height="34" rx="3"/>
+<text class="nj-charts-cell" x="730" y="426" text-anchor="middle">5.88</text>
+</g>
+<text class="nj-charts-tick nj-charts-tick--l" x="8" y="472">time relative to the fastest fully validating library, less is better</text>
+<g><rect class="nj-heat-0" x="8" y="482" width="76" height="20" rx="3"/>
+<text class="nj-charts-cell nj-charts-cell--small" x="46" y="496" text-anchor="middle">below 1.15</text></g>
+<g><rect class="nj-heat-1" x="88" y="482" width="76" height="20" rx="3"/>
+<text class="nj-charts-cell nj-charts-cell--small" x="126" y="496" text-anchor="middle">1.15 to 1.5</text></g>
+<g><rect class="nj-heat-2" x="168" y="482" width="76" height="20" rx="3"/>
+<text class="nj-charts-cell nj-charts-cell--small" x="206" y="496" text-anchor="middle">1.5 to 2.5</text></g>
+<g><rect class="nj-heat-3" x="248" y="482" width="76" height="20" rx="3"/>
+<text class="nj-charts-cell nj-charts-cell--small" x="286" y="496" text-anchor="middle">2.5 to 5</text></g>
+<g><rect class="nj-heat-4" x="328" y="482" width="76" height="20" rx="3"/>
+<text class="nj-charts-cell nj-charts-cell--small" x="366" y="496" text-anchor="middle">5 and more</text></g>
+<rect class="nj-heat-na" x="420" y="482" width="40" height="20" rx="3"/>
+<text class="nj-charts-tick" x="440" y="496">n/a</text>
+<text class="nj-charts-tick nj-charts-tick--l" x="468" y="496">no A&#8203;PI for it</text>
+</svg>
