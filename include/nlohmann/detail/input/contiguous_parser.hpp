@@ -37,8 +37,8 @@ namespace detail
 @brief a parser for JSON text in one contiguous block, for parse(), accept(),
        and sax_parse()
 
-The parser and the lexer exchange one token at a time, and the lexer keeps its
-state (the current character, a pending unget, where the token starts) in
+The default parser and lexer exchange one token at a time, and the lexer keeps
+its state (the current character, a pending unget, where the token starts) in
 members, which every character pays for. This parser reads the block through a
 local pointer instead, and the grammar, the whitespace and the tokens are one
 loop, after yyjson's reader: the state stays in registers, and the expected
@@ -46,13 +46,13 @@ next token is tested where it is expected instead of being dispatched on.
 
 It reports what it reads to a SAX handler: the one parse() uses to build the
 value, the one accept() uses, or the user's handler of sax_parse(). On a byte
-the library parser would reject, it stops before reporting the token, and
-returns false: the events up to there are those the library parser reports.
-The caller then runs the library parser on the same input to report the error
+the default parser would reject, it stops before reporting the token, and
+returns false: the events up to there are those the default parser reports.
+The caller then runs the default parser on the same input to report the error
 with its exact message and position (report_contiguous_error(),
 json_sax_error_forwarder), and parse() builds no value from what was read.
 
-What is accepted, and the values reported, are those of the library parser
+What is accepted, and the values reported, are those of the default parser
 with default options: the same number grammar and conversions, the same UTF-8
 and escape rules, a UTF-8 byte order mark at the start, and, without
 JSON_STRICT_NUL_HANDLING, a NUL byte as the end of the input.
@@ -106,28 +106,28 @@ class contiguous_parser
         std::vector<std::uint64_t> outer;
 
         // the current byte, or 0 at the end (no JSON token starts with 0)
-#define JSON_CONTIGUOUS_CUR() (p != e ? *p : 0)
+#define JSON_CONTIGUOUS_CUR() current(p, e)
         // skip whitespace; most tokens have none before them
-#define JSON_CONTIGUOUS_WS()                                      \
-    do                                                            \
-    {                                                             \
-        if (JSON_HEDLEY_UNLIKELY(JSON_CONTIGUOUS_CUR() <= ' '))  \
-        {                                                         \
-            p = skip_whitespace(p, e);                            \
-        }                                                         \
-    }                                                             \
+#define JSON_CONTIGUOUS_WS()                                    \
+    do                                                          \
+    {                                                           \
+        if (JSON_HEDLEY_UNLIKELY(JSON_CONTIGUOUS_CUR() <= ' ')) \
+        {                                                       \
+            p = skip_whitespace(p, e);                          \
+        }                                                       \
+    }                                                           \
     while (false)
-#define JSON_CONTIGUOUS_OPEN(is_object)                                      \
-    do                                                                       \
-    {                                                                        \
+#define JSON_CONTIGUOUS_OPEN(is_object)                                                             \
+    do                                                                                              \
+    {                                                                                               \
         if (JSON_HEDLEY_UNLIKELY(depth != 0 && (depth % 64) == 0)) /* NOLINT(readability/braces) */ \
-        {                                                                    \
-            outer.push_back(kinds);                                          \
-            kinds = 0;                                                       \
-        }                                                                    \
-        kinds = (kinds << 1u) | static_cast<std::uint64_t>(is_object);       \
-        ++depth;                                                             \
-    }                                                                        \
+        {                                                                                           \
+            outer.push_back(kinds);                                                                 \
+            kinds = 0;                                                                              \
+        }                                                                                           \
+        kinds = (kinds << 1u) | static_cast<std::uint64_t>(is_object);                              \
+        ++depth;                                                                                    \
+    }                                                                                               \
     while (false)
 
         JSON_CONTIGUOUS_WS();
@@ -160,107 +160,107 @@ class contiguous_parser
         // a value in an array or an object: expanded once for each, so that
         // each dispatch has its own branch history (arrays tend to hold values
         // of one kind) and the code after a scalar knows where it is
-#define JSON_CONTIGUOUS_VALUE                                                          \
-    switch (JSON_CONTIGUOUS_CUR())                                                     \
-    {                                                                                  \
-        case '"':                                                                      \
-            if (JSON_HEDLEY_UNLIKELY(!string(p, false)))                               \
-            {                                                                          \
-                return false;                                                          \
-            }                                                                          \
-            break;                                                                     \
-        case '{':                                                                      \
-            ++p;                                                                       \
-            if (JSON_HEDLEY_UNLIKELY(!report(sax->start_object(detail::unknown_size()))))      \
-            {                                                                          \
-                return false;                                                          \
-            }                                                                          \
-            JSON_CONTIGUOUS_OPEN(1u);                                                  \
-            goto object_first;                                                         \
-        case '[':                                                                      \
-            ++p;                                                                       \
-            if (JSON_HEDLEY_UNLIKELY(!report(sax->start_array(detail::unknown_size()))))       \
-            {                                                                          \
-                return false;                                                          \
-            }                                                                          \
-            JSON_CONTIGUOUS_OPEN(0u);                                                  \
-            goto array_first;                                                          \
-        case '-':                                                                      \
-        case '0':                                                                      \
-        case '1':                                                                      \
-        case '2':                                                                      \
-        case '3':                                                                      \
-        case '4':                                                                      \
-        case '5':                                                                      \
-        case '6':                                                                      \
-        case '7':                                                                      \
-        case '8':                                                                      \
-        case '9':                                                                      \
-            if (JSON_HEDLEY_UNLIKELY(!number(p)))                                      \
-            {                                                                          \
-                return false;                                                          \
-            }                                                                          \
-            break;                                                                     \
-        case 't':                                                                      \
-            if (JSON_HEDLEY_UNLIKELY(!literal(p, "true") || !report(sax->boolean(true))))      \
-            {                                                                          \
-                return false;                                                          \
-            }                                                                          \
-            break;                                                                     \
-        case 'f':                                                                      \
-            if (JSON_HEDLEY_UNLIKELY(!literal(p, "false") || !report(sax->boolean(false))))    \
-            {                                                                          \
-                return false;                                                          \
-            }                                                                          \
-            break;                                                                     \
-        case 'n':                                                                      \
-            if (JSON_HEDLEY_UNLIKELY(!literal(p, "null") || !report(sax->null())))             \
-            {                                                                          \
-                return false;                                                          \
-            }                                                                          \
-            break;                                                                     \
-        default:                                                                       \
-            return false;                                                              \
+#define JSON_CONTIGUOUS_VALUE                                                               \
+    switch (JSON_CONTIGUOUS_CUR())                                                          \
+    {                                                                                       \
+        case '"':                                                                           \
+            if (JSON_HEDLEY_UNLIKELY(!string(p, false)))                                    \
+            {                                                                               \
+                return false;                                                               \
+            }                                                                               \
+            break;                                                                          \
+        case '{':                                                                           \
+            ++p;                                                                            \
+            if (JSON_HEDLEY_UNLIKELY(!report(sax->start_object(detail::unknown_size()))))   \
+            {                                                                               \
+                return false;                                                               \
+            }                                                                               \
+            JSON_CONTIGUOUS_OPEN(1u);                                                       \
+            goto object_first;                                                              \
+        case '[':                                                                           \
+            ++p;                                                                            \
+            if (JSON_HEDLEY_UNLIKELY(!report(sax->start_array(detail::unknown_size()))))    \
+            {                                                                               \
+                return false;                                                               \
+            }                                                                               \
+            JSON_CONTIGUOUS_OPEN(0u);                                                       \
+            goto array_first;                                                               \
+        case '-':                                                                           \
+        case '0':                                                                           \
+        case '1':                                                                           \
+        case '2':                                                                           \
+        case '3':                                                                           \
+        case '4':                                                                           \
+        case '5':                                                                           \
+        case '6':                                                                           \
+        case '7':                                                                           \
+        case '8':                                                                           \
+        case '9':                                                                           \
+            if (JSON_HEDLEY_UNLIKELY(!number(p)))                                           \
+            {                                                                               \
+                return false;                                                               \
+            }                                                                               \
+            break;                                                                          \
+        case 't':                                                                           \
+            if (JSON_HEDLEY_UNLIKELY(!literal(p, "true") || !report(sax->boolean(true))))   \
+            {                                                                               \
+                return false;                                                               \
+            }                                                                               \
+            break;                                                                          \
+        case 'f':                                                                           \
+            if (JSON_HEDLEY_UNLIKELY(!literal(p, "false") || !report(sax->boolean(false)))) \
+            {                                                                               \
+                return false;                                                               \
+            }                                                                               \
+            break;                                                                          \
+        case 'n':                                                                           \
+            if (JSON_HEDLEY_UNLIKELY(!literal(p, "null") || !report(sax->null())))          \
+            {                                                                               \
+                return false;                                                               \
+            }                                                                               \
+            break;                                                                          \
+        default:                                                                            \
+            return false;                                                                   \
     }
 
         // what may follow a value in an array: a comma and the next value, or the end
-#define JSON_CONTIGUOUS_AFTER_ELEMENT                                \
-    JSON_CONTIGUOUS_WS();                                            \
+#define JSON_CONTIGUOUS_AFTER_ELEMENT                                                      \
+    JSON_CONTIGUOUS_WS();                                                                  \
     if (JSON_HEDLEY_LIKELY(JSON_CONTIGUOUS_CUR() == ',')) /* NOLINT(readability/braces) */ \
-    {                                                                \
-        ++p;                                                         \
-        JSON_CONTIGUOUS_WS();                                        \
-        goto array_value;                                            \
-    }                                                                \
+    {                                                                                      \
+        ++p;                                                                               \
+        JSON_CONTIGUOUS_WS();                                                              \
+        goto array_value;                                                                  \
+    }                                                                                      \
     if (JSON_HEDLEY_LIKELY(JSON_CONTIGUOUS_CUR() == ']')) /* NOLINT(readability/braces) */ \
-    {                                                                \
-        ++p;                                                         \
-        if (JSON_HEDLEY_UNLIKELY(!report(sax->end_array())))                 \
-        {                                                            \
-            return false;                                            \
-        }                                                            \
-        goto close;                                                  \
-    }                                                                \
+    {                                                                                      \
+        ++p;                                                                               \
+        if (JSON_HEDLEY_UNLIKELY(!report(sax->end_array())))                               \
+        {                                                                                  \
+            return false;                                                                  \
+        }                                                                                  \
+        goto close;                                                                        \
+    }                                                                                      \
     return false;
 
         // what may follow a value in an object: a comma and the next member, or the end
-#define JSON_CONTIGUOUS_AFTER_MEMBER                                 \
-    JSON_CONTIGUOUS_WS();                                            \
+#define JSON_CONTIGUOUS_AFTER_MEMBER                                                       \
+    JSON_CONTIGUOUS_WS();                                                                  \
     if (JSON_HEDLEY_LIKELY(JSON_CONTIGUOUS_CUR() == ',')) /* NOLINT(readability/braces) */ \
-    {                                                                \
-        ++p;                                                         \
-        JSON_CONTIGUOUS_WS();                                        \
-        goto object_key;                                             \
-    }                                                                \
+    {                                                                                      \
+        ++p;                                                                               \
+        JSON_CONTIGUOUS_WS();                                                              \
+        goto object_key;                                                                   \
+    }                                                                                      \
     if (JSON_HEDLEY_LIKELY(JSON_CONTIGUOUS_CUR() == '}')) /* NOLINT(readability/braces) */ \
-    {                                                                \
-        ++p;                                                         \
-        if (JSON_HEDLEY_UNLIKELY(!report(sax->end_object())))                \
-        {                                                            \
-            return false;                                            \
-        }                                                            \
-        goto close;                                                  \
-    }                                                                \
+    {                                                                                      \
+        ++p;                                                                               \
+        if (JSON_HEDLEY_UNLIKELY(!report(sax->end_object())))                              \
+        {                                                                                  \
+            return false;                                                                  \
+        }                                                                                  \
+        goto close;                                                                        \
+    }                                                                                      \
     return false;
 
 array_first:
@@ -387,6 +387,12 @@ done:
         return KeepValues;
     }
 
+    /// the byte at @a p, or 0 at the end @a e (no JSON token starts with 0)
+    static JSON_HEDLEY_ALWAYS_INLINE uchar current(const uchar* p, const uchar* e) noexcept
+    {
+        return p != e ? *p : 0;
+    }
+
     /// the first byte at or after p that is not whitespace, or e
     static JSON_HEDLEY_NEVER_INLINE const uchar* skip_whitespace(const uchar* p, const uchar* e) noexcept
     {
@@ -436,7 +442,7 @@ done:
     /// a JSON text that is a single scalar
     bool scalar(const uchar*& p)
     {
-        switch (p != end ? *p : 0)
+        switch (current(p, end))
         {
             case '"':
                 return string(p, false);
@@ -624,7 +630,7 @@ done:
            contiguous path (lexer::scan_number_bulk_contiguous())
 
     Integers that do not fit their type become floats; floats that overflow
-    are an error, which the library parser reports.
+    are an error, which the default parser reports.
     */
     JSON_HEDLEY_ALWAYS_INLINE bool number(const uchar*& pos)
     {
@@ -773,7 +779,7 @@ done:
         }
         if (JSON_HEDLEY_UNLIKELY(!std::isfinite(value)))
         {
-            return false; // the library parser reports the overflow
+            return false; // the default parser reports the overflow
         }
         return report(sax->number_float(value, number_text(data, data + i)));
     }
@@ -811,7 +817,7 @@ struct can_parse_contiguous
 @brief report the input behind @a adapter, one block of memory, to @a sax
 
 @return whether the input is valid and was reported completely; if not,
-        nothing was consumed from @a adapter, and the caller has the library
+        nothing was consumed from @a adapter, and the caller has the default
         parser report the error
 */
 template<typename BasicJsonType, bool KeepValues, typename SAX, typename InputAdapterType>
@@ -820,7 +826,7 @@ bool parse_contiguous(InputAdapterType& adapter, SAX& sax, std::true_type /*cont
     const std::size_t size = adapter.bulk_remaining();
     if (size == 0)
     {
-        return false; // the library parser reports the empty input
+        return false; // the default parser reports the empty input
     }
     const auto* const first = reinterpret_cast<const unsigned char*>(adapter.bulk_data());
     contiguous_parser<BasicJsonType, SAX, KeepValues> p(first, first + size, &sax);
@@ -831,7 +837,7 @@ bool parse_contiguous(InputAdapterType& adapter, SAX& sax, std::true_type /*cont
 @brief a SAX handler that only reports a parse error, as the handler of parse()
        does: it throws the exception, unless exceptions are not allowed
 
-After contiguous_parser has rejected an input, the library parser is run again
+After contiguous_parser has rejected an input, the default parser is run again
 with this handler to report the error: the error, its message and its position
 are those of parse(), without building the values read up to it.
 */
@@ -868,7 +874,7 @@ struct sax_ignores_number_text<json_sax_error_reporter<BasicJsonType>> : std::tr
        rejected, as parse() reports it: throw its exception, or, without
        exceptions, return true
 
-@return false if the library parser accepts the input after all (which would
+@return false if the default parser accepts the input after all (which would
         be a disagreement of the two parsers): the caller then parses it
 */
 template<typename BasicJsonType, typename InputAdapterType>
@@ -922,7 +928,7 @@ bool parse_contiguous(InputAdapterType& /*adapter*/, BasicJsonType& /*result*/, 
 
 @return whether @a accepted is the result of accept(); false if the input is
         not one block of memory, in which case the caller checks it.
-        contiguous_parser accepts exactly what the library parser accepts.
+        contiguous_parser accepts exactly what the default parser accepts.
 */
 template<typename BasicJsonType, typename InputAdapterType>
 bool accept_contiguous(InputAdapterType& adapter, bool& accepted, std::true_type /*contiguous*/)
@@ -943,9 +949,9 @@ bool accept_contiguous(InputAdapterType& /*adapter*/, bool& /*accepted*/, std::f
        handler of the user
 
 After contiguous_parser has delivered the events of the input to the user's
-handler and rejected it, the library parser is run again with this handler:
+handler and rejected it, the default parser is run again with this handler:
 the user's handler gets the error, its message and its position from the
-library parser, as before, but no event twice.
+default parser, as before, but no event twice.
 */
 template<typename BasicJsonType, typename SAX>
 class json_sax_error_forwarder : public json_sax_acceptor<BasicJsonType>
@@ -962,7 +968,7 @@ class json_sax_error_forwarder : public json_sax_acceptor<BasicJsonType>
         return user->parse_error(position, last_token, ex);
     }
 
-    /// whether the library parser reported an error
+    /// whether the default parser reported an error
     bool reported() const noexcept
     {
         return forwarded;
@@ -981,8 +987,8 @@ struct sax_ignores_number_text<json_sax_error_forwarder<BasicJsonType, SAX>> : s
        a user's handler @a sax
 
 contiguous_parser reports to @a sax what it reads, and stops at the token that
-the library parser would reject, before reporting it: the events up to an error
-are the same. The error itself is then reported by the library parser (see
+the default parser would reject, before reporting it: the events up to an error
+are the same. The error itself is then reported by the default parser (see
 json_sax_error_forwarder).
 
 @return whether @a result is the result of sax_parse(); false if the input is
@@ -1003,14 +1009,14 @@ bool sax_parse_contiguous(InputAdapterType& adapter, SAX* sax, bool& result, std
         }
         if (p.aborted())
         {
-            // the handler returned false, as with the library parser
+            // the handler returned false, as with the default parser
             result = false;
             return true;
         }
     }
     json_sax_error_forwarder<BasicJsonType, SAX> forwarder(sax);
     result = parser<BasicJsonType, InputAdapterType>(InputAdapterType(adapter), nullptr, true, false, false).sax_parse(&forwarder, true);
-    // the library parser must reject the input as well (the events after the
+    // the default parser must reject the input as well (the events after the
     // byte contiguous_parser stopped at cannot be delivered any more)
     JSON_ASSERT(forwarder.reported());
     return true;

@@ -84,6 +84,9 @@ Input in one block of memory is read even faster with the default options (no
 [parser callback](../../api/basic_json/parser_callback_t.md), no comments, no trailing commas, and for `sax_parse()`
 `strict = true`): `parse()`, `accept()`, and `sax_parse()` then read the grammar and the tokens in one loop over the
 memory. Only after an error do `parse()` and `sax_parse()` read the input again, to report the error exactly as before.
+This faster path is not used when [`JSON_DIAGNOSTIC_POSITIONS`](../../api/macros/json_diagnostic_positions.md) is
+enabled, because the positions are recorded by the default parser: the input is then parsed as before, at the same speed
+as before.
 
 Parsing a file from a `#!cpp std::ifstream` therefore takes about 1.15 to 1.45 times as long as reading the whole file
 into a `#!cpp std::string` first and parsing that, but it needs no memory for a copy of the file. The stream is never read
