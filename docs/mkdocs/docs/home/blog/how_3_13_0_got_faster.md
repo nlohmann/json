@@ -1108,12 +1108,13 @@ static void destroy_bounded(basic_json& v, std::size_t depth) noexcept
 <p class="nj-code-caption" markdown>Bounded recursion: recursive down to 128 levels, iterative below.</p>
 
 The first 128 levels run the old recursive code, and only below that does an explicit stack, or the walk below, take
-over. A document nested less deeply pays one comparison per container. Comparing walks `std::vector` and `std::map`
-itself and passes the depth as an argument. Copying can't do that cheaply: the containers' copy constructors call ours
-for every element, and a copy that inserts element by element so that it can pass the depth measured 4–16% slower,
-because `std::map`'s own copy clones its tree without comparing a single key. So copying counts the levels in a
-`thread_local` counter instead, about ten nanoseconds per copy of a small object, and so does comparing for custom
-container types.
+over. A document nested less deeply pays one comparison per container. Testing for equality walks `std::vector` and
+`std::map` itself and passes the depth as an argument. Copying can't do that cheaply: the containers' copy constructors
+call ours for every element, and a copy that inserts element by element so that it can pass the depth measured 4–16%
+slower, because `std::map`'s own copy clones its tree without comparing a single key. So copying counts the levels in a
+`thread_local` counter instead, about ten nanoseconds per copy of a small object. Three more operations use the same
+counter: converting a value from another `basic_json` specialization, the ordering comparisons (`<`, `<=>` and the
+operators derived from them), and equality for custom container types, whose own `operator==` calls ours.
 
 ### Destroying without a stack
 
@@ -1186,7 +1187,9 @@ static_assert(sizeof(node) == 16, "node must stay 16 bytes");
 - **Strings stay in the input.** Only strings with escapes are decoded, into an arena. A document makes only a handful
   of allocations, no matter how many values it has. The price is that the text must outlive the document, unless the
   document owns it: [`parse_copy()`](../../api/basic_json_document/parse_copy.md) copies the text, and parsing an
-  rvalue `std::string` moves it into the document. Offsets are 32 bits, which limits a document to 4 GiB.
+  rvalue `std::string` moves it into the document. Input that can't be read as one contiguous block of bytes, such as a
+  stream or a `FILE*`, is read into a buffer that the document owns, too. Offsets are 32 bits, which limits a document
+  to 4 GiB.
 - **Integers are converted while their digits are in the cache,** into the last 8 bytes of their node.
 - **Floats stay text until you read them.** The node records the number of digits before and after the point, and
   reading converts with the same Clinger/Eisel-Lemire code as `json::parse`. We tried converting them during the parse.
