@@ -3111,7 +3111,7 @@ public:
     {
         basic_json result;
         // JSON in one block of memory, with the default options, is read by
-        // the faster contiguous_parser; on an error, the library parser reads
+        // the faster contiguous_parser; on an error, the default parser reads
         // it again to report it (see contiguous_parser)
         using contiguous = std::integral_constant<bool, detail::can_parse_contiguous<basic_json, typename std::decay<InputAdapterType>::type>::value>;
         if (cb == nullptr && !ignore_comments && !ignore_trailing_commas
@@ -3129,8 +3129,8 @@ public:
                             const bool ignore_comments,
                             const bool ignore_trailing_commas)
     {
-        // JSON in one block of memory is checked by the faster
-        // contiguous_parser (see parse_impl())
+        // JSON in one block of memory, with the default options, is checked by
+        // the faster contiguous_parser (see parse_impl())
         using adapter_t = typename std::decay<InputAdapterType>::type;
         bool accepted = false;
         if (!ignore_comments && !ignore_trailing_commas
@@ -3154,8 +3154,9 @@ public:
     {
         if (format == input_format_t::json)
         {
-            // JSON in one block of memory is read by the faster
-            // contiguous_parser, with the default options (see parse_impl())
+            // JSON in one block of memory, with the default options, is read by
+            // the faster contiguous_parser; on an error, the default parser
+            // reads it again to report it (see parse_impl())
             bool result = false;
             if (strict && !ignore_comments && !ignore_trailing_commas
                     && detail::sax_parse_contiguous<basic_json>(ia, sax, result, std::integral_constant<bool, detail::can_parse_contiguous<basic_json, InputAdapterType>::value> {}))

@@ -77,13 +77,16 @@ them faster than others:
 |--------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
 | strings, string views, string literals, contiguous containers, pointer or iterator ranges over contiguous memory | the whole input is scanned in bulk: runs of string characters, numbers, and indentation are recognized several bytes at a time |
 | `#!cpp std::istream` (`#!cpp std::ifstream`, `#!cpp std::istringstream`, ...)            | the characters the stream buffer holds are scanned in bulk like a string; the stream buffer is asked for more when they are used up |
-| `#!cpp FILE*`                                                                              | one character at a time, with the file locked once for the whole parse              |
+| `#!cpp FILE*`                                                                              | with glibc and the Apple C library, the characters the `FILE` holds in its buffer are scanned in bulk like a stream's; elsewhere one character at a time; the file is locked once for the whole parse |
 | other iterator ranges (e.g., `#!cpp std::list<char>`, `#!cpp std::istreambuf_iterator<char>`), wide strings | one character at a time                                                             |
 
 Input in one block of memory is read even faster with the default options (no
 [parser callback](../../api/basic_json/parser_callback_t.md), no comments, no trailing commas, and for `sax_parse()`
 `strict = true`): `parse()`, `accept()`, and `sax_parse()` then read the grammar and the tokens in one loop over the
 memory. Only after an error do `parse()` and `sax_parse()` read the input again, to report the error exactly as before.
+This faster path is not used when [`JSON_DIAGNOSTIC_POSITIONS`](../../api/macros/json_diagnostic_positions.md) is
+enabled, because the positions are recorded by the default parser: the input is then parsed as before, at the same speed
+as before.
 
 Parsing a file from a `#!cpp std::ifstream` therefore takes about 1.15 to 1.45 times as long as reading the whole file
 into a `#!cpp std::string` first and parsing that, but it needs no memory for a copy of the file. The stream is never read

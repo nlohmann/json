@@ -5,7 +5,9 @@
 ```
 
 When defined to `1`, parsing from a `#!cpp FILE*` reads every character with `std::fgetc`, as in version 3.12.0 and
-earlier, instead of locking the file once and reading it with the unlocked stdio functions.
+earlier, instead of locking the file once and reading it with the unlocked stdio functions. This also turns off the
+scan of the `FILE`'s buffer in bulk (see below), which [`JSON_DISABLE_STREAM_BULK_SCAN`](json_disable_stream_bulk_scan.md)
+does not affect.
 
 It does not change any result: values, exceptions, and the position of the file after parsing are the same either way.
 Only the speed and the locking of the file differ (see the notes on locking below).
@@ -37,9 +39,17 @@ The default value is `0`: the file is locked once and read with the unlocked std
     | Microsoft (MSVC, clang-cl)                                 | `_lock_file`, `_fgetc_nolock`, `_unlock_file`       |
     | others (e.g., musl, MinGW, newlib)                         | `std::fgetc`, as before                             |
 
-    This makes parsing from a `FILE*` 3 to 4 times as fast with the Apple C library and 1.1 to 1.3 times as fast with
-    glibc, whose locking is cheaper. The binary formats ([`from_cbor`](../basic_json/from_cbor.md),
-    [`from_msgpack`](../basic_json/from_msgpack.md), ...) read from a `FILE*` the same way.
+    With glibc and the Apple C library, the parser also scans the characters that the `FILE` already holds in its
+    buffer in bulk, as it scans the get area of a stream (see
+    [`JSON_DISABLE_STREAM_BULK_SCAN`](json_disable_stream_bulk_scan.md)): it reads the same fields of the `FILE` that
+    the C library's own `getc_unlocked` reads, and it consumes exactly the characters that `getc_unlocked` would have
+    returned, so the file is left where it was left before.
+
+    Locking the file once makes parsing from a `FILE*` 3 to 4 times as fast with the Apple C library and 1.1 to 1.3
+    times as fast with glibc, whose locking is cheaper. Scanning the buffer in bulk makes `parse()` another 1.7 to 2.6
+    times as fast (and `accept()` 2.9 to 4.4 times), about as fast as parsing from a `std::ifstream`. The binary
+    formats ([`from_cbor`](../basic_json/from_cbor.md), [`from_msgpack`](../basic_json/from_msgpack.md), ...) read
+    from a `FILE*` the same way.
 
 !!! note "Locking"
 

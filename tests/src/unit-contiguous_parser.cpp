@@ -201,7 +201,7 @@ void check_same_events(const std::string& text, const std::list<char>& bytes)
         CHECK(r1 == r2);
         CHECK(contiguous.log() == byte_path.log());
     }
-    // a handler that asks to go on after an error (the library parser then
+    // a handler that asks to go on after an error (the default parser then
     // reports what follows, e.g., the missing end of the input)
     event_log contiguous(static_cast<std::size_t>(-1), true);
     event_log byte_path(static_cast<std::size_t>(-1), true);
@@ -545,7 +545,7 @@ TEST_CASE("contiguous parser")
         CHECK_FALSE(narrow_json::accept("34028236e31"));
     }
 
-    SECTION("callbacks, comments and trailing commas take the library parser")
+    SECTION("callbacks, comments and trailing commas take the default parser")
     {
         // (the results are those of the options; the contiguous parser does not support them)
         CHECK(json::parse("[1,]", nullptr, true, false, true) == json({1}));

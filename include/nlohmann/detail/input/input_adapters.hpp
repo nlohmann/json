@@ -58,6 +58,19 @@
         #define JSON_UNLOCKED_FILE_IO 0
     #endif
     #undef JSON_UNLOCKED_FILE_IO_MSAN
+
+    // Whether file_input_adapter scans the buffer of the FILE directly, as
+    // getc_unlocked() reads it: the fields it uses are those that the C
+    // library's own getc_unlocked() macro uses (glibc: _IO_read_ptr and
+    // _IO_read_end; Apple: _p and _r). It needs the file locked for the whole
+    // parse, as JSON_UNLOCKED_FILE_IO == 1 has it (so JSON_DISABLE_UNLOCKED_FILE_IO
+    // and MemorySanitizer builds turn it off).
+    // (uClibc defines __GLIBC__ as well, but its FILE has other fields)
+    #if JSON_UNLOCKED_FILE_IO == 1 && ((defined(__GLIBC__) && !defined(__UCLIBC__)) || defined(__APPLE__))
+        #define JSON_FILE_WINDOW 1
+    #else
+        #define JSON_FILE_WINDOW 0
+    #endif
 #endif  // JSON_NO_IO
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -179,8 +192,12 @@ class token_carry_buffer
     char* m_capacity_end = nullptr;
 };
 /*!
-Input adapter for stdio file access. This adapter read only 1 byte and do not use any
- buffer. This adapter is a very low level adapter.
+Input adapter for stdio file access. The file is locked for the lifetime of the
+adapter and read with the unlocked stdio functions (see
+JSON_DISABLE_UNLOCKED_FILE_IO). With glibc and the Apple C library, the
+characters in the buffer of the FILE are also scanned in bulk, as the get area
+of a stream is (see input_stream_adapter): exactly the characters getc_unlocked()
+would return are consumed, so the file is left where it was left before.
 */
 class file_input_adapter
 {
@@ -199,6 +216,12 @@ class file_input_adapter
     file_input_adapter(const file_input_adapter&) = delete;
     file_input_adapter(file_input_adapter&& rhs) noexcept
         : m_file(rhs.m_file)
+#if JSON_FILE_WINDOW
+        , token_carry(std::move(rhs.token_carry))
+        , token_segment(rhs.token_segment)
+        , current_in_buffer(rhs.current_in_buffer)
+        , tracking_token(rhs.tracking_token)
+#endif
     {
         // the lock is owned by the thread, not the adapter: hand it over
         rhs.m_file = nullptr;
@@ -210,6 +233,20 @@ class file_input_adapter
         unlock();
     }
 
+#if JSON_FILE_WINDOW
+    std::char_traits<char>::int_type get_character()
+    {
+        // what getc_unlocked() does, while the buffer has characters
+        const char* const next = buffer_ptr();
+        if (JSON_HEDLEY_LIKELY(next != buffer_end()))
+        {
+            current_in_buffer = true;
+            buffer_bump(1);
+            return std::char_traits<char>::to_int_type(*next);
+        }
+        return get_character_slow();
+    }
+#else
     std::char_traits<char>::int_type get_character() noexcept
     {
         // the file is locked for the lifetime of the adapter, so the
@@ -222,6 +259,7 @@ class file_input_adapter
         return std::fgetc(m_file);
 #endif
     }
+#endif
 
     // returns the number of characters successfully read
     template<class T>
@@ -230,7 +268,134 @@ class file_input_adapter
         return fread(dest, 1, sizeof(T) * count, m_file);
     }
 
+#if JSON_FILE_WINDOW
+    // The lexer may scan the buffer of the FILE directly, as the window of
+    // input_stream_adapter: the buffer ends wherever the C library's buffer
+    // ends, and is refilled by the next get_character().
+    static constexpr bool supports_bulk_scan = true;
+    static constexpr bool bulk_window = true;
+
+    // Pointer to the next unread character; only valid when bulk_remaining() > 0.
+    const char* bulk_data() const
+    {
+        return buffer_ptr();
+    }
+
+    // Number of unread characters in the buffer.
+    std::size_t bulk_remaining() const
+    {
+        if (!current_in_buffer)
+        {
+            return 0;
+        }
+        return static_cast<std::size_t>(buffer_end() - buffer_ptr());
+    }
+
+    // Consume @a n characters previously inspected via bulk_data().
+    void bulk_skip(std::size_t n)
+    {
+        JSON_ASSERT(n <= bulk_remaining());
+        buffer_bump(n);
+    }
+
+    // The adapter keeps the current token for the lexer's error messages, as
+    // input_stream_adapter does.
+    static constexpr bool supports_token_tracking = true;
+
+    void begin_token() noexcept
+    {
+        tracking_token = true;
+        token_carry.clear();
+        token_segment = buffer_ptr();
+    }
+
+    void mark_token_start(std::char_traits<char>::int_type c)
+    {
+        tracking_token = true;
+        token_carry.clear();
+        if (current_in_buffer)
+        {
+            token_segment = buffer_ptr() - 1;
+        }
+        else
+        {
+            token_segment = nullptr;
+            token_carry.push_back(std::char_traits<char>::to_char_type(c));
+        }
+    }
+
+    void copy_token(std::vector<char>& out, bool drop_last) const
+    {
+        token_carry.copy_to(out);
+        if (token_segment != nullptr)
+        {
+            out.insert(out.end(), token_segment, buffer_ptr());
+        }
+        if (drop_last && !out.empty())
+        {
+            out.pop_back();
+        }
+    }
+#endif
+
   private:
+#if JSON_FILE_WINDOW
+    // the buffer of the FILE: [buffer_ptr(), buffer_end()) are the characters
+    // getc_unlocked() would return next
+#if defined(__GLIBC__)
+    const char* buffer_ptr() const noexcept
+    {
+        return m_file->_IO_read_ptr;
+    }
+    const char* buffer_end() const noexcept
+    {
+        return m_file->_IO_read_end;
+    }
+    void buffer_bump(std::size_t n) noexcept
+    {
+        m_file->_IO_read_ptr += n;
+    }
+#else
+    const char* buffer_ptr() const noexcept
+    {
+        return reinterpret_cast<const char*>(m_file->_p);
+    }
+    const char* buffer_end() const noexcept
+    {
+        return m_file->_r > 0 ? reinterpret_cast<const char*>(m_file->_p) + m_file->_r : reinterpret_cast<const char*>(m_file->_p);
+    }
+    void buffer_bump(std::size_t n) noexcept
+    {
+        m_file->_p += n;
+        m_file->_r -= static_cast<int>(n);
+    }
+#endif
+
+    // the buffer is exhausted: getc_unlocked() refills it
+    JSON_HEDLEY_NEVER_INLINE std::char_traits<char>::int_type get_character_slow()
+    {
+        if (token_segment != nullptr)
+        {
+            token_carry.append(token_segment, buffer_end());
+            token_segment = nullptr;
+        }
+        const auto res = getc_unlocked(m_file);
+        if (res == EOF)
+        {
+            current_in_buffer = false;
+            return std::char_traits<char>::eof();
+        }
+        // the character was taken from the refilled buffer, at buffer_ptr() - 1
+        current_in_buffer = true;
+        if (tracking_token)
+        {
+            token_segment = buffer_ptr() - 1;
+        }
+        return res;
+    }
+
+#endif
+
     // Lock the file once for the whole parse instead of once per character.
     // The lock is recursive, so fread() and the user's own stdio calls on the
     // same thread keep working.
@@ -259,6 +424,16 @@ class file_input_adapter
 
     /// the file pointer to read from
     std::FILE* m_file;
+#if JSON_FILE_WINDOW
+    /// the part of the current token that was in earlier buffers
+    token_carry_buffer token_carry{}; // NOLINT(readability-redundant-member-init)
+    /// start of the current token's part in the buffer, or nullptr
+    const char* token_segment = nullptr;
+    /// whether the character last returned by get_character() is in the buffer
+    bool current_in_buffer = false;
+    /// whether a token is tracked at all; the binary readers never start one
+    bool tracking_token = false;
+#endif
 };
 
 /*!
