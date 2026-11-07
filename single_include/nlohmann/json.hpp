@@ -10295,17 +10295,26 @@ other iterator can be mistaken for one. (std::basic_string is only matched for
 char: other character types need std::char_traits specializations that the
 standard library need not have.)
 */
-template < typename IteratorType, typename CharType, bool IsByte = sizeof(CharType) == 1 && std::is_integral<CharType>::value && !std::is_same<CharType, bool>::value >
+template<typename CharType>
+struct is_byte_char_type
+{
+    // a member, not an integral_constant argument, which astyle misformats
+    static constexpr bool value = sizeof(CharType) == 1 && std::is_integral<CharType>::value && !std::is_same<CharType, bool>::value;
+};
+
+template<typename IteratorType, typename CharType, bool IsByte = is_byte_char_type<CharType>::value>
 struct is_std_contiguous_byte_iterator_impl : std::false_type {};
 
 // (the containers are only named for byte types)
 template<typename IteratorType, typename CharType>
 struct is_std_contiguous_byte_iterator_impl<IteratorType, CharType, true>
-    : std::integral_constant < bool, !std::is_pointer<IteratorType>::value
-  && (std::is_same<IteratorType, typename std::vector<CharType>::iterator>::value
-      || std::is_same<IteratorType, typename std::vector<CharType>::const_iterator>::value
-      || std::is_same<IteratorType, std::string::iterator>::value
-      || std::is_same<IteratorType, std::string::const_iterator>::value) > {};
+{
+    static constexpr bool value = !std::is_pointer<IteratorType>::value
+                                  && (std::is_same<IteratorType, typename std::vector<CharType>::iterator>::value
+                                      || std::is_same<IteratorType, typename std::vector<CharType>::const_iterator>::value
+                                      || std::is_same<IteratorType, std::string::iterator>::value
+                                      || std::is_same<IteratorType, std::string::const_iterator>::value);
+};
 
 template<typename IteratorType>
 struct is_std_contiguous_byte_iterator

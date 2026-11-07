@@ -1433,6 +1433,7 @@ template<typename T>
 std::vector<T> bytes_as(const std::string& text)
 {
     std::vector<T> result;
+    result.reserve(text.size());
     for (const char c : text)
     {
         result.push_back(static_cast<T>(c));
