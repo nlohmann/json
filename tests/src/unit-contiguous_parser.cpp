@@ -553,7 +553,7 @@ TEST_CASE("contiguous parser")
         CHECK(json::accept("[1,]", false, true));
         CHECK(json::accept("// c\n[1]", true));
         int calls = 0;
-        const json j = json::parse("[1,2]", [&calls](int /*depth*/, json::parse_event_t /*event*/, json& /*parsed*/)
+        const json j = json::parse("[1,2]", [&calls](int /*depth*/, json::parse_event_t /*event*/, json& /*parsed*/) noexcept
         {
             ++calls;
             return true;
