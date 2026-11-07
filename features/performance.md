@@ -27,8 +27,8 @@ A `#!cpp std::istream` (including `#!cpp std::ifstream`) gets the same bulk scan
 characters its stream buffer already holds (the *get area*) and asks the stream buffer for more only when they are used
 up. Nothing is read ahead, so the stream is left exactly where it would be after reading one character at a time, and
 [`operator>>`](../api/operator_gtgt.md) can still read several values from one stream. A stream buffer without a get
-area is read one character at a time. A `#!cpp FILE*` is still read one character at a time, but `file_input_adapter`
-locks the file once per parse instead of once per character. See
+area is read one character at a time. A `#!cpp FILE*` is locked once per parse instead of once per character, and with
+glibc and the Apple C library, the characters in its buffer are scanned in bulk as a stream's get area is. See
 [input sources and performance](parsing/index.md#input-sources-and-performance) for the full table. According to the
 description of [#5828](https://github.com/nlohmann/json/pull/5828), parsing from a stream is within about 10 to 20 % of
 parsing an equivalent `#!cpp std::string`.

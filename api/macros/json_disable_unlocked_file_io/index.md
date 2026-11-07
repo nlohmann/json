@@ -4,7 +4,7 @@
 #define JSON_DISABLE_UNLOCKED_FILE_IO /* value */
 ```
 
-When defined to `1`, parsing from a `FILE*` reads every character with `std::fgetc`, as in version 3.12.0 and earlier, instead of locking the file once and reading it with the unlocked stdio functions.
+When defined to `1`, parsing from a `FILE*` reads every character with `std::fgetc`, as in version 3.12.0 and earlier, instead of locking the file once and reading it with the unlocked stdio functions. This also turns off the scan of the `FILE`'s buffer in bulk (see below), which [`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md) does not affect.
 
 It does not change any result: values, exceptions, and the position of the file after parsing are the same either way. Only the speed and the locking of the file differ (see the notes on locking below).
 
@@ -32,7 +32,9 @@ Instead, the parser locks the file once when parsing starts and unlocks it when 
 | Microsoft (MSVC, clang-cl)                                                          | `_lock_file`, `_fgetc_nolock`, `_unlock_file`       |
 | others (e.g., musl, MinGW, newlib)                                                  | `std::fgetc`, as before                             |
 
-This makes parsing from a `FILE*` 3 to 4 times as fast with the Apple C library and 1.1 to 1.3 times as fast with glibc, whose locking is cheaper. The binary formats ([`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md), [`from_msgpack`](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md), ...) read from a `FILE*` the same way.
+With glibc and the Apple C library, the parser also scans the characters that the `FILE` already holds in its buffer in bulk, as it scans the get area of a stream (see [`JSON_DISABLE_STREAM_BULK_SCAN`](https://json.nlohmann.me/api/macros/json_disable_stream_bulk_scan/index.md)): it reads the same fields of the `FILE` that the C library's own `getc_unlocked` reads, and it consumes exactly the characters that `getc_unlocked` would have returned, so the file is left where it was left before.
+
+Locking the file once makes parsing from a `FILE*` 3 to 4 times as fast with the Apple C library and 1.1 to 1.3 times as fast with glibc, whose locking is cheaper. Scanning the buffer in bulk makes `parse()` another 1.7 to 2.6 times as fast (and `accept()` 2.9 to 4.4 times), about as fast as parsing from a `std::ifstream`. The binary formats ([`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md), [`from_msgpack`](https://json.nlohmann.me/api/basic_json/from_msgpack/index.md), ...) read from a `FILE*` the same way.
 
 Locking
 
