@@ -14,7 +14,6 @@ using nlohmann::json;
 
 #include <functional>
 #include <limits>
-#include <type_traits>
 #include <valarray>
 #if JSON_HAS_RANGES
     #include <ranges>
@@ -1074,13 +1073,16 @@ struct sweep_allocator
         return (std::numeric_limits<std::size_t>::max)() / sizeof(T);
     }
 
-    // libc++ probes whether construct() is usable for const objects (when
-    // checking for trivial copies); this must not be viable then
-    template<class U, class... Args, typename = typename std::enable_if<!std::is_const<U>::value>::type>
+    template<class U, class... Args>
     void construct(U* p, Args&& ... args) noexcept(noexcept(::new (static_cast<void*>(p)) U(std::forward<Args>(args)...)))
     {
         ::new (static_cast<void*>(p)) U(std::forward<Args>(args)...);
     }
+
+    // libc++ probes whether construct() is usable for const objects (when
+    // checking for trivial copies); this must not be viable then
+    template<class U, class... Args>
+    void construct(const U* /*unused*/, const Args& ... /*unused*/) = delete;
 
     template<class U>
     void destroy(U* p) noexcept
