@@ -351,7 +351,7 @@ TEST_CASE("parsing from a FILE*")
         {
             CAPTURE(size)
             std::vector<char> buffer(static_cast<std::size_t>(size));
-            const file_ptr f = open_with(name, std::string(cbor.begin(), cbor.end()));
+            const file_ptr f = open_with(name, std::string(reinterpret_cast<const char*>(cbor.data()), cbor.size()));
             REQUIRE(f != nullptr);
             REQUIRE(std::setvbuf(f.get(), buffer.data(), _IOFBF, buffer.size()) == 0);
             CHECK(json::from_cbor(f.get()) == value);
