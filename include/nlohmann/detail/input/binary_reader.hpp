@@ -4887,6 +4887,14 @@ class binary_reader
                    const char* context,
                    ContainerType& result)
     {
+        // a string that is in the block of input as a whole is appended from
+        // it, without the zero-filling resize() below
+        constexpr bool from_block = bulk_scan && std::is_same<ContainerType, string_t>::value;
+        if (append_from_block(len, result, std::integral_constant<bool, from_block> {}))
+        {
+            return true;
+        }
+
         // upper bound on the number of bytes read (and allocated) per chunk
         constexpr std::size_t chunk_size = 4096;
 
@@ -4921,6 +4929,36 @@ class binary_reader
             len = static_cast<NumberType>(len - static_cast<NumberType>(wanted));
         }
         return true;
+    }
+
+    /// append the @a len bytes at the current position to @a result, if the
+    /// input holds them in one block; false (with nothing read) otherwise
+    template<typename NumberType>
+    bool append_from_block(const NumberType len, string_t& result, std::true_type /*block*/)
+    {
+        if (len <= 0)
+        {
+            return false;
+        }
+        // (len > 0, so the unsigned type holds it; casting a signed char
+        // straight to std::size_t would trip bugprone-signed-char-misuse)
+        const auto ulen = static_cast<typename std::make_unsigned<NumberType>::type>(len);
+        const std::size_t remaining = ia.bulk_remaining();
+        if (static_cast<std::uintmax_t>(ulen) > static_cast<std::uintmax_t>(remaining))
+        {
+            return false; // (the loop reports the premature end)
+        }
+        const auto n = static_cast<std::size_t>(ulen);
+        result.append(reinterpret_cast<const typename string_t::value_type*>(ia.bulk_data()), n);
+        ia.bulk_skip(n);
+        chars_read += n;
+        return true;
+    }
+
+    template<typename NumberType, typename ContainerType>
+    static bool append_from_block(const NumberType /*len*/, ContainerType& /*result*/, std::false_type /*block*/) noexcept
+    {
+        return false;
     }
 
     /*!
