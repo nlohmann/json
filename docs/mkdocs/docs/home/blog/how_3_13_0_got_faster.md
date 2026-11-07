@@ -32,7 +32,8 @@ This post is about *how*. Hardly any of the techniques are new: we borrowed them
 [simdjson](https://github.com/simdjson/simdjson), [yyjson](https://github.com/ibireme/yyjson),
 [fast_float](https://github.com/fastfloat/fast_float), [Żmij](https://github.com/vitaut/zmij),
 [serde_json](https://github.com/serde-rs/json), [Glaze](https://github.com/stephenberry/glaze),
-[SQLite](https://sqlite.org), [Boost.JSON](https://github.com/boostorg/json), or a textbook, and we name the source at
+[SQLite](https://sqlite.org), [Boost.JSON](https://github.com/boostorg/json), [gnulib](https://www.gnu.org/software/gnulib/),
+or a textbook, and we name the source at
 each step. What is worth writing about is the *combination*, and the conditions it had to work under. It is a
 header-only C++11 library whose 3.x API has been stable for almost nine years, and whose value type is a template over
 its string, number, object, array, and allocator types. Input comes from strings, streams, `FILE*`, iterator pairs, wide
@@ -202,14 +203,16 @@ iterators over a `std::list<char>`, or a user's own adapter. But it makes every 
 ```mermaid
 flowchart LR
     src[/"input"/] --> q{{"what is it?"}}
-    q -->|"std::string, std::vector,<br>pointers, contiguous ranges"| c["contiguous:<br>scan the whole buffer"]
+    q -->|"std::string, std::vector,<br>their iterators, pointers,<br>contiguous ranges"| c["contiguous:<br>scan the whole buffer"]
     q -->|"std::istream"| w["window:<br>scan the streambuf's get area"]
-    q -->|"FILE*"| f["one lock per parse,<br>unlocked reads"]
+    q -->|"FILE*"| f["window:<br>scan the FILE's buffer"]
     q -->|"other iterators,<br>user adapters"| b["byte at a time"]
 ```
 
 <p class="nj-caption" markdown>The four kinds of input the lexer distinguishes in 3.13.0. Everything on the fast paths
-falls back to the byte path on anything unusual, so the result and the error messages stay the same.</p>
+falls back to the byte path on anything unusual, so the result and the error messages stay the same. The `FILE*`
+window needs glibc or Apple's C library; elsewhere, a `FILE*` is read one character at a time with one lock per
+parse.</p>
 
 ### Detecting the input in C++11
 
@@ -236,7 +239,8 @@ which also keeps MSVC from warning about constant conditions. `get()` still look
 token bookkeeping are now calls. For an adapter that can seek, their `std::true_type` overloads are empty and cost
 nothing, because the position and the text of a token are derived only when an error message needs them (theme
 <a class="nj-theme" href="#theme-4" title="theme 4">4</a>). For a `std::string`, what remains is the branch on
-`next_unget` and the adapter's bounds check and pointer increment.
+`next_unget` and the adapter's bounds check and pointer increment. For the most common calls, not even that remains:
+they don't use the lexer at all ([One loop instead of two](#one-loop-instead-of-two)).
 
 ### Contiguous input
 
@@ -248,6 +252,43 @@ are scanned in bulk (themes <a class="nj-theme" href="#theme-2" title="theme 2">
 <a class="nj-theme" href="#theme-3" title="theme 3">3</a>). Every fast path defers to the byte path on anything
 malformed, so error messages and byte positions stay the same, with one deliberate correction (the column after a number
 at the end of a line). [Appendix J](#j-validation) describes how that was checked.
+
+A pair of iterators is harder. Before C++20, `s.begin()` and `s.end()` of a `std::string` can't be told from the
+iterators of any other random-access container, so `json::parse(s.begin(), s.end())` was read one character at a time,
+while `json::parse(s)` got all the bulk scans. The library now matches the iterator types of `std::string` and of a
+`std::vector` of one-byte integers exactly, and turns the pair into the pointer range it covers. That made
+`parse(s.begin(), s.end())` 1.7–2.0× as fast on the M1, and `accept()` 2.7–3.1×.
+
+### One loop instead of two
+
+Even on a pointer range, the parser and the lexer still talked through an interface: the parser asks for a token, the
+lexer finds it and hands it over, and the parser dispatches on its type. The lexer's state, the current character, a
+pending `unget()`, and where the token starts, lives in members, so it goes through memory on every token. After all of
+the above, `json::accept()` of `twitter.json` still took 2.8× as long as `json_document::accept()` (theme
+<a class="nj-theme" href="#theme-8" title="theme 8">8</a>), which reads the same bytes.
+
+[yyjson](https://github.com/ibireme/yyjson)'s reader shows the alternative: one function that holds the input in a
+local pointer and in which the grammar, the whitespace and the tokens are one loop. After a `:`, it tests for the
+characters that can start a value right there, instead of returning a token type and dispatching on it. 3.13.0 adds
+such a parser for input in one block of memory, `contiguous_parser`. Its stack of open arrays and objects is a 64-bit
+word with one bit per level, so the kind of the enclosing container is a shift away and stays in a register; every 64
+levels, the word is pushed to a vector. It doesn't build values itself: it drives the library's own SAX handlers, so
+`parse()` builds the same `json` with the same code as before. It is used by `parse()` without a callback, by
+`accept()`, and by `sax_parse()` with the user's own handler, each with the default options; everything else keeps the
+old parser.
+
+The hard part was the errors. A second parser would have to produce the same exception, message and position for
+every malformed input, a large surface for small differences. So it doesn't report errors at all. It stops at the
+token the old parser would reject, before it reports that token to the handler, and the old parser runs again on the
+same input to report the error. `parse()` gives it a handler that only reports, and `sax_parse()` one that forwards
+only `parse_error()` to the user's handler, so that no event arrives twice. An error at the end of a large input costs
+`parse()` about 1.2× as much as before; valid input costs nothing extra.
+
+On the M1, `accept()` got 1.6–2.0× as fast, `sax_parse()` 1.4–1.5×, and `parse()` 10–16% faster, about the same with
+GCC and Clang on x86-64. In `accept()`, which needs no values, the parser also skips the digits of a number without
+computing its value, except for the rare float whose exponent may reach the largest `double`: another 16% on
+`canada.json`. The cost is about 1,000 lines of header, and a translation unit that parses a string and dumps it
+compiles 3% slower at `-O0` and 9% at `-O2`.
 
 ### Streams
 
@@ -284,11 +325,26 @@ measurement before the change; now it takes just 9–16% longer.
 `_lock_file` and `_fgetc_nolock` with the Microsoft runtime). `flockfile` is recursive, so the binary readers' `fread()`
 and a SAX handler's own `ftell()` keep working. Whereas parsing `citm_catalog.json` from a `FILE*` got 4.4× as fast on
 macOS in the pull request's measurement, with glibc it got only 1.1–1.3× as fast, because glibc's per-call locking is
-already cheap. Two details: MemorySanitizer builds keep `fgetc`, because glibc's inline `getc_unlocked` reads a buffer
-that uninstrumented glibc filled. And a SAX handler that waits for another thread using the same `FILE` now deadlocks,
-as the documentation says. Both paths can be switched off, with
+already cheap.
+
+That still left a call per character, while a stream had its get area scanned in bulk. But a `FILE` has a buffer too,
+and `getc_unlocked()` is a macro that reads it: glibc's compares `_IO_read_ptr` with `_IO_read_end`, Apple's counts
+down `_r` and advances `_p`. The adapter now reads those same fields and offers the lexer the rest of the buffer as a
+window, as for a stream. It consumes exactly the characters `getc_unlocked()` would have returned, so the file is
+left where it was before, and when the C library is about to refill the buffer, the part of the current token in it is
+kept for error messages. The idea is gnulib's
+[`freadptr()`](https://github.com/coreutils/gnulib/blob/master/lib/freadptr.c), which knows these fields for many C
+libraries. Parsing from a `FILE*` got another 2.0–2.6× faster on the M1 and 1.7–2.2× with glibc on x86-64, and
+`accept()` 2.9–4.4×; it is now about as fast as parsing from an `std::ifstream`. uClibc
+defines `__GLIBC__` but has other fields, so it is excluded, and other C libraries keep reading one character at a
+time.
+
+Two details: MemorySanitizer builds keep `fgetc`, because glibc's inline `getc_unlocked` reads a buffer that
+uninstrumented glibc filled. And a SAX handler that waits for another thread using the same `FILE` now deadlocks, as the
+documentation says. Both paths can be switched off, with
 [`JSON_DISABLE_STREAM_BULK_SCAN`](../../api/macros/json_disable_stream_bulk_scan.md) and
-[`JSON_DISABLE_UNLOCKED_FILE_IO`](../../api/macros/json_disable_unlocked_file_io.md).
+[`JSON_DISABLE_UNLOCKED_FILE_IO`](../../api/macros/json_disable_unlocked_file_io.md); the second turns the `FILE`
+window off as well, as it needs the lock for the whole parse.
 
 ## <span class="nj-theme">2</span> Work on words, not bytes { #theme-2 }
 
@@ -325,6 +381,20 @@ Hacks](https://graphics.stanford.edu/~seander/bithacks.html#ZeroInWord). The sub
 it can flag a byte *after* a real hit, but never one before it: the lowest flag is always right, and the number of
 trailing zero bits divided by eight is the index of the first special byte.
 
+The code above is the readable form, and it does more work than it needs to. The `& ~x` of the zero-byte test only
+keeps bytes from 0x80 out of the result, and `has_non_ascii` flags exactly those bytes anyway. So all three `& ~x`
+terms can go, and the whole test becomes one expression:
+
+```cpp
+return ((q - ones) | (b - ones) | (v - 0x2020202020202020ull) | v) & high;
+```
+
+<p class="nj-code-caption" markdown>The same test without the redundant `& ~x` terms.</p>
+
+Clang finds this reduction on its own; GCC doesn't, and emitted 24 instructions per word instead of 16. With GCC on
+x86-64, writing it out made validating `twitter.json` and `citm_catalog.json` 5–7% faster and `dump()` 2–3%. The
+masks of both forms are the same for every pair of adjacent byte values and for 1.3 billion random words.
+
 <div class="nj-fig-wrap" markdown>
 --8<-- "images/perf_blog_swar.svg"
 </div>
@@ -359,10 +429,16 @@ The same kind of word test now runs in several places:
 ### 16 bytes with SSE2 and NEON
 
 Where a vector unit is part of the baseline instruction set (SSE2 on x86-64, NEON on 64-bit Arm), the string paths take
-16 bytes per step. Two well-known details are worth repeating. A signed comparison `byte < 0x20` catches control
-characters *and* every byte from 0x80, because those are negative as `int8_t`, so four classes of bytes take three
-comparisons. And NEON has no equivalent of x86's `pmovmskb`, which turns a vector of comparison results into a bit mask.
-The usual replacement, by [Danila
+16 bytes per step. Three details are worth repeating. A signed comparison `byte < 0x20` catches control characters
+*and* every byte from 0x80, because those are negative as `int8_t`. Flipping bit 1 first folds the quote into that
+comparison too: `c ^ 2` maps 0x00–0x1F onto themselves and the quote (0x22) onto 0x20, keeps the bytes from 0x80
+negative, and maps every other ASCII byte to 33 or more. So `(int8_t)(c ^ 2) < 33` finds three of the four classes of
+bytes, and only the backslash needs a comparison of its own (Daniel Lemire, ["Detect control characters, quotes and
+backslashes efficiently using
+SWAR"](https://lemire.me/blog/2025/04/13/detect-control-characters-quotes-and-backslashes-efficiently-using-swar/),
+2025; ruby/json uses the same trick in its SIMD scan). Neither GCC nor Clang finds this one on its own. And NEON has no
+equivalent of x86's `pmovmskb`, which turns a vector of comparison results into a bit mask. The usual replacement, by
+[Danila
 Kutenin](https://developer.arm.com/community/arm-community-blogs/b/servers-and-cloud-computing-blog/posts/porting-x86-vector-bitmask-optimizations-to-arm-neon),
 shifts each 16-bit lane right by four and narrows it to eight bits, which leaves four bits per input byte in a 64-bit
 integer:
@@ -371,10 +447,11 @@ integer:
 while (e - p >= 16)
 {
     const uint8x16_t in = vld1q_u8(p);
-    const uint8x16_t quote_or_backslash = vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')),
-                                                   vceqq_u8(in, vdupq_n_u8('\\')));
-    const uint8x16_t special = vorrq_u8(quote_or_backslash,
-                                        vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20)));
+    // the backslash, and (c ^ 2) < 33 as int8_t for the quote, the control
+    // characters and the bytes from 0x80
+    const uint8x16_t special = vorrq_u8(vceqq_u8(in, vdupq_n_u8('\\')),
+                                        vcltq_s8(vreinterpretq_s8_u8(veorq_u8(in, vdupq_n_u8(2))),
+                                                 vdupq_n_s8(33)));
     // each byte of special is 0x00 or 0xFF; shifting each 16-bit lane right by 4 and
     // keeping its low byte leaves 4 bits per input byte
     const uint8x8_t nibbles = vshrn_n_u16(vreinterpretq_u16_u8(special), 4);
@@ -387,7 +464,7 @@ while (e - p >= 16)
 }
 ```
 
-<p class="nj-code-caption" markdown>The NEON string scan: three comparisons for four classes of bytes, and a narrowing
+<p class="nj-code-caption" markdown>The NEON string scan: two comparisons for four classes of bytes, and a narrowing
 shift in place of `pmovmskb`.</p>
 
 On `twitter.json`, the vector scan made `json::parse()` 5% faster with Clang and 9% with GCC on an M1 Max; on long
@@ -738,7 +815,12 @@ arrays `[1,2]` at most 1.5%.
 The parser checks for the expected `:` or `,` before it falls into the lexer's general token switch (−7% on
 `citm_catalog.json`, a contribution by [@mvanslobbe](https://github.com/mvanslobbe)), and
 [`to_cbor()`](../../api/basic_json/to_cbor.md) no longer creates a temporary `basic_json` for every object key it writes
-(−55% on `twitter.json`, by [@alexprabhat99](https://github.com/alexprabhat99)).
+(−55% on `twitter.json`, by [@alexprabhat99](https://github.com/alexprabhat99)). And the binary readers wrote every
+byte of a string twice: they grew the string with `resize()`, which fills it with zeros, and then copied the bytes over
+the zeros. The zero fill alone was 5% of the instructions of `from_cbor()`. A string that the input holds in one block
+is now appended from it directly, after its claimed length has been checked against the input, so a huge claimed
+length still allocates nothing. Reading `twitter.json` and `citm_catalog.json` from CBOR and MessagePack got 5–9%
+faster on the M1, 3–9% on x86-64.
 
 !!! note "The same idea, measured twice"
 
@@ -1005,6 +1087,15 @@ oa.commit(out - start);
 
 <p class="nj-code-caption" markdown>Encoding a run of integers through a cursor, with one capacity check for the whole
 run.</p>
+
+The cursor needs the vector to be as long as the space it writes into, so the sink grew it with `resize()` to its whole
+new capacity. That zeroes the new bytes, so every doubling zeroed megabytes of fresh memory at once: it faulted in all
+the pages and pushed them out of the cache before the writer got there. The writers had gained much less on x86-64 than
+on the M1 (writing an array of numbers as CBOR got 2.4× as fast on a Skylake laptop and 4.8× on the M1 Max), and this
+was part of the reason: page faults, zeroing and copies on reallocation of a 9–80 MB output were 30–76% of the 3.13.0
+time on x86-64. The sink still reserves the same capacity, but now resizes the vector only to 64 KiB ahead of the
+cursor, a window that is still in the cache when the writer's stores arrive. On x86-64, writing large arrays of numbers
+got 9–26% faster; on the M1, 1–2.5%.
 
 ### Integers without branches
 
@@ -2566,19 +2657,21 @@ suite also on an Intel laptop with Clang. The comparison with other libraries al
 which Haswell doesn't have, so the real CPU is probably a later one. It shares its cores with other work, so its
 differences of a few percent are noise. The theme sections quote x86-64 numbers where a pull request measured them,
 mostly with GCC 13 and Clang 18. Expect smaller gains for some workloads on x86-64 with glibc: its `FILE*` locking is
-cheaper to begin with, and its allocator behaves differently. We did not measure on Windows, and we did not measure
-binary size or memory use.
+cheaper to begin with, so taking it once per parse gains less, its allocator behaves differently, and fresh output
+memory costs more page faults. We did not measure on Windows, and we did not measure binary size or memory use.
 
 ### H. Pull requests by theme
 
 - <a class="nj-theme" href="#theme-1" title="theme 1">1</a> **Specialize for each input source:** contiguous input
-  [#5283][5283]; streams and `FILE*` [#5828][5828], [#5884][5884]; binary strings in bulk [#5233][5233]; sized sentinels
-  [#5268][5268].
+  [#5283][5283]; streams and `FILE*` [#5828][5828], [#5884][5884]; the buffer of a `FILE` [#6030][6030]; iterator
+  pairs [#6029][6029]; one loop for parser and lexer [#6031][6031]; binary strings in bulk [#5233][5233]; sized
+  sentinels [#5268][5268].
 - <a class="nj-theme" href="#theme-2" title="theme 2">2</a> **Work on words, not bytes:** word-at-a-time strings, UTF-8
   runs, and digits [#5283][5283], [#5738][5738], [#5851][5851]; indentation [#5810][5810]; `dump()` runs [#5285][5285];
   SSE2 and NEON [#5853][5853], [#5628][5628]; `json_document` with `ensure_ascii` [#5879][5879]; short strings
   [#5878][5878], [#5883][5883]; escape table [#5822][5822]; loop shape [#5490][5490]; fraction digits [#5971][5971];
-  BSON keys [#5968][5968]; UTF-8 checks of binary strings [#5982][5982]; one SIMD macro set [#5921][5921].
+  BSON keys [#5968][5968]; UTF-8 checks of binary strings [#5982][5982]; one SIMD macro set [#5921][5921]; fewer
+  operations per word and vector [#6033][6033].
 - <a class="nj-theme" href="#theme-3" title="theme 3">3</a> **Own the number conversions:** Eisel-Lemire [#5617][5617];
   long numbers [#5738][5738]; one pass over the digits [#5851][5851]; Żmij [#5634][5634]; long integers in `dump()`
   [#5964][5964]; MSVC intrinsics for the 128-bit multiplication [#5782][5782].
@@ -2587,13 +2680,14 @@ binary size or memory use.
   [#5501][5501]; `ordered_json` growth [#5609][5609]; arrays at their final size [#5882][5882]; moving keys
   [#5458][5458], [#5855][5855]; separator check [#5592][5592]; CBOR keys [#5328][5328]; `accept()` without copies
   [#5978][5978]; runs of scalars in binary arrays [#5975][5975], [#5980][5980], [#5981][5981], [#6008][6008]; BJData
-  marker list [#5555][5555]; `from_json()` into containers [#5833][5833].
+  marker list [#5555][5555]; `from_json()` into containers [#5833][5833]; binary strings without a zero fill
+  [#6028][6028].
 - <a class="nj-theme" href="#theme-5" title="theme 5">5</a> **Read the assembly:** stack canary [#5854][5854];
   exceptions and inlining [#5838][5838], [#5840][5840], [#5839][5839], [#5836][5836]; aliasing [#5633][5633]; forced
   inlining [#5878][5878]; branch-free selections [#5908][5908]; code size [#5902][5902].
 - <a class="nj-theme" href="#theme-6" title="theme 6">6</a> **Write through a cursor:** write buffer [#5285][5285];
   adapter on the stack [#5449][5449]; binary sinks [#5286][5286]; cursor and runs of numbers [#5824][5824],
-  [#5885][5885]; `to_bson()` in one pass [#5979][5979].
+  [#5885][5885]; `to_bson()` in one pass [#5979][5979]; a window instead of zeroing the whole capacity [#6020][6020].
 - <a class="nj-theme" href="#theme-7" title="theme 7">7</a> **Fix the algorithm first:** `diff()` [#5461][5461]; parse
   callbacks [#5457][5457]; `operator<` [#5390][5390]; `flatten()` [#5834][5834]; `unflatten()` [#5793][5793]; JSON
   Pointer and Patch [#5861][5861], [#5886][5886]; `to_bson()` [#5553][5553]; `JSON_DIAGNOSTICS` [#5832][5832]; bounded
@@ -2681,7 +2775,15 @@ These are the checks behind the themes:
   [Appendix F](#f-behavior-changes).
 - **Stream windows** (theme <a class="nj-theme" href="#theme-1" title="theme 1">1</a>). A test `streambuf` hands out get
   areas of 1–4,096 bytes, so that every token crosses a window edge at every offset, and the result is compared with a
-  `streambuf` without a get area, which takes the old path.
+  `streambuf` without a get area, which takes the old path. The `FILE` window is checked the same way, with `FILE`
+  buffers of 1 to 70 bytes, unbuffered files, and characters pushed back with `ungetc()` before the parse, on macOS and
+  glibc.
+- **The fused parser** (theme <a class="nj-theme" href="#theme-1" title="theme 1">1</a>). `contiguous_parser` is
+  compared with the byte path on corner cases of literals, numbers, escapes, surrogates and UTF-8, on 1,500 generated
+  documents, every truncation of the short ones and random mutations, and on nesting across the 64-level words of its
+  stack: the same values with the same number types and float bits, the same exception messages, the same `accept()`
+  verdicts and the same `sax_parse()` events, also for handlers that stop early (242,118 assertions). A fuzzer that
+  compares the `sax_parse()` events of both paths ran 9 million inputs without a finding.
 - **Differential fuzzing of the input kinds.** Every fuzz input is also parsed from an `std::istringstream`, from
   `std::list` iterators (the byte path) and from a `FILE*`, and the value, the exception id, the message, and the byte
   offset must be identical ([#5827][5827]).
@@ -2792,3 +2894,9 @@ These are the checks behind the themes:
 [5981]: https://github.com/nlohmann/json/pull/5981
 [5982]: https://github.com/nlohmann/json/pull/5982
 [6008]: https://github.com/nlohmann/json/pull/6008
+[6020]: https://github.com/nlohmann/json/pull/6020
+[6028]: https://github.com/nlohmann/json/pull/6028
+[6029]: https://github.com/nlohmann/json/pull/6029
+[6030]: https://github.com/nlohmann/json/pull/6030
+[6031]: https://github.com/nlohmann/json/pull/6031
+[6033]: https://github.com/nlohmann/json/pull/6033
