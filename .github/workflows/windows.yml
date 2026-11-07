@@ -206,7 +206,7 @@ jobs:
       - name: Test
         run: cd build ; ctest -j 10 -C Debug --output-on-failure
 
-  ci_module_cpp20:
+  ci_modules:
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -218,9 +218,9 @@ jobs:
         with:
           cmakeVersion: '^4.5.0'
       # CMAKE_CXX_FLAGS replaces CMake's MSVC defaults (which include /EHsc), and
-      # ci_module_cpp20 forwards it to the module build, so list /EHsc explicitly
+      # ci_modules forwards it to the module build, so list /EHsc explicitly
       - name: Run CMake (Debug)
         run: cmake -S . -B build -G "Visual Studio 17 2022" -DJSON_CI=ON -DCMAKE_CXX_FLAGS="/permissive- /std:c++latest /utf-8 /EHsc /W4 /WX"
       - name: Build
-        run: cmake --build build --config Debug --target ci_module_cpp20
+        run: cmake --build build --config Debug --target ci_modules
         
