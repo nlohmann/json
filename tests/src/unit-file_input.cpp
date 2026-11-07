@@ -303,10 +303,12 @@ TEST_CASE("parsing from a FILE*")
     }
 #endif
 
-#if !defined(JSON_NOEXCEPTION)
+    // the C standard guarantees only one pushed-back character (and the
+    // Windows C runtime fails further calls to ungetc()), so this is limited
+    // to the C libraries that keep them in a separate buffer
+#if !defined(JSON_NOEXCEPTION) && ((defined(__GLIBC__) && !defined(__UCLIBC__)) || defined(__APPLE__))
     SECTION("characters pushed back with ungetc() before parsing")
     {
-        // (glibc and Apple keep them in a separate buffer)
         const file_ptr f = open_with(name, "2, 3]");
         REQUIRE(f != nullptr);
         REQUIRE(std::ungetc(',', f.get()) == ',');
