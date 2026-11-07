@@ -38,6 +38,231 @@ NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
 {
 
+/////////////////////////////////////////////////////////
+// JSON Canonicalization Scheme (RFC 8785) helpers     //
+/////////////////////////////////////////////////////////
+
+// Note: next_utf16_code_unit decodes code units for ordering without validating
+// continuation bytes; strict validation is performed during dump_escaped().
+inline bool next_utf16_code_unit(const char*& p, const char* end, std::uint16_t& pending_surrogate, std::uint16_t& out_code_unit) noexcept
+{
+    if (pending_surrogate != 0)
+    {
+        out_code_unit = pending_surrogate;
+        pending_surrogate = 0;
+        return true;
+    }
+    if (p >= end)
+    {
+        return false;
+    }
+
+    const auto b0 = static_cast<unsigned char>(*p++);
+    if (b0 < 0x80)
+    {
+        out_code_unit = static_cast<std::uint16_t>(b0);
+        return true;
+    }
+    if ((b0 & 0xE0) == 0xC0)
+    {
+        if (p < end)
+        {
+            const auto b1 = static_cast<unsigned char>(*p++);
+            out_code_unit = static_cast<std::uint16_t>(((b0 & 0x1F) << 6) | (b1 & 0x3F));
+            return true;
+        }
+    }
+    else if ((b0 & 0xF0) == 0xE0)
+    {
+        if (p + 1 < end)
+        {
+            const auto b1 = static_cast<unsigned char>(*p++);
+            const auto b2 = static_cast<unsigned char>(*p++);
+            out_code_unit = static_cast<std::uint16_t>(((b0 & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (b2 & 0x3F));
+            return true;
+        }
+    }
+    else if ((b0 & 0xF8) == 0xF0)
+    {
+        if (p + 2 < end)
+        {
+            const auto b1 = static_cast<unsigned char>(*p++);
+            const auto b2 = static_cast<unsigned char>(*p++);
+            const auto b3 = static_cast<unsigned char>(*p++);
+            std::uint32_t cp = ((static_cast<std::uint32_t>(b0 & 0x07)) << 18) |
+                               ((static_cast<std::uint32_t>(b1 & 0x3F)) << 12) |
+                               ((static_cast<std::uint32_t>(b2 & 0x3F)) << 6) |
+                               static_cast<std::uint32_t>(b3 & 0x3F);
+            if (cp >= 0x10000 && cp <= 0x10FFFF)
+            {
+                cp -= 0x10000;
+                out_code_unit = static_cast<std::uint16_t>(0xD800 + (cp >> 10));
+                pending_surrogate = static_cast<std::uint16_t>(0xDC00 + (cp & 0x3FF));
+                return true;
+            }
+        }
+    }
+    out_code_unit = static_cast<std::uint16_t>(b0);
+    return true;
+}
+
+struct utf16_code_unit_less
+{
+    template<typename StringType>
+    bool operator()(const StringType& a, const StringType& b) const noexcept
+    {
+        const char* p1 = a.data();
+        const char* const end1 = p1 + a.size();
+        const char* p2 = b.data();
+        const char* const end2 = p2 + b.size();
+
+        std::uint16_t pending1 = 0;
+        std::uint16_t pending2 = 0;
+        std::uint16_t cu1 = 0;
+        std::uint16_t cu2 = 0;
+
+        while (true)
+        {
+            const bool has1 = next_utf16_code_unit(p1, end1, pending1, cu1);
+            const bool has2 = next_utf16_code_unit(p2, end2, pending2, cu2);
+
+            if (!has1)
+            {
+                return has2;
+            }
+            if (!has2)
+            {
+                return false;
+            }
+            if (cu1 != cu2)
+            {
+                return cu1 < cu2;
+            }
+        }
+    }
+};
+
+// Note: pos is passed by value and returned as a scalar for performance
+// (avoiding reference aliasing overhead in tight loops).
+inline std::size_t append_exponent_ecmascript(std::array<char, 128>& buf, std::size_t pos, int e) noexcept
+{
+    if (e < 0)
+    {
+        buf[pos++] = '-';
+        e = -e;
+    }
+    else
+    {
+        buf[pos++] = '+';
+    }
+
+    std::array<char, 16> temp{{}};
+    std::size_t idx = 0;
+    auto val = static_cast<std::uint32_t>(e);
+    if (val == 0)
+    {
+        buf[pos++] = '0';
+        return pos;
+    }
+    while (val > 0)
+    {
+        temp[idx++] = static_cast<char>('0' + (val % 10));
+        val /= 10;
+    }
+    while (idx > 0)
+    {
+        buf[pos++] = temp[--idx];
+    }
+    return pos;
+}
+
+inline std::size_t format_buffer_ecmascript(std::array<char, 128>& buf, std::size_t len, int decimal_exponent) noexcept
+{
+    const auto k = static_cast<int>(len);
+    const int n = k + decimal_exponent;
+
+    if (k <= n && n <= 21)
+    {
+        std::memset(buf.data() + k, '0', static_cast<std::size_t>(n - k));
+        return static_cast<std::size_t>(n);
+    }
+
+    if (0 < n && n <= 21)
+    {
+        std::memmove(buf.data() + (n + 1), buf.data() + n, static_cast<std::size_t>(k - n));
+        buf[static_cast<std::size_t>(n)] = '.';
+        return static_cast<std::size_t>(k + 1);
+    }
+
+    if (-6 < n && n <= 0)
+    {
+        const auto zeros = static_cast<std::size_t>(-n);
+        std::memmove(buf.data() + (2 + zeros), buf.data(), static_cast<std::size_t>(k));
+        buf[0] = '0';
+        buf[1] = '.';
+        std::memset(buf.data() + 2, '0', zeros);
+        return 2 + zeros + static_cast<std::size_t>(k);
+    }
+
+    std::size_t pos = 0;
+    if (k == 1)
+    {
+        pos = 1;
+    }
+    else
+    {
+        std::memmove(buf.data() + 2, buf.data() + 1, static_cast<std::size_t>(k - 1));
+        buf[1] = '.';
+        pos = 1 + static_cast<std::size_t>(k);
+    }
+
+    buf[pos++] = 'e';
+    return append_exponent_ecmascript(buf, pos, n - 1);
+}
+
+template<typename FloatType>
+inline void get_shortest_digits(FloatType x, std::array<char, 128>& buf, std::size_t& len, int& decimal_exponent, std::true_type /*is_binary64*/)
+{
+    std::uint64_t bits = 0;
+    std::memcpy(&bits, &x, sizeof(bits));
+    const zmij::shortest_decimal sd = zmij::to_shortest(bits);
+    std::uint64_t significand = sd.has_digit ? (sd.integral * 10) + sd.digit : sd.integral;
+    decimal_exponent = sd.has_digit ? sd.exponent : sd.exponent + 1;
+
+    std::array<char, 24> temp{{}};
+    std::size_t temp_idx = 0;
+    while (significand > 0)
+    {
+        temp[temp_idx++] = static_cast<char>('0' + (significand % 10));
+        significand /= 10;
+    }
+    if (temp_idx == 0)
+    {
+        buf[len++] = '0';
+    }
+    else
+    {
+        while (temp_idx > 0)
+        {
+            buf[len++] = temp[--temp_idx];
+        }
+    }
+
+    while (len > 1 && buf[len - 1] == '0')
+    {
+        --len;
+        ++decimal_exponent;
+    }
+}
+
+template<typename FloatType>
+inline void get_shortest_digits(FloatType x, std::array<char, 128>& buf, std::size_t& len, int& decimal_exponent, std::false_type /*is_binary64*/)
+{
+    int l = 0;
+    ::nlohmann::detail::dtoa_impl::grisu2(buf.data(), l, decimal_exponent, x);
+    len = static_cast<std::size_t>(l);
+}
+
 ///////////////////
 // serialization //
 ///////////////////
@@ -120,6 +345,360 @@ class serializer
     {
         dump_element(val, current_indent, 0);
         flush();
+    }
+
+    /*!
+    @brief serialization using JSON Canonicalization Scheme (RFC 8785)
+
+    @param[in] val  value to serialize
+    */
+    void dump_canonical(const BasicJsonType& val)
+    {
+        dump_canonical_internal(val, 0);
+        flush();
+    }
+
+  JSON_PRIVATE_UNLESS_TESTED:
+    using value_type = typename BasicJsonType::object_t::value_type;
+
+    static std::vector<const value_type*> sort_canonical_object_elements(const typename BasicJsonType::object_t& obj)
+    {
+        std::vector<const value_type*> sorted_elements;
+        sorted_elements.reserve(obj.size());
+        for (const auto& el : obj)
+        {
+            sorted_elements.push_back(&el);
+        }
+        std::sort(sorted_elements.begin(), sorted_elements.end(),
+                  [](const value_type * a, const value_type * b)
+        {
+            return utf16_code_unit_less{}(a->first, b->first);
+        });
+        return sorted_elements;
+    }
+
+    /// @brief a container that has been opened for iterative canonical dump
+    struct canonical_dump_frame
+    {
+        const BasicJsonType* container;
+        std::vector<const value_type*> sorted_elements{};
+        std::size_t current_idx = 0;
+
+        explicit canonical_dump_frame(const BasicJsonType* c)
+            : container(c)
+        {
+            if (c->is_object())
+            {
+                sorted_elements = sort_canonical_object_elements(*c->m_data.m_value.object);
+            }
+        }
+    };
+
+    /*!
+    @brief serialize scalar values according to RFC 8785
+    */
+    void dump_canonical_scalar(const BasicJsonType& val)
+    {
+        switch (val.m_data.m_type)
+        {
+            case value_t::string:
+            {
+                put_char('"');
+                dump_escaped(*val.m_data.m_value.string);
+                put_char('"');
+                return;
+            }
+
+            case value_t::boolean:
+            {
+                if (val.m_data.m_value.boolean)
+                {
+                    put_literal("true");
+                }
+                else
+                {
+                    put_literal("false");
+                }
+                return;
+            }
+
+            case value_t::number_integer:
+            {
+                dump_float_canonical(static_cast<double>(val.m_data.m_value.number_integer), &val);
+                return;
+            }
+
+            case value_t::number_unsigned:
+            {
+                dump_float_canonical(static_cast<double>(val.m_data.m_value.number_unsigned), &val);
+                return;
+            }
+
+            case value_t::number_float:
+            {
+                dump_float_canonical(static_cast<double>(val.m_data.m_value.number_float), &val);
+                return;
+            }
+
+            case value_t::null:
+            {
+                put_literal("null");
+                return;
+            }
+
+            case value_t::object:
+            case value_t::array:
+            {
+                JSON_ASSERT(false);
+                JSON_THROW(type_error::create(exception_id::type_not_serializable, concat("containers cannot be serialized by dump_canonical_scalar(): ", val.type_name()), &val));
+            }
+
+            case value_t::binary:
+            case value_t::discarded:
+            default:
+            {
+                JSON_THROW(type_error::create(exception_id::type_not_serializable, concat("type cannot be serialized in canonical JSON (RFC 8785): ", val.type_name()), &val));
+            }
+        }
+    }
+
+    /*!
+    @brief write out @a val canonically without the call stack
+    */
+    void dump_canonical_iteratively(const BasicJsonType& val)
+    {
+        if (val.is_object())
+        {
+            if (val.m_data.m_value.object->empty())
+            {
+                put_literal("{}");
+                return;
+            }
+            put_char('{');
+        }
+        else if (val.is_array())
+        {
+            if (val.m_data.m_value.array->empty())
+            {
+                put_literal("[]");
+                return;
+            }
+            put_char('[');
+        }
+        else
+        {
+            dump_canonical_scalar(val);
+            return;
+        }
+
+        std::vector<canonical_dump_frame> stack;
+        stack.emplace_back(&val);
+
+        auto push_or_dump_child = [this, &stack](const BasicJsonType& child)
+        {
+            if (child.is_object())
+            {
+                if (child.m_data.m_value.object->empty())
+                {
+                    put_literal("{}");
+                }
+                else
+                {
+                    put_char('{');
+                    stack.emplace_back(&child);
+                }
+            }
+            else if (child.is_array())
+            {
+                if (child.m_data.m_value.array->empty())
+                {
+                    put_literal("[]");
+                }
+                else
+                {
+                    put_char('[');
+                    stack.emplace_back(&child);
+                }
+            }
+            else
+            {
+                dump_canonical_scalar(child);
+            }
+        };
+
+        while (!stack.empty())
+        {
+            if (stack.back().container->is_object())
+            {
+                if (stack.back().current_idx < stack.back().sorted_elements.size())
+                {
+                    if (stack.back().current_idx > 0)
+                    {
+                        put_char(',');
+                    }
+
+                    const auto* elem = stack.back().sorted_elements[stack.back().current_idx];
+                    ++stack.back().current_idx;
+
+                    put_char('"');
+                    dump_escaped(elem->first);
+                    put_literal("\":");
+
+                    push_or_dump_child(elem->second);
+                }
+                else
+                {
+                    put_char('}');
+                    stack.pop_back();
+                }
+            }
+            else // is_array
+            {
+                const auto* arr = stack.back().container->m_data.m_value.array;
+                if (stack.back().current_idx < arr->size())
+                {
+                    if (stack.back().current_idx > 0)
+                    {
+                        put_char(',');
+                    }
+
+                    const BasicJsonType& child = (*arr)[stack.back().current_idx];
+                    ++stack.back().current_idx;
+
+                    push_or_dump_child(child);
+                }
+                else
+                {
+                    put_char(']');
+                    stack.pop_back();
+                }
+            }
+        }
+    }
+
+    /*!
+    @brief worker for @ref dump_canonical
+    */
+    void dump_canonical_internal(const BasicJsonType& val, const std::size_t depth = 0)
+    {
+        switch (val.m_data.m_type)
+        {
+            case value_t::object:
+            {
+                if (JSON_HEDLEY_UNLIKELY(depth >= recursion_depth_limit()))
+                {
+                    dump_canonical_iteratively(val);
+                    return;
+                }
+
+                const auto* obj = val.m_data.m_value.object;
+                if (obj->empty())
+                {
+                    put_literal("{}");
+                    return;
+                }
+
+                put_char('{');
+
+                const auto sorted_elements = sort_canonical_object_elements(*obj);
+                for (std::size_t i = 0; i < sorted_elements.size(); ++i)
+                {
+                    if (i > 0)
+                    {
+                        put_char(',');
+                    }
+                    put_char('"');
+                    dump_escaped(sorted_elements[i]->first);
+                    put_literal("\":");
+                    dump_canonical_internal(sorted_elements[i]->second, depth + 1);
+                }
+
+                put_char('}');
+                return;
+            }
+
+            case value_t::array:
+            {
+                if (JSON_HEDLEY_UNLIKELY(depth >= recursion_depth_limit()))
+                {
+                    dump_canonical_iteratively(val);
+                    return;
+                }
+
+                const auto* arr = val.m_data.m_value.array;
+                if (arr->empty())
+                {
+                    put_literal("[]");
+                    return;
+                }
+
+                put_char('[');
+                for (std::size_t i = 0; i < arr->size(); ++i)
+                {
+                    if (i > 0)
+                    {
+                        put_char(',');
+                    }
+                    dump_canonical_internal((*arr)[i], depth + 1);
+                }
+                put_char(']');
+                return;
+            }
+
+            case value_t::string:
+            case value_t::boolean:
+            case value_t::number_integer:
+            case value_t::number_unsigned:
+            case value_t::number_float:
+            case value_t::null:
+            case value_t::binary:
+            case value_t::discarded:
+            default:
+            {
+                dump_canonical_scalar(val);
+                return;
+            }
+        }
+    }
+
+    /*!
+    @brief dump a number according to RFC 8785 (ECMAScript Number::toString modeled as IEEE 754 binary64 double)
+    */
+    void dump_float_canonical(double x, const BasicJsonType* context)
+    {
+        if (!std::isfinite(x))
+        {
+            JSON_THROW(out_of_range::create(exception_id::number_overflow, "cannot serialize non-finite numbers in canonical mode", context));
+        }
+
+#if defined(__GNUC__) || defined(__clang__)
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
+#endif
+        const bool is_zero = (x == 0.0);
+#if defined(__GNUC__) || defined(__clang__)
+        JSON_HEDLEY_DIAGNOSTIC_POP
+#endif
+
+        if (is_zero)
+        {
+            put_char('0');
+            return;
+        }
+
+        if (std::signbit(x))
+        {
+            put_char('-');
+            x = -x;
+        }
+
+        std::array<char, 128> buf{{}};
+        std::size_t len = 0;
+        int decimal_exponent = 0;
+        get_shortest_digits(x, buf, len, decimal_exponent, std::true_type{});
+
+        const std::size_t str_len = format_buffer_ecmascript(buf, len, decimal_exponent);
+        put_buffer(buf, str_len);
     }
 
   JSON_PRIVATE_UNLESS_TESTED:
