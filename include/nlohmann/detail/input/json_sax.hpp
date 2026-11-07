@@ -904,7 +904,8 @@ class json_sax_dom_parser : public json_sax_dom_error_state
             {
                 hashes.push_back(hasher(element.first));
             }
-            ordered_data.key_indexes.emplace_back(new object_key_index(std::move(hashes)));
+            std::unique_ptr<object_key_index> index(new object_key_index(std::move(hashes))); // NOLINT(cppcoreguidelines-owning-memory,modernize-make-unique): std::make_unique is C++14
+            ordered_data.key_indexes.push_back(std::move(index));
             f.ordered.index = ordered_data.key_indexes.back().get();
         }
 
@@ -999,7 +1000,7 @@ class json_sax_dom_parser : public json_sax_dom_error_state
         ordered_data.members[f.ordered.dest_member].second = std::move(value);
     }
 
-    static void place_member(const frame& /*f*/, BasicJsonType&& /*value*/, std::false_type /*indexed*/) noexcept {}
+    static void place_member(const frame& /*f*/, BasicJsonType&& /*value*/, std::false_type /*indexed*/) noexcept {} // LCOV_EXCL_LINE
 
     /// store the members of a new object directly in it
     bool start_stored_object(std::size_t len)
@@ -1303,13 +1304,33 @@ class json_sax_dom_parser : public json_sax_dom_error_state
         {
             // a new member is null and holds nothing: construct the value
             // over it instead of destroying and swapping
-            ::new (static_cast<void*>(&member)) BasicJsonType(std::forward<Value>(v));
+            construct_member(member, std::forward<Value>(v), std::is_nothrow_constructible<BasicJsonType, Value> {});
         }
         else
         {
             // the key occurred before
             member = BasicJsonType(std::forward<Value>(v));
         }
+    }
+
+    /// constructing the value cannot throw (for example a number or a boolean): construct it in place
+    template<typename Value>
+    JSON_HEDLEY_ALWAYS_INLINE
+    static void construct_member(BasicJsonType& member, Value&& v, std::true_type /*nothrow*/)
+    {
+        ::new (static_cast<void*>(&member)) BasicJsonType(std::forward<Value>(v));
+    }
+
+    /// constructing the value can throw (for example a container or a string), and a
+    /// constructor that was interrupted must not have touched the member (#5985):
+    /// create the value first, then move it over the member (the move constructor is
+    /// noexcept)
+    template<typename Value>
+    JSON_HEDLEY_ALWAYS_INLINE
+    static void construct_member(BasicJsonType& member, Value&& v, std::false_type /*may throw*/)
+    {
+        BasicJsonType value(std::forward<Value>(v));
+        ::new (static_cast<void*>(&member)) BasicJsonType(std::move(value));
     }
 
     /// a custom base class may care about the lifetime of the value
@@ -1737,7 +1758,7 @@ class json_sax_dom_callback_parser : public json_sax_dom_error_state
         key_stack.push_back(val);
 
         // add discarded value at the given key and store the reference for later
-        if (keep && ref_stack.back())
+        if (keep)
         {
             auto& obj = *ref_stack.back()->m_data.m_value.object;
             // a single lookup: insert the placeholder, or find the existing member
@@ -1794,7 +1815,7 @@ class json_sax_dom_callback_parser : public json_sax_dom_error_state
 
         const string_t object_key = pop_container();
 
-        if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_structured())
+        if (!ref_stack.empty() && ref_stack.back())
         {
             // remove discarded value
             remove_discarded_value(*ref_stack.back(), object_key);
@@ -1960,8 +1981,7 @@ class json_sax_dom_callback_parser : public json_sax_dom_error_state
     */
     string_t current_key() const
     {
-        if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_object()
-                && !key_stack.empty())
+        if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_object())
         {
             return key_stack.back();
         }

@@ -441,6 +441,10 @@ TEST_CASE("regression tests 2")
 
         float_json j2 = {1000.0, 2000.0, 3000.0};
         CHECK(float_json::from_ubjson(float_json::to_ubjson(j2, true, true)) == j2);
+
+        // half-precision floats of both signs are converted to the float type
+        CHECK(float_json::from_cbor(std::vector<std::uint8_t> {0xF9, 0xC0, 0x00}) == -2.0f);
+        CHECK(float_json::from_cbor(std::vector<std::uint8_t> {0xF9, 0x3C, 0x00}) == 1.0f);
     }
 
     SECTION("issue #1045 - Using STL algorithms with JSON containers with expected results?")
@@ -1005,7 +1009,7 @@ TEST_CASE("regression test - excessive binary container size honors allow_except
     // allow_exceptions=true (the default) must still throw exactly as before.
     // The exact message text is not checked here: on platforms where
     // std::size_t is 32-bit, the CBOR reader's own length-narrowing check
-    // (get_cbor_container_size(), unrelated to this fix) intercepts a
+    // (get_container_size(), unrelated to this fix) intercepts a
     // declared length of 2^63 before it ever reaches the check this test
     // targets, with different (but equally valid, and already correct)
     // wording -- see unit-cbor.cpp for coverage of that message.

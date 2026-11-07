@@ -11,6 +11,11 @@ that cost, ordered by how much they typically save.
     16.2.0 on macOS (Apple M1 Max). All configurations were run interleaved, in alternating order. They show the order
     of magnitude to expect; measure your own code before and after a change.
 
+    The two sections on `std::format` and ranges apply to C++20 only and were measured with `-std=c++20`, so their
+    baselines are slower than the others. Their differences are mostly within the run-to-run noise of a few percent:
+    two complete runs of the same configuration differed by up to 10% in the median. The tables show the later run (one
+    outlier cell was repeated).
+
     The translation units are listed below. They replace the ones used for earlier versions of this page, whose
     sources were not published, so the numbers differ from earlier versions.
 
@@ -66,7 +71,8 @@ that cost, ordered by how much they typically save.
 --8<-- "images/compile_times.svg"
 </div>
 <p class="nj-charts-caption" markdown>Change in compile time at `-O0` against the default configuration of the same
-translation unit, taken from the tables below (medians of nine runs, see above). * computed from the milliseconds in
+translation unit, taken from the tables below (medians of nine runs, see above; the `std::format` and ranges rows are
+measured with `-std=c++20`). * computed from the milliseconds in
 [Options without effect on compile times](#options-without-effect-on-compile-times).</p>
 
 ## Include `json_fwd.hpp` in headers
@@ -214,6 +220,88 @@ from and to `std::string`; whether that fallback exists depends on the platform'
 (`std::wstring` on Windows), so check code that converts paths. `JSON_NO_IO` additionally removes all stream
 functions (see [Options without effect](#options-without-effect-on-compile-times)).
 
+## Switch off `std::format` support
+
+With C++20 and a standard library that provides `<format>`, the library includes it to provide a
+[`std::formatter<basic_json>`](../api/basic_json/std_formatter.md) specialization (see
+[`JSON_HAS_STD_FORMAT`](../api/macros/json_has_std_format.md)). If you do not format JSON values with `std::format`,
+switch the detection off for the whole project:
+
+```cmake
+target_compile_definitions(my_target PRIVATE JSON_HAS_STD_FORMAT=0)
+```
+
+| Compiler    | Translation unit | Default (`-O0` / `-O2`) | `std::format` off (`-O0` / `-O2`) | Change     |
+|-------------|------------------|------------------------:|----------------------------------:|-----------:|
+| Apple clang | model            |       1283 ms / 1544 ms |                1269 ms / 1539 ms |  −1% / 0%  |
+| GCC 16      | model            |       2026 ms / 2482 ms |                1944 ms / 2416 ms | −4% / −3%  |
+| Apple clang | parsing          |       1350 ms / 2278 ms |                1347 ms / 2300 ms |  0% / +1%  |
+| GCC 16      | parsing          |       2715 ms / 4351 ms |                2644 ms / 4287 ms | −3% / −1%  |
+
+<p class="nj-table-caption" markdown>Compile time with `JSON_HAS_STD_FORMAT=0` against the default configuration, both with `-std=c++20`, at `-O0` and `-O2`.</p>
+
+The saving is small, and only GCC shows it: libstdc++'s `<format>` is an additional header that nothing else in the
+translation unit includes, so the macro removes it (and the headers it pulls in). With libc++ (Apple clang), other
+standard headers include `<format>` anyway, so the macro only removes the library's own formatter, and the difference is
+within the noise.
+
+The trade-off: the `std::formatter<basic_json>` specialization is removed, so `#!cpp std::format("{}", j)`,
+and `#!cpp std::format_to` with a JSON value no longer compile (in a test with both compilers on
+macOS, the error was that `std::formatter` must be specialized for the type). Use [`dump()`](../api/basic_json/dump.md),
+or the stream operators, instead.
+
+## Switch off ranges support
+
+With C++20 and a standard library that provides `<ranges>`, the library includes it to declare the
+[`items()`](../api/basic_json/items.md) proxy a *borrowed range*, and uses the `std::ranges` concepts and algorithms for
+construction from range views and for iterator input (see [`JSON_HAS_RANGES`](../api/macros/json_has_ranges.md)). If you
+do not need these, switch the detection off for the whole project:
+
+```cmake
+target_compile_definitions(my_target PRIVATE JSON_HAS_RANGES=0)
+```
+
+| Compiler    | Translation unit | Default (`-O0` / `-O2`) | Ranges off (`-O0` / `-O2`) | Change     |
+|-------------|------------------|------------------------:|---------------------------:|-----------:|
+| Apple clang | model            |       1283 ms / 1544 ms |           1237 ms / 1495 ms | −4% / −3%  |
+| GCC 16      | model            |       2026 ms / 2482 ms |           2004 ms / 2464 ms | −1% / −1%  |
+| Apple clang | parsing          |       1350 ms / 2278 ms |           1311 ms / 2284 ms |  −3% / 0%  |
+| GCC 16      | parsing          |       2715 ms / 4351 ms |           2705 ms / 4427 ms |  0% / +2%  |
+
+<p class="nj-table-caption" markdown>Compile time with `JSON_HAS_RANGES=0` against the default configuration, both with `-std=c++20`, at `-O0` and `-O2`.</p>
+
+The saving is small as well, and with GCC it is not distinguishable from the noise: its `<format>` includes `<span>`,
+so with `std::format` support left on, part of the ranges machinery is still parsed.
+Both macros together save more than either alone:
+
+```cmake
+target_compile_definitions(my_target PRIVATE JSON_HAS_STD_FORMAT=0 JSON_HAS_RANGES=0)
+```
+
+| Compiler    | Translation unit | Default (`-O0` / `-O2`) | Both off (`-O0` / `-O2`) | Change     |
+|-------------|------------------|------------------------:|-------------------------:|-----------:|
+| Apple clang | model            |       1283 ms / 1544 ms |         1223 ms / 1504 ms | −5% / −3%  |
+| GCC 16      | model            |       2026 ms / 2482 ms |         1914 ms / 2378 ms | −6% / −4%  |
+| Apple clang | parsing          |       1350 ms / 2278 ms |         1311 ms / 2271 ms |  −3% / 0%  |
+| GCC 16      | parsing          |       2715 ms / 4351 ms |         2635 ms / 4260 ms | −3% / −2%  |
+
+<p class="nj-table-caption" markdown>Compile time with `JSON_HAS_STD_FORMAT=0` and `JSON_HAS_RANGES=0` against the default configuration, both with `-std=c++20`, at `-O0` and `-O2`.</p>
+
+The trade-offs of `JSON_HAS_RANGES=0` are larger than those of the other options on this page:
+
+- `items()` is no longer a borrowed range. On a temporary, `#!cpp std::ranges::begin(make_json().items())` no longer
+  compiles, and `std::ranges` algorithms such as `#!cpp std::ranges::find_if(make_json().items(), pred)` return
+  `std::ranges::dangling` instead of an iterator, so code that uses the result no longer compiles. Calling them on
+  `#!cpp j.items()` for a named `j` is not affected.
+- [`JSON_HAS_RANGE_VIEW_CONVERSION`](../api/macros/json_has_range_view_conversion.md) becomes `0`, so a JSON array can no
+  longer be constructed from a `std::ranges::view` such as the result of `std::views::filter`. The assignment
+  `#!cpp json j = v | std::views::filter(pred);` no longer compiles.
+- Parsing from an iterator pair loses the C++20 fast path for contiguous iterators that are not pointers (for
+  example those of `std::vector`) and falls back to byte-at-a-time scanning. The result is the same; parsing may be
+  slower (not measured here).
+
+The first two were checked with both compilers on macOS; the third is read from the library's source.
+
 ## Use C++20 modules
 
 With a toolchain that supports named modules, `import nlohmann.json;` compiles the library once into a module and
@@ -343,6 +431,8 @@ and −2% / 0% (GCC). To get a saving, combine it with
 
 - [`JSON_HAS_FILESYSTEM`](../api/macros/json_has_filesystem.md) - control the conversions from and to
   `std::filesystem::path`
+- [`JSON_HAS_STD_FORMAT`](../api/macros/json_has_std_format.md) - control the `std::formatter` specialization
+- [`JSON_HAS_RANGES`](../api/macros/json_has_ranges.md) - control the use of `std::ranges`
 - [`JSON_NO_AUTOMATIC_UDLS`](../api/macros/json_no_automatic_udls.md) - do not include the user-defined string
   literals automatically
 - [Modules](../features/modules.md) - C++20 module support

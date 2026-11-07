@@ -289,9 +289,12 @@ compares, and the UTF-8 check covers the bytes up to it. Returns where the
 string scan stops, like scan_string_run: before ill-formed UTF-8 and for the
 last bytes of the input, the bytes are checked one sequence at a time. Out of
 line, so that no constants of the check occupy registers in the parse loop.
-On x86-64, it is compiled for SSSE3 (see cpu_has_ssse3()).
+On x86-64, it is compiled for SSSE3 (see cpu_has_ssse3()). Not cloned: with
+the calls of accept()'s builder, GCC 16 would clone it without plain (always
+string_plain()), and calling the clone made json_document::parse() run 0.7-1.2 %
+more instructions.
 */
-NLOHMANN_VIEW_SSSE3_TARGET NLOHMANN_VIEW_NOINLINE inline const unsigned char* scan_string_vector(const unsigned char* p, const unsigned char* e, const std::uint8_t* plain) noexcept
+NLOHMANN_VIEW_SSSE3_TARGET NLOHMANN_VIEW_NOINLINE NLOHMANN_VIEW_NOCLONE inline const unsigned char* scan_string_vector(const unsigned char* p, const unsigned char* e, const std::uint8_t* plain) noexcept
 {
     using lookup = utf8_lookup4<>;
     const unsigned char* block = p;

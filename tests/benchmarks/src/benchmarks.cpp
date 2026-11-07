@@ -629,6 +629,22 @@ static json make_containers()
     return j;
 }
 
+/// many arrays of one number each: one-element arrays are left to the general
+/// path (CBOR and MessagePack), which reads a lone number slower than the loop
+/// for arrays of scalars would
+static json make_singles()
+{
+    json data = json::array();
+    for (std::size_t i = 0; i < 100000; ++i)
+    {
+        data.push_back(json::array({i}));
+    }
+
+    json j = json::object();
+    j["data"] = std::move(data);
+    return j;
+}
+
 /// one flat array of numbers: the scalar decoding path, which must not move
 static json make_scalars()
 {
@@ -676,6 +692,8 @@ BENCHMARK_CAPTURE(FromBinaryShape, containers / ubjson_optimized, make_container
 BENCHMARK_CAPTURE(FromBinaryShape, containers / bjdata, make_containers, binary_format::bjdata);
 BENCHMARK_CAPTURE(FromBinaryShape, containers / bson, make_containers, binary_format::bson);
 BENCHMARK_CAPTURE(FromBinaryShape, containers / bon8, make_containers, binary_format::bon8);
+BENCHMARK_CAPTURE(FromBinaryShape, singles / cbor, make_singles, binary_format::cbor);
+BENCHMARK_CAPTURE(FromBinaryShape, singles / msgpack, make_singles, binary_format::msgpack);
 // BSON names every array element, so a large array measures key generation
 // rather than scalar decoding and is left out here
 BENCHMARK_CAPTURE(FromBinaryShape, scalars / cbor, make_scalars, binary_format::cbor);

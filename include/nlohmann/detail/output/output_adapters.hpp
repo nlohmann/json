@@ -11,6 +11,7 @@
 #include <algorithm> // max
 #include <array> // array
 #include <cstddef> // size_t
+#include <cstdint> // uint32_t
 #include <cstring> // memcpy
 #include <memory> // shared_ptr, make_shared
 #include <string> // basic_string
@@ -115,6 +116,10 @@ inline void copy_short(CharType* dst, const CharType* src, const std::size_t len
 /// the number of characters an empty vector is grown to by output_vector_sink
 constexpr std::size_t min_vector_sink_capacity = 64;
 
+/// the number of characters output_vector_sink makes writable ahead of its
+/// position at a time: 64 KiB of the vector's capacity, not all of it
+constexpr std::size_t vector_sink_window = 65536;
+
 /// @brief non-virtual output sink writing into a std::vector
 ///
 /// This sink is not part of the virtual output_adapter_protocol hierarchy: it is
@@ -128,7 +133,8 @@ constexpr std::size_t min_vector_sink_capacity = 64;
 /// encoding them: insert() is an out-of-line call into a routine that can insert
 /// anywhere, and resize() is one as well with libstdc++. The sink therefore keeps
 /// its own write position: it grows the vector geometrically ahead of the
-/// position and copies each write to it, so a write is a capacity check and a
+/// position (making @ref vector_sink_window characters of it writable at a
+/// time) and copies each write to it, so a write is a capacity check and a
 /// short copy. The destructor shrinks the vector to the bytes actually written,
 /// also when a write throws; shrinking a vector never allocates. The sink owns
 /// that trim, so it can be moved but not copied, and the vector must not be used
@@ -227,6 +233,31 @@ class output_vector_sink
     void flush() noexcept
     {}
 
+    /// the number of characters written so far, the position of the next one
+    std::size_t written() const noexcept
+    {
+        return position();
+    }
+
+    /// @brief replace the 4 bytes written before at position @a pos with
+    ///        those of @a n, in the byte order of the machine
+    ///
+    /// Lets a writer put a length in front of data it has written since, such
+    /// as the size of a BSON document, without computing it in advance.
+    void overwrite(const std::size_t pos, const std::uint32_t n) noexcept
+    {
+        static_assert(sizeof(CharType) == 1, "overwrite() writes bytes");
+        JSON_ASSERT(pos + sizeof(n) <= position());
+        std::memcpy(v->data() + pos, &n, sizeof(n));
+    }
+
+    /// drop the characters written from position @a pos on
+    void rewind(const std::size_t pos) noexcept
+    {
+        JSON_ASSERT(pos <= position());
+        cursor = v->data() + pos;
+    }
+
   private:
     /// number of characters of *v written so far
     std::size_t position() const noexcept
@@ -251,9 +282,17 @@ class output_vector_sink
         // reallocate for every few bytes
         const std::size_t written = position();
         const std::size_t needed = written + length;
-        v->resize((std::max)(min_vector_sink_capacity, needed <= v->capacity()
-                             ? v->capacity()
-                             : (std::max)(needed, v->capacity() * 2)));
+        const std::size_t capacity = (std::max)(min_vector_sink_capacity, needed <= v->capacity()
+                                                ? v->capacity()
+                                                : (std::max)(needed, v->capacity() * 2));
+        v->reserve(capacity);
+        // resize() zeroes the characters it adds. Zeroing all of a doubled
+        // capacity, megabytes of a fresh allocation, at once faults in its
+        // pages and evicts them from the cache before the writer gets there,
+        // so its stores miss again; a window ahead of the position is still
+        // cached when they come (the binary writers on a long array of
+        // numbers: 4-26 % faster on x86, 1-2.5 % on Apple M1)
+        v->resize((std::min)(capacity, (std::max)(needed, written + vector_sink_window)));
         cursor = v->data() + written;
         limit = v->data() + v->size();
     }

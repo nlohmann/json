@@ -83,10 +83,6 @@ template<typename StringType>
 inline void unescape(StringType& s)
 {
     auto pos = s.find_first_of('~', 0);
-    if (pos == StringType::npos)
-    {
-        return;
-    }
 
     StringType result;
     result.reserve(s.size());

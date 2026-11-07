@@ -134,9 +134,21 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
 - **Macros.** [`JSON_STRICT_NUL_HANDLING`](../api/macros/json_strict_nul_handling.md) and
   [`JSON_NOEXCEPTION`](../api/macros/json_noexception.md)/[`JSON_THROW_USER`](../api/macros/json_throw_user.md)
   behave the same way they do for `<nlohmann/json.hpp>`. These are the macros that change what the parser accepts or
-  how it reports errors. The others either do not apply ([`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md)
-  needs parent pointers in `basic_json` values) or only affect the values `materialize()` produces, through
-  `BasicJsonType`.
+  how it reports errors. Two more macros add context to the exceptions of views, as they do for those of
+  `#!cpp basic_json`:
+
+    - With [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md), an exception names the JSON Pointer path of the
+      value within the document.
+    - With [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md), an exception names the bytes of
+      the value in the source text.
+
+    A view has neither parent pointers nor stored positions, so both are found from the document's index when the
+    exception is thrown. This takes time linear in the size of the document. One exception has neither:
+    `key()` of an iterator over an array or a primitive value
+    ([`invalid_iterator.207`](../home/exceptions.md#jsonexceptioninvalid_iterator207)), because a view's iterator does
+    not know the value it iterates over.
+
+    The other macros only affect the values `materialize()` produces, through `BasicJsonType`.
 
 ## What is different
 
@@ -148,7 +160,9 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
   wide. The limit is 16 bytes below 2^32, because the parser reads in 16-byte steps, and a position one step past the
   end must still fit.
 - **A stream is always read to its end.** There is no partial/streaming read of an `#!cpp std::istream`: the stream
-  is read to its end into a buffer the document owns, and parsing starts after that.
+  is read to its end into a buffer the document owns, and parsing starts after that. For a file, reading it into a
+  `#!cpp std::string` yourself and parsing that (an lvalue is borrowed) is therefore not more expensive in memory, and
+  was about 6 to 12 % faster than parsing from an `#!cpp std::ifstream`.
 - **Fewer source positions after edits.** With
   [`JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md) enabled,
   [`materialize()`](../api/basic_json_view/materialize.md) sets the same positions as `#!cpp basic_json::parse()`.
@@ -167,10 +181,6 @@ document: `#!cpp auto v = json_document::parse(text).root();` does not compile. 
   [`at`](../api/basic_json_view/at.md) throws for every missing value.
 - **Duplicate keys: lookups find the first member, `parse()` keeps the last.** See [Duplicate keys](#duplicate-keys)
   below.
-- **No [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md) path.** Exceptions thrown by `basic_json_view`'s own
-  element access and lookup functions never carry the JSON Pointer path `JSON_DIAGNOSTICS` would otherwise add: the
-  view has no `basic_json` value to point at, so the exception is created without one, regardless of how
-  `BasicJsonType` was built.
 - **Ordering comparisons are not provided** by `basic_json_view` — there is no `#!cpp operator<`.
   [`operator==`](../api/basic_json_view/operator_eq.md) and [`operator!=`](../api/basic_json_view/operator_ne.md) are
   provided, though: two views, or a view and a `BasicJsonType` value, compare equal exactly when
@@ -253,6 +263,34 @@ Two conversions never copy at all:
 
 Both results are only valid as long as the view — and, for a string with no escapes, the borrowed source text — is.
 
+### `string_view` members
+
+A struct whose member is a `#!cpp std::string_view` (C++17) can be decoded from a view with the
+`NLOHMANN_DEFINE_TYPE_*` macros, and the member is not copied either: for a string without escape sequences it points
+into the document's source text, and for a string with escape sequences into the document's buffer of decoded strings.
+The member is valid as long as the document is alive and, for a document that
+[borrows its source text](#ownership-and-lifetime) (as [`parse()`](../api/basic_json_document/parse.md) does for
+an lvalue `#!cpp std::string`, a `#!cpp std::string_view`, or a C string), as long as that text is.
+
+```cpp
+struct record
+{
+    std::string_view name;
+    int count;
+    NLOHMANN_DEFINE_TYPE_INTRUSIVE(record, name, count)
+};
+
+const std::string text = R"({"name": "widget", "count": 3})";
+const json_document doc = json_document::parse(text);  // borrows text
+const record r = doc.root().get<record>();             // r.name points into text, valid while text and doc are
+```
+
+!!! warning "Decoding into a `string_view` from a `json` value dangles at once"
+
+    The same struct also compiles with `#!cpp json::parse(text).get<record>()`, but there `name` points into the
+    temporary `json` value, which is destroyed at the end of the statement. Use a named
+    [`json_document`](../api/json_document.md), as above, to decode such a struct.
+
 ## Writing generic code
 
 A view's type names its `BasicJsonType` and its [`view_mode`](../api/view_mode.md):
@@ -329,14 +367,10 @@ Its body may only use what views and `basic_json` have in common: the type check
 a view does not have; such a type is converted through `materialize()`. A `from_json()` for `json` only is
 converted through `materialize()` as well.
 
-Two things differ when a `from_json()` reads the view:
-
-- **Duplicate keys.** Members looked up by name (`at()`, `value()`, ... and thus the macros) find the **first** member
-  with a repeated key, see [Duplicate keys](#duplicate-keys); `#!cpp materialize().get<T>()` would see the last one.
-  Containers built from an object, such as `#!cpp std::map`, keep the **last** value either way, as
-  [`parse()`](../api/basic_json/parse.md) does.
-- **[`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md).** Exceptions thrown by the view carry no path to the
-  value.
+One thing differs when a `from_json()` reads the view: members looked up by name (`at()`, `value()`, ... and thus
+the macros) find the **first** member with a repeated key, see [Duplicate keys](#duplicate-keys);
+`#!cpp materialize().get<T>()` would see the last one. Containers built from an object, such as `#!cpp std::map`,
+keep the **last** value either way, as [`parse()`](../api/basic_json/parse.md) does.
 
 `to_json()` is unaffected: it writes `basic_json` values, never views.
 

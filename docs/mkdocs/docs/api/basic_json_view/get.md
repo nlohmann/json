@@ -11,7 +11,8 @@ For the types below, the conversion works directly on the flat index — no `Bas
 
 - `#!cpp bool`
 - arithmetic types other than `#!cpp bool` (for a boolean, `#!cpp 0`/`#!cpp 1`, exactly as for
-  [`BasicJsonType::get<T>()`](../basic_json/get.md))
+  [`BasicJsonType::get<T>()`](../basic_json/get.md#notes), except for `number_integer_t`, `number_unsigned_t` and
+  `number_float_t`, which throw `type_error.302` for a boolean, as `BasicJsonType::get<T>()` does)
 - `#!cpp std::nullptr_t`
 - `#!cpp std::basic_string<char, Traits, Alloc>` (including `string_t`) — a copy of the string
 - [`string_view_t`](index.md#member-types) — **no copy**: the returned view points into the document's
@@ -80,14 +81,13 @@ Strong guarantee: there are no changes to the view or the document it refers to.
 - For every other `T`: whatever [`materialize().get<T>()`](../basic_json/get.md) throws — typically `type_error.302`,
   or whatever a user-provided `from_json()` throws.
 
-None of the exceptions thrown directly by this function or by a `from_json()` that reads the view (the first four
-bullets above) carry a
-[`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) path: the view has no `BasicJsonType` value to point at. An
-exception thrown while converting through `materialize()` (the last bullet) is different: it is thrown by a real
-`BasicJsonType` value, so it **does** carry a `JSON_DIAGNOSTICS` path if `BasicJsonType` was built with it enabled.
-That path is relative to the root of the view's subtree, because `materialize()` builds only the subtree (with parent
-pointers): it is empty if the failing value is the subtree's root itself, and it never is the path within the whole
-document.
+The exceptions thrown directly by this function or by a `from_json()` that reads the view (the first four bullets
+above) carry the context of those of `BasicJsonType`: with [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) the
+JSON Pointer path of the value within the document, and with
+[`JSON_DIAGNOSTIC_POSITIONS`](../macros/json_diagnostic_positions.md) its bytes in the source text. An exception
+thrown while converting through `materialize()` (the last bullet) is thrown by the materialized `BasicJsonType` value
+instead: its path is relative to the root of the view's subtree, because `materialize()` builds only the subtree
+(with parent pointers), so it is empty if the failing value is the subtree's root itself.
 
 ## Complexity
 

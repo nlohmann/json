@@ -18,14 +18,14 @@ concurrency:
 
 jobs:
   ci_test_gcc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: gcc:latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -38,7 +38,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Check that Meson and pkg-config offer the CMake options
         run: make check_build_options
       - name: Install Meson
@@ -80,7 +80,7 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 
@@ -92,7 +92,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -112,7 +112,7 @@ jobs:
         target: [ci_test_single_header, ci_cppcheck, ci_cpplint, ci_reproducible_tests, ci_non_git_tests, ci_offline_testdata, ci_reuse_compliance, ci_test_valgrind]
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 
@@ -123,14 +123,14 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
         run: cmake --build build --target ${{ matrix.target }}
 
   ci_static_analysis_clang:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: silkeh/clang:22
     strategy:
       matrix:
@@ -142,14 +142,14 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
         run: cmake --build build --target ${{ matrix.target }}
 
   ci_cmake_options:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: ubuntu:24.04
     strategy:
       matrix:
@@ -168,7 +168,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -178,7 +178,7 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 
@@ -209,7 +209,7 @@ jobs:
           fail-on-error: false
 
   ci_test_compilers_gcc_old:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         compiler: ['4.8', '4.9', '5', '6']
@@ -244,14 +244,14 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Run CMake
         run: CXX=g++-${{ matrix.compiler }} cmake -S . -B build -DJSON_CI=On
       - name: Build
         run: cmake --build build --target ci_test_compiler_g++-${{ matrix.compiler }}
 
   ci_test_compilers_gcc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         # older GCC docker images (4, 5, 6) fail to check out code
@@ -262,14 +262,14 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
         run: cmake --build build --target ci_test_compiler_default
 
   ci_test_compilers_clang:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
         compiler: ['3.4', '3.5', '3.6', '3.7', '3.8', '3.9', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15-bullseye', '16', '17', '18', '19', '20', '21', '22', 'latest']
@@ -279,7 +279,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Disable filesystem support (std::filesystem is unusable) for clang 7 / 8 / 9 / 10
         run: echo "JSON_FORCED_GLOBAL_COMPILE_OPTIONS=-DJSON_HAS_FILESYSTEM=0;-DJSON_HAS_EXPERIMENTAL_FILESYSTEM=0" >> "$GITHUB_ENV"
         if: ${{ matrix.compiler == '7' || matrix.compiler == '8' || matrix.compiler == '9' || matrix.compiler == '10' }}
@@ -289,7 +289,7 @@ jobs:
         run: cmake --build build --target ci_test_compiler_default
 
   ci_test_standards_gcc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: gcc:latest
     strategy:
       matrix:
@@ -299,14 +299,14 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
         run: cmake --build build --target ci_test_gcc_cxx${{ matrix.standard }}
 
   ci_test_standards_clang:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: silkeh/clang:latest
     strategy:
       matrix:
@@ -319,7 +319,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build with libc++
@@ -330,7 +330,7 @@ jobs:
         if: ${{ matrix.stdlib == 'libstdcxx' }}
 
   ci_cuda_example:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
@@ -346,7 +346,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -356,7 +356,7 @@ jobs:
     strategy:
       matrix:
         container: ['gcc:latest', 'silkeh/clang:latest']
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: ${{ matrix.container }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -366,7 +366,7 @@ jobs:
       # import-std support. Its opt-in token is CMake-version-specific, so pin
       # CMake to the version whose token is set in tests/module_cpp20/CMakeLists.txt.
       - name: Get pinned CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
         with:
           cmakeVersion: 4.3.4
       # Clang: the std library module is provided by libc++ (the image's libstdc++
@@ -383,7 +383,7 @@ jobs:
         run: cmake --build build --target ci_module_cpp20
 
   ci_icpc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     # Intel discontinued the classic icc/icpc compiler in oneAPI 2024.0; this is
     # Intel's own last officially published image that still includes it.
     container: intel/oneapi-hpckit:2023.2.1-devel-ubuntu22.04
@@ -392,7 +392,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -402,28 +402,28 @@ jobs:
         run: cmake --build build --target ci_icpc
 
   ci_icpx:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: intel/oneapi-hpckit:latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
         run: cmake --build build --target ci_icpx
 
   ci_nvhpc:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     container: nvcr.io/nvidia/nvhpc:25.5-devel-cuda12.9-ubuntu22.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
@@ -433,7 +433,7 @@ jobs:
     runs-on: ubuntu-26.04
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 
@@ -443,7 +443,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Run CMake
         run: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -GNinja
       - name: Build
@@ -456,7 +456,7 @@ jobs:
         target: [ci_test_examples, ci_test_build_documentation, ci_test_documentation_mermaid]
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: audit
 
@@ -484,7 +484,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Get latest CMake and ninja
-        uses: lukka/get-cmake@a89e43e22a96abafcd7a62db652a65ecd33052c9 # v4.4.4
+        uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
       - name: Check that the job runs natively on arm64
         run: uname -m && test "$(uname -m)" = aarch64
       - name: Run CMake

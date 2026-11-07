@@ -10,6 +10,7 @@
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_view.hpp>
 
 #include <cstdint>
 #include <string>
@@ -480,6 +481,58 @@ TEST_CASE("alternative string type")
         alt_json _;
         doc = "blue";
         CHECK_THROWS_WITH_AS(_ = doc.get<alt_color>(), "[json.exception.out_of_range.410] enum value out of range for alt_color: \"blue\"", alt_json::out_of_range&);
+    }
+}
+
+TEST_CASE("alternative string type with json_view")
+{
+    // regression test for #5994: basic_json_view::dump() called
+    // StringType::capacity(), which alt_string (and the documented StringType
+    // requirements) do not provide
+    using alt_document = nlohmann::basic_json_document<alt_json, nlohmann::view_mode::read_only>;
+    using alt_editable_document = nlohmann::basic_json_document<alt_json, nlohmann::view_mode::editable>;
+
+    const char* text = R"({"a":[1,"x\u00e4"],"b":{"c":true,"d":null},"e":2.5})";
+    const alt_json j = alt_json::parse(text);
+
+    SECTION("read-only document")
+    {
+        const alt_document d = alt_document::parse(text);
+        CHECK(d.root().dump() == j.dump());
+        CHECK(d.root().dump(2) == j.dump(2));
+        CHECK(d.root().dump(-1, ' ', true) == j.dump(-1, ' ', true));
+        CHECK(d.root().materialize() == j);
+        CHECK(d.root().contains(alt_string("b")));
+        CHECK(d.root()[alt_string("b")][alt_string("c")].dump() == "true");
+    }
+
+    SECTION("long output")
+    {
+        // more than one growth step of the output buffer
+        alt_json big = alt_json::array();
+        for (int i = 0; i < 20000; ++i)
+        {
+            big.push_back(alt_json::parse(text));
+        }
+        const alt_string big_text = big.dump();
+        const alt_document d = alt_document::parse(big_text);
+        CHECK(d.root().dump() == big_text);
+        CHECK(d.root().dump(4) == big.dump(4));
+    }
+
+    SECTION("editable document")
+    {
+        alt_editable_document d = alt_editable_document::parse(text);
+        d.set(d.root(), "f", "new");
+        d.push_back(d.root()[alt_string("a")], 3);
+        alt_json expected = j;
+        expected["f"] = "new";
+        expected["a"].push_back(3);
+        CHECK(d.root().materialize() == expected);
+        CHECK(alt_json::parse(d.root().dump()) == expected);
+
+        const alt_editable_document loaded = alt_editable_document::load(d.save());
+        CHECK(loaded.root().materialize() == expected);
     }
 }
 

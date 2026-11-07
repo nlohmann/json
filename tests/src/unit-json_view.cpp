@@ -31,9 +31,11 @@ using json_view_test::has_duplicate_keys;
 #include <ios>
 #include <istream>
 #include <iterator>
+#include <functional>
 #include <limits>
 #include <list>
 #include <map>
+#include <new>
 #include <random>
 #include <sstream>
 #include <string>
@@ -98,6 +100,71 @@ template<typename View>
 using bool_conversion_t = decltype(static_cast<bool>(std::declval<View>()));
 
 #if !defined(JSON_NOEXCEPTION)
+// an allocator that never has room
+template<typename T>
+struct failing_allocator
+{
+    using value_type = T;
+    // GCC 4.8's std::map takes these from the allocator instead of from
+    // std::allocator_traits
+    using pointer = T*;
+    using const_pointer = const T*;
+    using reference = T&;
+    using const_reference = const T&;
+    using size_type = std::size_t;
+    using difference_type = std::ptrdiff_t;
+
+    template<typename U>
+    struct rebind
+    {
+        using other = failing_allocator<U>;
+    };
+
+    failing_allocator() = default;
+
+    template<typename U>
+    explicit failing_allocator(const failing_allocator<U>& /*other*/) noexcept {}
+
+    [[noreturn]] T* allocate(std::size_t /*n*/) // NOLINT(readability-convert-member-functions-to-static)
+    {
+        throw std::bad_alloc();
+    }
+
+    void deallocate(T* /*p*/, std::size_t /*n*/) noexcept {} // NOLINT(readability-convert-member-functions-to-static)
+
+    // GCC 4.8's std::map calls these on the allocator directly instead of
+    // going through std::allocator_traits
+    std::size_t max_size() const noexcept // NOLINT(readability-convert-member-functions-to-static)
+    {
+        return (std::numeric_limits<std::size_t>::max)() / sizeof(T);
+    }
+
+    template<typename U, typename... Args>
+    void construct(U* p, Args&& ... args) // NOLINT(readability-convert-member-functions-to-static)
+    {
+        ::new (static_cast<void*>(p)) U(std::forward<Args>(args)...);
+    }
+
+    template<typename U>
+    void destroy(U* p) noexcept // NOLINT(readability-convert-member-functions-to-static)
+    {
+        static_cast<void>(p); // unused for trivially destructible types
+        p->~U();
+    }
+
+    template<typename U>
+    bool operator==(const failing_allocator<U>& /*other*/) const noexcept
+    {
+        return true;
+    }
+
+    template<typename U>
+    bool operator!=(const failing_allocator<U>& /*other*/) const noexcept
+    {
+        return false;
+    }
+};
+
 // the exception parse() throws for a text, or "" if it accepts it
 std::string parse_exception(const std::string& text, bool comments = false, bool trailing_commas = false)
 {
@@ -225,7 +292,7 @@ TEST_CASE("json_view")
 #if JSON_DIAGNOSTICS
         // the parents are set, so errors name the path
         const json m = materialized<json_document>(R"({"a":{"b":[1]}})");
-        CHECK_THROWS_WITH_AS(m.at("a").at("b").at(0).at("x"), "[json.exception.type_error.304] (/a/b/0) cannot use at() with number", json::type_error&);
+        CHECK_THROWS_WITH_AS(m.at("a").at("b").at(0).at("x"), json_view_test::message("type_error.304", "/a/b/0", 11, 12, "cannot use at() with number").c_str(), json::type_error&);
 #endif
     }
 
@@ -235,7 +302,9 @@ TEST_CASE("json_view")
                 {
                     "", " ", "[", "]", "{", "[1,]", "{\"a\":1,}", "[1 2]", "{\"a\" 1}", "{1:2}", "tru", "nul", "fals", "truex", "-", "01", "1.", ".5", "1e",
                     "\"", "\"abc", "\"\\x\"", "\"\\u12\"", "\"\\ud800\"", "\"\\udc00\"", "\"\x01\"", "\"\xff\"", "\"\xc3\"", "[1]x", "/", "/*", "[\n  1,\n  x\n]", // NOLINT(modernize-raw-string-literal)
-                    "1e400", "-1e400", "[1.7976931348623159e308]", "{\"a\":\n{\"b\": [1, 2,\n 3 x]}}"
+                    "1e400", "-1e400", "[1.7976931348623159e308]", "{\"a\":\n{\"b\": [1, 2,\n 3 x]}}",
+                    // (an error after every kind of value: the error is found by replaying the parser)
+                    R"([null, true, -1, 1, 1.5, "s", {"a": 1} 2])", R"({"a": null, "b": -1, "c": 1.5, "d": "s", "e": {}, 1})"
                 })
         {
             CAPTURE(text)
@@ -368,6 +437,10 @@ TEST_CASE("json_view")
         CHECK(from_stream.root().materialize() == expected);
         const std::list<char> list(text.begin(), text.end());
         CHECK(json_document::parse(list.begin(), list.end()).owns_source());
+        // (an input that is not valid)
+        const std::list<char> bad_list{'[', '1', ','};
+        json_document from_bad_list;
+        CHECK_THROWS_AS(from_bad_list = json_document::parse(bad_list.begin(), bad_list.end()), json::parse_error&);
         CHECK(materialized<json_document>(list.begin(), list.end()) == expected);
 
         // iterator pairs: pointers are borrowed, and so are contiguous library
@@ -750,19 +823,6 @@ std::string exception_of(F f)
     return "";
 }
 
-// the exception a call on a basic_json value throws, without the byte range of
-// the value (JSON_DIAGNOSTIC_POSITIONS), which the exceptions of views lack
-template<typename F>
-std::string json_exception_of(F f)
-{
-    std::string what = exception_of(f);
-    const std::size_t at = what.find("] (bytes ");
-    if (at != std::string::npos)
-    {
-        what.erase(at + 2, what.find(") ", at) - at);
-    }
-    return what;
-}
 #endif
 
 // compares a view with the ordered_json value materialize() gives for it:
@@ -971,24 +1031,25 @@ TEST_CASE("json_view element access and iteration")
 #if !defined(JSON_NOEXCEPTION)
             if (!j.is_object())
             {
-                CHECK(exception_of([&] { static_cast<void>(v["a"]); }) == json_exception_of([&] { static_cast<void>(j["a"]); }));
+                CHECK(exception_of([&] { static_cast<void>(v["a"]); }) == exception_of([&] { static_cast<void>(j["a"]); }));
             }
             if (!j.is_array())
             {
-                CHECK(exception_of([&] { static_cast<void>(v[0]); }) == json_exception_of([&] { static_cast<void>(j[0]); }));
+                CHECK(exception_of([&] { static_cast<void>(v[0]); }) == exception_of([&] { static_cast<void>(j[0]); }));
             }
-            CHECK(exception_of([&] { static_cast<void>(v.at("a")); }) == json_exception_of([&] { static_cast<void>(j.at("a")); }));
-            CHECK(exception_of([&] { static_cast<void>(v.at("missing")); }) == json_exception_of([&] { static_cast<void>(j.at("missing")); }));
-            CHECK(exception_of([&] { static_cast<void>(v.at(0)); }) == json_exception_of([&] { static_cast<void>(j.at(0)); }));
-            CHECK(exception_of([&] { static_cast<void>(v.at(5)); }) == json_exception_of([&] { static_cast<void>(j.at(5)); }));
+            CHECK(exception_of([&] { static_cast<void>(v.at("a")); }) == exception_of([&] { static_cast<void>(j.at("a")); }));
+            CHECK(exception_of([&] { static_cast<void>(v.at("missing")); }) == exception_of([&] { static_cast<void>(j.at("missing")); }));
+            CHECK(exception_of([&] { static_cast<void>(v.at(0)); }) == exception_of([&] { static_cast<void>(j.at(0)); }));
+            CHECK(exception_of([&] { static_cast<void>(v.at(5)); }) == exception_of([&] { static_cast<void>(j.at(5)); }));
             if (!(j.is_object() && j.empty())) // (key() of an end iterator)
             {
-                CHECK(exception_of([&] { static_cast<void>(v.begin().key()); }) == json_exception_of([&] { static_cast<void>(j.begin().key()); }));
+                // (without the context of basic_json: view iterators do not know the value they iterate over)
+                CHECK(exception_of([&] { static_cast<void>(v.begin().key()); }) == (j.is_object() ? "" : "[json.exception.invalid_iterator.207] cannot use key() for non-object iterators"));
             }
             if (!j.empty() || j.is_null())
             {
-                CHECK(exception_of([&] { static_cast<void>(v.front()); }) == json_exception_of([&] { static_cast<void>(j.front()); }));
-                CHECK(exception_of([&] { static_cast<void>(v.back()); }) == json_exception_of([&] { static_cast<void>(j.back()); }));
+                CHECK(exception_of([&] { static_cast<void>(v.front()); }) == exception_of([&] { static_cast<void>(j.front()); }));
+                CHECK(exception_of([&] { static_cast<void>(v.back()); }) == exception_of([&] { static_cast<void>(j.back()); }));
             }
 #endif
             CHECK(v.contains("a") == j.contains("a"));
@@ -1000,8 +1061,8 @@ TEST_CASE("json_view element access and iteration")
         const json_document d = json_document::parse(R"({"a":[]})");
         CHECK(d.root()["b"].is_discarded());
         CHECK(d.root()["a"][0].is_discarded());
-        CHECK_THROWS_WITH_AS(d.root()["a"].front(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
-        CHECK_THROWS_WITH_AS(d.root()["a"].back(), "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
+        CHECK_THROWS_WITH_AS(d.root()["a"].front(), json_view_test::message("invalid_iterator.214", "/a", 5, 7, "cannot get value").c_str(), json::invalid_iterator&);
+        CHECK_THROWS_WITH_AS(d.root()["a"].back(), json_view_test::message("invalid_iterator.214", "/a", 5, 7, "cannot get value").c_str(), json::invalid_iterator&);
         const json_view invalid{};
         CHECK(invalid.begin() == invalid.end());
         CHECK(std::string(invalid.type_name()) == "discarded");
@@ -1032,10 +1093,10 @@ TEST_CASE("json_view element access and iteration")
         CHECK(v[json_view::json_pointer("/a/b/5")][0].is_discarded());
 #if !defined(JSON_NOEXCEPTION)
         // type errors on values that are not discarded stay
-        CHECK_THROWS_WITH_AS(v[0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with object", json::type_error&);
-        CHECK_THROWS_WITH_AS(v["a"]["b"]["c"], "[json.exception.type_error.305] cannot use operator[] with a string argument with array", json::type_error&);
-        CHECK_THROWS_WITH_AS(v["s"]["c"], "[json.exception.type_error.305] cannot use operator[] with a string argument with string", json::type_error&);
-        CHECK_THROWS_WITH_AS(v["s"][0], "[json.exception.type_error.305] cannot use operator[] with a numeric argument with string", json::type_error&);
+        CHECK_THROWS_WITH_AS(v[0], json_view_test::message("type_error.305", "", 0, 29, "cannot use operator[] with a numeric argument with object").c_str(), json::type_error&);
+        CHECK_THROWS_WITH_AS(v["a"]["b"]["c"], json_view_test::message("type_error.305", "/a/b", 10, 17, "cannot use operator[] with a string argument with array").c_str(), json::type_error&);
+        CHECK_THROWS_WITH_AS(v["s"]["c"], json_view_test::message("type_error.305", "/s", 23, 28, "cannot use operator[] with a string argument with string").c_str(), json::type_error&);
+        CHECK_THROWS_WITH_AS(v["s"][0], json_view_test::message("type_error.305", "/s", 23, 28, "cannot use operator[] with a numeric argument with string").c_str(), json::type_error&);
         CHECK_THROWS_AS(v["a"]["b"][0]["c"], json::type_error&);
         CHECK_THROWS_AS(v["s"][json_view::json_pointer("/x")], json::out_of_range&);
         // at() keeps throwing on a discarded view
@@ -1110,9 +1171,9 @@ TEST_CASE("json_view element access and iteration")
         CHECK(v[(std::numeric_limits<std::size_t>::max)()].is_discarded());
         CHECK(v[std::numeric_limits<int>::max()].is_discarded());
 #if !defined(JSON_NOEXCEPTION)
-        CHECK_THROWS_WITH_AS(v.at(3), "[json.exception.out_of_range.401] array index 3 is out of range", json::out_of_range&);
-        CHECK_THROWS_WITH_AS(v.at(3u), "[json.exception.out_of_range.401] array index 3 is out of range", json::out_of_range&);
-        CHECK_THROWS_WITH_AS(v.at(std::int64_t(3)), "[json.exception.out_of_range.401] array index 3 is out of range", json::out_of_range&);
+        CHECK_THROWS_WITH_AS(v.at(3), json_view_test::message("out_of_range.401", "", 0, 10, "array index 3 is out of range").c_str(), json::out_of_range&);
+        CHECK_THROWS_WITH_AS(v.at(3u), json_view_test::message("out_of_range.401", "", 0, 10, "array index 3 is out of range").c_str(), json::out_of_range&);
+        CHECK_THROWS_WITH_AS(v.at(std::int64_t(3)), json_view_test::message("out_of_range.401", "", 0, 10, "array index 3 is out of range").c_str(), json::out_of_range&);
         CHECK_THROWS_AS(v.at(-1), json::out_of_range&);
         CHECK_THROWS_AS(v.at(-1L), json::out_of_range&);
         CHECK_THROWS_AS(v.at(std::int64_t(-1)), json::out_of_range&);
@@ -1246,26 +1307,6 @@ TEST_CASE("json_view element access and iteration")
 
 namespace
 {
-#if !defined(JSON_NOEXCEPTION)
-// an exception message without the context that basic_json adds with
-// JSON_DIAGNOSTICS ("(/path) ") and JSON_DIAGNOSTIC_POSITIONS ("(bytes 1-2) ");
-// the view's exceptions have no such context
-std::string without_path(std::string msg)
-{
-    for (const char* prefix :
-            {"] (/", "] (bytes "
-            })
-    {
-        const std::size_t open = msg.find(prefix);
-        if (open != std::string::npos)
-        {
-            msg.erase(open + 2, msg.find(") ", open) + 2 - (open + 2));
-        }
-    }
-    return msg;
-}
-#endif
-
 // the bits of a float, to compare values bit for bit
 std::uint64_t bits(double x)
 {
@@ -1336,18 +1377,18 @@ void check_values(const ordered_json_view& v, const ordered_json& j, const std::
     // conversions to the wrong type throw what basic_json throws
     if (!j.is_number())
     {
-        CHECK(exception_of([&] { static_cast<void>(v.get<int>()); }) == without_path(exception_of([&] { static_cast<void>(j.get<int>()); })));
+        CHECK(exception_of([&] { static_cast<void>(v.get<int>()); }) == exception_of([&] { static_cast<void>(j.get<int>()); }));
     }
-    CHECK(exception_of([&] { static_cast<void>(v.get<bool>()); }) == without_path(exception_of([&] { static_cast<void>(j.get<bool>()); })));
-    CHECK(exception_of([&] { static_cast<void>(v.get<std::string>()); }) == without_path(exception_of([&] { static_cast<void>(j.get<std::string>()); })));
-    CHECK(exception_of([&] { static_cast<void>(v.get<std::nullptr_t>()); }) == without_path(exception_of([&] { static_cast<void>(j.get<std::nullptr_t>()); })));
+    CHECK(exception_of([&] { static_cast<void>(v.get<bool>()); }) == exception_of([&] { static_cast<void>(j.get<bool>()); }));
+    CHECK(exception_of([&] { static_cast<void>(v.get<std::string>()); }) == exception_of([&] { static_cast<void>(j.get<std::string>()); }));
+    CHECK(exception_of([&] { static_cast<void>(v.get<std::nullptr_t>()); }) == exception_of([&] { static_cast<void>(j.get<std::nullptr_t>()); }));
     if (!j.is_array())
     {
-        CHECK(exception_of([&] { static_cast<void>(v.get<std::vector<int>>()); }) == without_path(exception_of([&] { static_cast<void>(j.get<std::vector<int>>()); })));
+        CHECK(exception_of([&] { static_cast<void>(v.get<std::vector<int>>()); }) == exception_of([&] { static_cast<void>(j.get<std::vector<int>>()); }));
     }
     if (!j.is_object())
     {
-        CHECK(exception_of([&] { static_cast<void>(v.get<std::map<std::string, int>>()); }) == without_path(exception_of([&] { static_cast<void>(j.get<std::map<std::string, int>>()); })));
+        CHECK(exception_of([&] { static_cast<void>(v.get<std::map<std::string, int>>()); }) == exception_of([&] { static_cast<void>(j.get<std::map<std::string, int>>()); }));
     }
 #endif
 
@@ -1490,8 +1531,8 @@ TEST_CASE("json_view values")
         CHECK(v[3].number_token() == "123456789012345678901234567890");
         CHECK(v[4].number_token() == "-12");
         CHECK(v[5].number_token() == "7");
-        CHECK_THROWS_WITH_AS(v[6].number_token(), "[json.exception.type_error.302] type must be number, but is string", json::type_error&);
-        CHECK_THROWS_WITH_AS(v.get_string(), "[json.exception.type_error.302] type must be string, but is array", json::type_error&);
+        CHECK_THROWS_WITH_AS(v[6].number_token(), json_view_test::message("type_error.302", "/6", 56, 59, "type must be number, but is string").c_str(), json::type_error&);
+        CHECK_THROWS_WITH_AS(v.get_string(), json_view_test::message("type_error.302", "", 0, 60, "type must be string, but is array").c_str(), json::type_error&);
     }
 
     SECTION("conversions")
@@ -1543,6 +1584,17 @@ TEST_CASE("json_view values")
         const json_document dup = json_document::parse(R"({"a":1,"a":2})");
         CHECK((dup.root().get<std::map<std::string, int>>() == std::map<std::string, int> {{"a", 2}}));
 
+        // a map of views from something that is not an object
+        using view_map = std::map<std::string, json_view>;
+        const json_document not_an_object = json_document::parse("[1,2]");
+        CHECK_THROWS_WITH_AS(not_an_object.root().get<view_map>(), json_view_test::message("type_error.302", "", 0, 5, "type must be object, but is array").c_str(), json::type_error&);
+#if !defined(JSON_NOEXCEPTION)
+        // (and one that cannot allocate its nodes)
+        using failing_map = std::map<std::string, json_view, std::less<std::string>, failing_allocator<std::pair<const std::string, json_view>>>; // NOLINT(modernize-use-transparent-functors)
+        const json_document one_member = json_document::parse(R"({"a":1})");
+        CHECK_THROWS_AS(one_member.root().get<failing_map>(), std::bad_alloc&);
+#endif
+
         const json_view invalid{};
         CHECK_THROWS_WITH_AS(invalid.get<int>(), "[json.exception.type_error.302] type must be number, but is discarded", json::type_error&);
         CHECK(invalid.get<json>().is_discarded());
@@ -1565,15 +1617,15 @@ TEST_CASE("json_view values")
         CHECK(v["o"]["x"].value(json::json_pointer("/1"), 0) == j["o"]["x"].value(json::json_pointer("/1"), 0));
         CHECK(v["o"]["x"].value(json::json_pointer("/7"), 3) == j["o"]["x"].value(json::json_pointer("/7"), 3));
 #if !defined(JSON_NOEXCEPTION)
-        CHECK(exception_of([&] { static_cast<void>(v["o"]["x"].value("k", 0)); }) == without_path(exception_of([&] { static_cast<void>(j["o"]["x"].value("k", 0)); })));
-        CHECK(exception_of([&] { static_cast<void>(v.value("s", 0)); }) == without_path(exception_of([&] { static_cast<void>(j.value("s", 0)); })));
-        CHECK(exception_of([&] { static_cast<void>(v["n"].value("x", 0)); }) == without_path(exception_of([&] { static_cast<void>(j["n"].value("x", 0)); })));
-        CHECK(exception_of([&] { static_cast<void>(v["n"].value(json::json_pointer("/x"), 0)); }) == without_path(exception_of([&] { static_cast<void>(j["n"].value(json::json_pointer("/x"), 0)); })));
+        CHECK(exception_of([&] { static_cast<void>(v["o"]["x"].value("k", 0)); }) == exception_of([&] { static_cast<void>(j["o"]["x"].value("k", 0)); }));
+        CHECK(exception_of([&] { static_cast<void>(v.value("s", 0)); }) == exception_of([&] { static_cast<void>(j.value("s", 0)); }));
+        CHECK(exception_of([&] { static_cast<void>(v["n"].value("x", 0)); }) == exception_of([&] { static_cast<void>(j["n"].value("x", 0)); }));
+        CHECK(exception_of([&] { static_cast<void>(v["n"].value(json::json_pointer("/x"), 0)); }) == exception_of([&] { static_cast<void>(j["n"].value(json::json_pointer("/x"), 0)); }));
         // string defaults: the member is not a string, or the value is neither an object nor an array
-        CHECK(exception_of([&] { static_cast<void>(v.value("n", "default")); }) == without_path(exception_of([&] { static_cast<void>(j.value("n", "default")); })));
-        CHECK(exception_of([&] { static_cast<void>(v["n"].value("x", "default")); }) == without_path(exception_of([&] { static_cast<void>(j["n"].value("x", "default")); })));
-        CHECK(exception_of([&] { static_cast<void>(v.value(json::json_pointer("/n"), "default")); }) == without_path(exception_of([&] { static_cast<void>(j.value(json::json_pointer("/n"), "default")); })));
-        CHECK(exception_of([&] { static_cast<void>(v["s"].value(json::json_pointer("/x"), "default")); }) == without_path(exception_of([&] { static_cast<void>(j["s"].value(json::json_pointer("/x"), "default")); })));
+        CHECK(exception_of([&] { static_cast<void>(v.value("n", "default")); }) == exception_of([&] { static_cast<void>(j.value("n", "default")); }));
+        CHECK(exception_of([&] { static_cast<void>(v["n"].value("x", "default")); }) == exception_of([&] { static_cast<void>(j["n"].value("x", "default")); }));
+        CHECK(exception_of([&] { static_cast<void>(v.value(json::json_pointer("/n"), "default")); }) == exception_of([&] { static_cast<void>(j.value(json::json_pointer("/n"), "default")); }));
+        CHECK(exception_of([&] { static_cast<void>(v["s"].value(json::json_pointer("/x"), "default")); }) == exception_of([&] { static_cast<void>(j["s"].value(json::json_pointer("/x"), "default")); }));
 #endif
         // (defaults and members longer than the short string optimization)
         CHECK(v.value("s", "a default longer than fifteen characters") == "text");
@@ -1581,6 +1633,85 @@ TEST_CASE("json_view values")
         CHECK(v.value(json::json_pointer("/s"), "a default longer than fifteen characters") == "text");
         CHECK(v.value(json::json_pointer("/zz"), "a default longer than fifteen characters") == "a default longer than fifteen characters");
     }
+}
+
+namespace
+{
+// get<T>() of a boolean: the same value or the same exception in basic_json and in the view (#5988)
+template<typename T>
+void check_boolean_get_parity()
+{
+    for (const bool b :
+            {
+                true, false
+            })
+    {
+        const std::string text = b ? "true" : "false";
+        const json j = json::parse(text);
+        const json_document d = json_document::parse(text);
+        CAPTURE(text)
+#if !defined(JSON_NOEXCEPTION)
+        T dom_value {};
+        T view_value{};
+        const std::string dom_error = json_view_test::exception_of_call([&] { dom_value = j.get<T>(); });
+        const std::string view_error = json_view_test::exception_of_call([&] { view_value = d.root().template get<T>(); });
+        CHECK(dom_error == view_error);
+        if (dom_error.empty())
+        {
+            CHECK(dom_value == view_value);
+            CHECK(view_value == static_cast<T>(b));
+        }
+#else
+        // without exceptions, the combinations that throw (number_integer_t, number_unsigned_t, number_float_t)
+        // cannot be run: JSON_THROW aborts
+        const bool throws = std::is_same<T, json::number_integer_t>::value
+                            || std::is_same<T, json::number_unsigned_t>::value
+                            || std::is_same<T, json::number_float_t>::value;
+        if (!throws)
+        {
+            CHECK(j.get<T>() == d.root().template get<T>());
+        }
+#endif
+    }
+}
+} // namespace
+
+TEST_CASE("json_view get<T>() of a boolean (#5988)")
+{
+    check_boolean_get_parity<bool>();
+    check_boolean_get_parity<char>();
+    check_boolean_get_parity<signed char>();
+    check_boolean_get_parity<unsigned char>();
+    check_boolean_get_parity<short>(); // NOLINT(google-runtime-int)
+    check_boolean_get_parity<unsigned short>(); // NOLINT(google-runtime-int)
+    check_boolean_get_parity<int>();
+    check_boolean_get_parity<unsigned>();
+    check_boolean_get_parity<long>(); // NOLINT(google-runtime-int)
+    check_boolean_get_parity<unsigned long>(); // NOLINT(google-runtime-int)
+    check_boolean_get_parity<long long>(); // NOLINT(google-runtime-int)
+    check_boolean_get_parity<unsigned long long>(); // NOLINT(google-runtime-int)
+    check_boolean_get_parity<std::int64_t>();
+    check_boolean_get_parity<std::uint64_t>();
+    check_boolean_get_parity<float>();
+    check_boolean_get_parity<double>();
+    check_boolean_get_parity<long double>();
+
+#if !defined(JSON_NOEXCEPTION)
+    SECTION("the exceptions of the exact number types")
+    {
+        const json_document d = json_document::parse("true");
+        CHECK_THROWS_WITH_AS(d.root().get<json::number_integer_t>(), json_view_test::message("type_error.302", "", 0, 4, "type must be number, but is boolean").c_str(), json::type_error&);
+        CHECK_THROWS_WITH_AS(d.root().get<json::number_unsigned_t>(), json_view_test::message("type_error.302", "", 0, 4, "type must be number, but is boolean").c_str(), json::type_error&);
+        CHECK_THROWS_WITH_AS(d.root().get<json::number_float_t>(), json_view_test::message("type_error.302", "", 0, 4, "type must be number, but is boolean").c_str(), json::type_error&);
+        CHECK(d.root().get<int>() == 1);
+        // get_to() and value() go through get<T>()
+        json::number_float_t x = 0;
+        CHECK_THROWS_AS(d.root().get_to(x), json::type_error&);
+        const json_document o = json_document::parse("{\"b\":true}");
+        CHECK_THROWS_AS(static_cast<void>(o.root().value("b", 0.0)), json::type_error&);
+        CHECK(o.root().value("b", 0) == 1);
+    }
+#endif
 }
 
 TEST_CASE("json_view JSON pointers")
@@ -1632,7 +1763,7 @@ TEST_CASE("json_view JSON pointers")
         {
             CAPTURE(pointer)
             const json::json_pointer p(pointer);
-            const std::string at_error = without_path(exception_of([&] { static_cast<void>(j.at(p)); }));
+            const std::string at_error = exception_of([&] { static_cast<void>(j.at(p)); });
             CHECK(exception_of([&] { static_cast<void>(v.at(p)); }) == at_error);
             if (at_error.empty())
             {
@@ -1646,7 +1777,7 @@ TEST_CASE("json_view JSON pointers")
             }
             else
             {
-                CHECK(exception_of([&] { static_cast<void>(v[p]); }) == without_path(exception_of([&] { static_cast<void>(j[p]); })));
+                CHECK(exception_of([&] { static_cast<void>(v[p]); }) == exception_of([&] { static_cast<void>(j[p]); }));
             }
             // (basic_json::contains() throws out_of_range.404 for an empty
             // array index token, although it is not meant to throw; the view
@@ -1657,7 +1788,7 @@ TEST_CASE("json_view JSON pointers")
                 static_cast<void>(found);
             });
             CHECK(v.contains(p) == (contains_error.empty() && j.contains(p)));
-            CHECK(exception_of([&] { static_cast<void>(v.value(p, 5)); }) == without_path(exception_of([&] { static_cast<void>(j.value(p, 5)); })));
+            CHECK(exception_of([&] { static_cast<void>(v.value(p, 5)); }) == exception_of([&] { static_cast<void>(j.value(p, 5)); }));
         }
     }
 #endif

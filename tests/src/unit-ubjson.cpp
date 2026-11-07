@@ -21,12 +21,15 @@ using nlohmann::json;
 
 #include <iostream>
 #include <fstream>
+#include <list>
 #include <set>
 #include "make_test_data_available.hpp"
 #include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
 #include "sax_countdown.hpp"
+#include "sax_event_loggers.hpp"
 using utils::SaxCountdown;
+using utils::SaxEventLogger;
 
 
 TEST_CASE("UBJSON")
@@ -1670,6 +1673,31 @@ TEST_CASE("UBJSON")
                     return true;
                 });
                 CHECK_THROWS_AS(scp2.start_array((std::numeric_limits<std::size_t>::max)() - 1), json::out_of_range&);
+
+                // without exceptions, the error is reported to the caller
+                json l;
+                nlohmann::detail::json_sax_dom_callback_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> scp3(l, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+                {
+                    return true;
+                }, false);
+                CHECK_FALSE(scp3.start_array((std::numeric_limits<std::size_t>::max)() - 1));
+                CHECK(scp3.is_errored());
+            }
+
+            SECTION("array with a known size, read without exceptions")
+            {
+                std::vector<uint8_t> const v_ubjson = {'[', '#', 'i', 2, 'i', 1, 'i', 2};
+                json j;
+                nlohmann::detail::json_sax_dom_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> sax(j, false);
+                CHECK(json::sax_parse(v_ubjson, &sax, json::input_format_t::ubjson));
+                CHECK(j == json({1, 2}));
+
+                // the readers reject a size this large before they announce
+                // it, so it can only reach start_array() directly
+                json k;
+                nlohmann::detail::json_sax_dom_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> sax2(k, false);
+                CHECK_FALSE(sax2.start_array((std::numeric_limits<std::size_t>::max)() - 1));
+                CHECK(sax2.is_errored());
             }
         }
     }
@@ -2355,6 +2383,18 @@ TEST_CASE("UBJSON optimized arrays of a valueless type are bounded")
             CHECK_THROWS_WITH_AS(_ = json::from_ubjson(input), "[json.exception.out_of_range.408] syntax error while parsing UBJSON size: excessive array size", json::out_of_range&);
             CHECK(json::from_ubjson(input, true, false).is_discarded());
         }
+    }
+
+    SECTION("a count equal to SIZE_MAX is rejected")
+    {
+        // the reader marks a container without a count by SIZE_MAX, so a
+        // count of that value must not be read as "no count"; UBJSON's
+        // largest count type (int64) can only reach it where size_t is 32 bits
+#if SIZE_MAX == 0xffffffff
+        const std::vector<uint8_t> input = {'[', '#', 'L', 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 'i', 0x01, ']'};
+        CHECK_THROWS_WITH_AS(_ = json::from_ubjson(input), "[json.exception.out_of_range.408] syntax error while parsing UBJSON size: integer value overflow", json::out_of_range&);
+        CHECK(json::from_ubjson(input, true, false).is_discarded());
+#endif
     }
 
     SECTION("ordinary counts are unaffected")
@@ -3398,5 +3438,74 @@ TEST_CASE("UBJSON optimized container type marker is validated for count 0")
             CHECK(json::from_ubjson(va) == json::array());
             CHECK(json::from_ubjson(vo) == json::object());
         }
+    }
+}
+
+TEST_CASE("UBJSON optimized arrays from contiguous and non-contiguous input")
+{
+    // contiguous input reads the numbers of an array with a type marker in
+    // one loop, other input number by number; both must give the same events,
+    // value, or error for the complete document and for every truncation of
+    // it, and stop at every event a SAX handler rejects
+    json document =
+    {
+        {"u8", {0, 200, 255}},
+        {"i8", {-5, 100, -128}},
+        {"i16", {-30000, 1000, 30000}},
+        {"i32", {-2000000000, 5, 70000}},
+        {"i64", {-9000000000000000000LL, 1, 5000000000LL}},
+        {"f64", {1.5, -0.1, 2.5}},
+        {"pairs", {{1.25, -3.75}, {1.25, -3.75}, json::array()}},
+        {"mixed", {1, "a", 2.5, nullptr}},
+    };
+    const std::vector<std::uint8_t> encoded = json::to_ubjson(document, true, true);
+    CHECK(json::from_ubjson(encoded) == document);
+
+    for (std::size_t length = 0; length <= encoded.size(); ++length)
+    {
+        CAPTURE(length)
+        const std::vector<std::uint8_t> contiguous(encoded.begin(), encoded.begin() + static_cast<std::ptrdiff_t>(length));
+        const std::list<std::uint8_t> bytewise(contiguous.begin(), contiguous.end());
+
+        CHECK(json::from_ubjson(contiguous, true, false).dump() == json::from_ubjson(bytewise.begin(), bytewise.end(), true, false).dump());
+#if !defined(JSON_NOEXCEPTION)
+        std::string contiguous_error;
+        std::string bytewise_error;
+        try
+        {
+            json _;
+            _ = json::from_ubjson(contiguous);
+        }
+        catch (const json::exception& e)
+        {
+            contiguous_error = e.what();
+        }
+        try
+        {
+            json _;
+            _ = json::from_ubjson(bytewise.begin(), bytewise.end());
+        }
+        catch (const json::exception& e)
+        {
+            bytewise_error = e.what();
+        }
+        CHECK(contiguous_error == bytewise_error);
+#endif
+
+        SaxEventLogger from_contiguous;
+        SaxEventLogger from_bytewise;
+        CHECK(json::sax_parse(contiguous, &from_contiguous, json::input_format_t::ubjson)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::ubjson));
+        CHECK(from_contiguous.events == from_bytewise.events);
+    }
+
+    for (int events = 0; events <= 80; ++events)
+    {
+        CAPTURE(events)
+        const std::list<std::uint8_t> bytewise(encoded.begin(), encoded.end());
+        SaxCountdown from_contiguous(events);
+        SaxCountdown from_bytewise(events);
+        CHECK(json::sax_parse(encoded, &from_contiguous, json::input_format_t::ubjson)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::ubjson));
     }
 }

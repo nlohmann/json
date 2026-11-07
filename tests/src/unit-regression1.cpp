@@ -23,11 +23,13 @@ using nlohmann::json;
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
+#include <array>
 #include <fstream>
 #include <sstream>
 #include <list>
 #include <limits>
 #include <cstdio>
+#include <utility>
 #include "make_test_data_available.hpp"
 #include "test_utils.hpp"
 
@@ -1516,6 +1518,76 @@ TEST_CASE("regression tests 1")
             my_json j(orig.get_ref<const my_json::object_t&>());
             CHECK_THROWS_AS(j[my_json::json_pointer(pointer)], my_json::out_of_range&);
             CHECK(j.dump() == R"({"x":1})");
+        }
+    }
+
+    SECTION("operator[](json_pointer) continues with the member that emplace() found")
+    {
+        // see the section above: the lookup does not find "k", but emplace()
+        // finds "x" and the pointer continues with the member of "x". Here
+        // the member is a container, so the pointer can go on below it. Only
+        // the outermost object may be a copy (with restarted timestamps): the
+        // value of "x" is moved in, so that its own lookups work.
+        const my_json orig = my_json::parse(R"({"x":null})");
+        const auto make = [&orig]()
+        {
+            my_json::object_t top = orig.get_ref<const my_json::object_t&>();
+            top.at("x") = my_json::parse(R"({"a":{"b":1},"n":null,"arr":[10,20],"objs":[{"m":5},{"m":6}]})");
+            return my_json(std::move(top)); // NOLINT(modernize-return-braced-init-list): {top} would be an array
+        };
+
+        SECTION("existing members")
+        {
+            // emplace() registers the key "k" in the object, so that every
+            // pointer needs a new object to reach the member of "x" again
+            const std::array<std::pair<const char*, const char*>, 4> pointers = {{{"/k/a/b", "1"}, {"/k/arr/1", "20"}, {"/k/n", "null"}, {"/k/objs/1/m", "6"}}};
+            for (const auto& pointer : pointers)
+            {
+                CAPTURE(pointer.first)
+                my_json j = make();
+                CHECK(j[my_json::json_pointer(pointer.first)].dump() == pointer.second);
+                CHECK(j.size() == 1);
+                CHECK(j["x"].size() == 4);
+            }
+        }
+
+        SECTION("a missing member of an object")
+        {
+            my_json j = make();
+#ifdef JSON_NO_THREAD_LOCAL
+            // (set by the user, or by the library for clang with MinGW)
+            // the objects below the outermost one are not copied by their
+            // object_t here, but member by member, which keeps their
+            // timestamps correct: "c" is not mistaken for "b" and is inserted
+            CHECK(j[my_json::json_pointer("/k/a/c/d")].is_null());
+            CHECK(j["x"]["a"].dump() == R"({"b":1,"c":{"d":null}})");
+#else
+            // the timestamp of "c" is that of "b" again, so that emplace()
+            // finds the member "b", a number, which has no member "d"
+            CHECK_THROWS_AS(j[my_json::json_pointer("/k/a/c/d")], my_json::out_of_range&);
+            CHECK(j["x"]["a"].dump() == R"({"b":1})");
+#endif
+        }
+
+        SECTION("a null value is converted to an object")
+        {
+            my_json j = make();
+            j[my_json::json_pointer("/k/n/c")] = 3;
+            CHECK(j["x"]["n"].dump() == R"({"c":3})");
+        }
+
+        SECTION("the end of an array")
+        {
+            my_json j = make();
+            j[my_json::json_pointer("/k/arr/-")] = 30;
+            CHECK(j["x"]["arr"].dump() == "[10,20,30]");
+        }
+
+        SECTION("an index past the end of an array")
+        {
+            my_json j = make();
+            j[my_json::json_pointer("/k/arr/3")] = 40;
+            CHECK(j["x"]["arr"].dump() == "[10,20,null,40]");
         }
     }
 

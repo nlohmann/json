@@ -532,21 +532,25 @@ TEST_CASE("json_view edits: errors")
 
     CHECK_THROWS_WITH_AS(d.set(other_editable.root(), 1), "[json.exception.invalid_iterator.202] view does not belong to this document", json::invalid_iterator&);
     CHECK_THROWS_WITH_AS(d.set(json_editable_view(), 1), "[json.exception.invalid_iterator.202] view does not belong to this document", json::invalid_iterator&);
-    CHECK_THROWS_WITH_AS(d.set(root["a"], "k", 1), "[json.exception.type_error.305] cannot use operator[] with a string argument with array", json::type_error&);
-    CHECK_THROWS_WITH_AS(d.set(root["o"], 0, 1), "[json.exception.type_error.305] cannot use operator[] with a numeric argument with object", json::type_error&);
-    CHECK_THROWS_WITH_AS(d.set(root["a"], 2, 1), "[json.exception.out_of_range.401] array index 2 is out of range", json::out_of_range&);
-    CHECK_THROWS_WITH_AS(d.set(root["a"], -1, 1), "[json.exception.out_of_range.401] array index -1 is out of range", json::out_of_range&);
-    CHECK_THROWS_WITH_AS(d.push_back(root["o"], 1), "[json.exception.type_error.308] cannot use push_back() with object", json::type_error&);
-    CHECK_THROWS_WITH_AS(d.insert(root["n"], 0, 1), "[json.exception.type_error.309] cannot use insert() with number", json::type_error&);
-    CHECK_THROWS_WITH_AS(d.insert(root["a"], 3, 1), "[json.exception.out_of_range.401] array index 3 is out of range", json::out_of_range&);
-    CHECK_THROWS_WITH_AS(d.erase(root["n"], "k"), "[json.exception.type_error.307] cannot use erase() with number", json::type_error&);
-    CHECK_THROWS_WITH_AS(d.erase(root["o"], 0), "[json.exception.type_error.307] cannot use erase() with object", json::type_error&);
-    CHECK_THROWS_WITH_AS(d.erase(root["a"], 2), "[json.exception.out_of_range.401] array index 2 is out of range", json::out_of_range&);
+    CHECK_THROWS_WITH_AS(d.set(root["a"], "k", 1), json_view_test::message("type_error.305", "/a", 21, 27, "cannot use operator[] with a string argument with array").c_str(), json::type_error&);
+    CHECK_THROWS_WITH_AS(d.set(root["o"], 0, 1), json_view_test::message("type_error.305", "/o", 6, 14, "cannot use operator[] with a numeric argument with object").c_str(), json::type_error&);
+    CHECK_THROWS_WITH_AS(d.set(root["a"], 2, 1), json_view_test::message("out_of_range.401", "/a", 21, 27, "array index 2 is out of range").c_str(), json::out_of_range&);
+    CHECK_THROWS_WITH_AS(d.set(root["a"], -1, 1), json_view_test::message("out_of_range.401", "/a", 21, 27, "array index -1 is out of range").c_str(), json::out_of_range&);
+    CHECK_THROWS_WITH_AS(d.push_back(root["o"], 1), json_view_test::message("type_error.308", "/o", 6, 14, "cannot use push_back() with object").c_str(), json::type_error&);
+    CHECK_THROWS_WITH_AS(d.insert(root["n"], 0, 1), json_view_test::message("type_error.309", "/n", 34, 35, "cannot use insert() with number").c_str(), json::type_error&);
+    CHECK_THROWS_WITH_AS(d.insert(root["a"], 3, 1), json_view_test::message("out_of_range.401", "/a", 21, 27, "array index 3 is out of range").c_str(), json::out_of_range&);
+    CHECK_THROWS_WITH_AS(d.erase(root["n"], "k"), json_view_test::message("type_error.307", "/n", 34, 35, "cannot use erase() with number").c_str(), json::type_error&);
+    CHECK_THROWS_WITH_AS(d.erase(root["o"], 0), json_view_test::message("type_error.307", "/o", 6, 14, "cannot use erase() with object").c_str(), json::type_error&);
+    CHECK_THROWS_WITH_AS(d.erase(root["a"], 2), json_view_test::message("out_of_range.401", "/a", 21, 27, "array index 2 is out of range").c_str(), json::out_of_range&);
     CHECK_THROWS_WITH_AS(d.erase(json::json_pointer("")), "[json.exception.out_of_range.405] JSON pointer has no parent", json::out_of_range&);
-    CHECK_THROWS_WITH_AS(d.erase(json::json_pointer("/missing/x")), "[json.exception.out_of_range.403] key 'missing' not found", json::out_of_range&);
+    CHECK_THROWS_WITH_AS(d.erase(json::json_pointer("/missing/x")), json_view_test::message("out_of_range.403", "", 0, 47, "key 'missing' not found").c_str(), json::out_of_range&);
     CHECK_THROWS_WITH_AS(d.set(json::json_pointer("/a/01"), 1), "[json.exception.parse_error.106] parse error: array index '01' must not begin with '0'", json::parse_error&);
     CHECK_THROWS_WITH_AS(d.set(root, json_editable_view()), "[json.exception.type_error.302] type must be a value, but is discarded", json::type_error&);
     CHECK_THROWS_WITH_AS(d.set(root, json::binary({1, 2})), "[json.exception.type_error.319] cannot store a binary value in a json_document", json::type_error&);
+    CHECK_THROWS_WITH_AS(d.set(root, json(json::value_t::discarded)), "[json.exception.type_error.302] type must be a value, but is discarded", json::type_error&);
+    // (an index that does not fit the document, in a null: basic_json would pad it with 4 Gi nulls)
+    CHECK_THROWS_AS(d.set(json::json_pointer("/z/4294967295"), 1), json::out_of_range&);
+    CHECK(root["z"].is_null());
 
 #if !defined(JSON_NOEXCEPTION)
     // invalid UTF-8 is rejected when it enters the document, with the error
@@ -570,6 +574,19 @@ TEST_CASE("json_view edits: errors")
     // nothing of the failed edits is visible
     CHECK(root.dump() == R"({"o":{"a":1},"a":[1,2],"n":1,"z":null})");
     static_cast<void>(other);
+}
+
+TEST_CASE("json_view edits: a container that was added is replaced by a scalar")
+{
+    // the view of an element that push_back() added is that of the new value itself, not of
+    // the slot that links to it: replacing it by a scalar has to find the container it is in
+    json_editable_document d = json_editable_document::parse(R"({"a": [1]})");
+    d.push_back(d.root()["a"], json::array({2, 3}));
+    d.push_back(d.root()["a"], json::object({{"k", json::array({4, 5})}}));
+    d.set(d.root()["a"][1], 6);
+    d.set(d.root()["a"][2]["k"], "s");
+    CHECK(d.root().dump() == R"({"a":[1,6,{"k":"s"}]})");
+    CHECK(d.root().materialize() == json::parse(R"({"a":[1,6,{"k":"s"}]})"));
 }
 
 #if !defined(JSON_NOEXCEPTION)

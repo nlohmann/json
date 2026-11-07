@@ -833,7 +833,7 @@ class binary_writer
         while (n != 0);
         std::reverse(result.begin(), result.end());
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /*!
     @brief the decimal digits of the integer @a n, with a leading '-' if it
@@ -860,7 +860,7 @@ class binary_writer
         }
         std::reverse(result.begin(), result.end());
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /*!
     @brief throws because the integer @a j is too large for @a format
@@ -1792,7 +1792,7 @@ class binary_writer
         std::memcpy(out, &n, sizeof(NumberType));
         if (!is_little_endian)
         {
-            std::reverse(out, out + sizeof(NumberType));
+            std::reverse(out, out + sizeof(NumberType)); // LCOV_EXCL_LINE (big-endian hosts only)
         }
     }
 
@@ -1921,7 +1921,7 @@ class binary_writer
             const string_t& value = *j.m_data.m_value.string;
             if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(value.size() + 1ul)))
             {
-                return false;
+                return false; // LCOV_EXCL_LINE (a string of 2 GiB or more)
             }
             out[0] = to_char_type(0x02);
             store_little_endian<std::int32_t>(p, static_cast<std::int32_t>(value.size() + 1ul));
@@ -2088,7 +2088,8 @@ class binary_writer
         /// arrays: the first index with one more digit; only maintained by
         /// @ref calc_bson_sizes
         std::uint64_t index_boundary = 10;
-        /// @ref calc_bson_sizes only: where its size goes in the table
+        /// @ref calc_bson_sizes: where its size goes in the table; @ref
+        /// write_bson_document_single_pass: the position of its size field
         std::size_t size_slot;
         /// @ref calc_bson_sizes only: the size of its entries seen so far
         std::size_t entries_size = 0;
@@ -2339,6 +2340,198 @@ class binary_writer
         }
     }
 
+    template<typename SinkType>
+    using sink_written_t = decltype(std::declval<const SinkType&>().written());
+
+    /// whether every integer fits the 64 bits BSON has, so that writing an
+    /// array of numbers needs no range check
+    static constexpr bool bson_integers_fit_64_bits =
+        std::numeric_limits<typename BasicJsonType::number_integer_t>::is_specialized
+        && std::numeric_limits<typename BasicJsonType::number_integer_t>::digits <= std::numeric_limits<std::int64_t>::digits
+        && std::numeric_limits<typename BasicJsonType::number_unsigned_t>::is_specialized
+        && std::numeric_limits<typename BasicJsonType::number_unsigned_t>::digits <= std::numeric_limits<std::uint64_t>::digits;
+
+    /*!
+    @brief whether BSON documents can be written in a single pass: the sink
+           can overwrite what it has written (output_vector_sink), and
+           @ref bson_integers_fit_64_bits
+    */
+    using bson_single_pass_sink = conjunction<is_detected<sink_written_t, OutputSinkType>, std::integral_constant<bool, bson_integers_fit_64_bits>>;
+
+    /// write a placeholder for the size of an object or array whose entries
+    /// follow; @return its position, for @ref close_bson_container
+    std::size_t write_bson_size_placeholder()
+    {
+        const std::size_t pos = oa.written();
+        // zero in any byte order
+        const std::array<CharType, sizeof(std::int32_t)> zero{};
+        oa.write_characters(zero.data(), zero.size());
+        return pos;
+    }
+
+    /// end the object or array whose size is at @a pos and write its size
+    /// there: everything from that field to the terminating null byte
+    /// @return false (and the size is not written) if it does not fit
+    bool close_bson_container(const std::size_t pos)
+    {
+        oa.write_character(to_char_type(0x00));
+        const std::size_t size = oa.written() - pos;
+        if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(size)))
+        {
+            return false; // LCOV_EXCL_LINE (a document of 2 GiB or more)
+        }
+        const auto le_size = static_cast<std::uint32_t>(size);
+        oa.overwrite(pos, is_little_endian ? le_size : byteswap(le_size));
+        return true;
+    }
+
+    /*!
+    @brief check the value @a j of a BSON entry as @ref calc_bson_value_size
+           does, for @ref write_bson_document_single_pass
+    @return at least the size of the value
+    A number, boolean, or null needs no check there (its integers have at most
+    64 bits) and has at most 8 characters; a discarded value is rejected with
+    the same exception when it is written.
+    */
+    std::size_t check_bson_value(const BasicJsonType& j)
+    {
+        return (j.is_string() || j.is_binary()) ? calc_bson_value_size(j) : 8;
+    }
+
+    /// whether an entry of @a entry_size characters keeps the document that
+    /// begins at @a start, closed by @a open_containers null bytes, within
+    /// the 32-bit size of BSON
+    bool bson_entry_fits(const std::size_t start, const std::size_t entry_size, const std::size_t open_containers) const noexcept
+    {
+        const auto limit = static_cast<std::size_t>((std::numeric_limits<std::int32_t>::max)());
+        const std::size_t written = oa.written() - start;
+        return written <= limit && entry_size <= limit - written && open_containers <= limit - written - entry_size;
+    }
+
+    /*!
+    @brief Serializes the JSON object @a document as a BSON document in a
+           single pass, writing the size of each object and array once it is
+           complete
+
+    Checks every key and value as @ref calc_bson_sizes does, in the same
+    order, so the same exception is thrown; the output written up to then is
+    discarded with the vector it was written to.
+
+    @return false as soon as the document or a string, binary value, object,
+            or array in it would be larger than the 32-bit BSON sizes allow;
+            nothing large has been written then, and the caller writes the
+            document in two passes, which reports that error
+    */
+    bool write_bson_document_single_pass(const BasicJsonType& document)
+    {
+        const std::size_t start = oa.written();
+        // the object or array whose entries are being written (with the
+        // position of its size), and the ones it is in
+        bson_frame current(&document, write_bson_size_placeholder());
+        std::vector<bson_frame> parents;
+
+        while (true)
+        {
+            const BasicJsonType* nested = nullptr;
+            std::size_t nested_size_pos = 0;
+            if (current.value->is_object())
+            {
+                const auto& object = *current.value->m_data.m_value.object;
+                while (nested == nullptr && current.member != object.cend())
+                {
+                    const auto& el = *current.member;
+                    ++current.member;
+                    const std::size_t header_size = calc_bson_entry_header_size(el.first, el.second);
+                    const std::size_t value_size = el.second.is_structured() ? 0 : check_bson_value(el.second);
+                    if (JSON_HEDLEY_UNLIKELY(!bson_entry_fits(start, header_size + value_size, parents.size() + 1)))
+                    {
+                        return false;
+                    }
+                    if (el.second.is_structured())
+                    {
+                        write_bson_entry_header(el.first, el.second.is_object() ? 0x03 : 0x04);
+                        nested_size_pos = write_bson_size_placeholder();
+                        nested = &el.second;
+                    }
+                    else
+                    {
+                        write_bson_value(el.first, el.second);
+                    }
+                }
+            }
+            else
+            {
+                const auto& array = *current.value->m_data.m_value.array;
+                while (nested == nullptr && current.index < array.size())
+                {
+                    if (is_bson_fixed_size(array[current.index]))
+                    {
+                        write_bson_array_fixed_entries(current);
+                        if (current.index == array.size())
+                        {
+                            break;
+                        }
+                    }
+
+                    // a string, binary value, object or array
+                    const BasicJsonType& el = array[current.index];
+                    const string_t index_name(current.index_name.data(), current.index_name_size);
+                    current.next_index();
+                    const std::size_t value_size = el.is_structured() ? 0 : check_bson_value(el);
+                    if (JSON_HEDLEY_UNLIKELY(!bson_entry_fits(start, 2 + index_name.size() + value_size, parents.size() + 1)))
+                    {
+                        return false;
+                    }
+                    if (el.is_structured())
+                    {
+                        write_bson_entry_header(index_name, el.is_object() ? 0x03 : 0x04);
+                        nested_size_pos = write_bson_size_placeholder();
+                        nested = &el;
+                    }
+                    else
+                    {
+                        write_bson_value(index_name, el);
+                    }
+                }
+            }
+
+            if (nested != nullptr)
+            {
+                if (nested->is_array())
+                {
+                    // an array of booleans, numbers and null is written without a frame on the stack
+                    bson_frame leaf(nested, nested_size_pos);
+                    write_bson_array_fixed_entries(leaf);
+                    if (leaf.index == nested->m_data.m_value.array->size())
+                    {
+                        if (JSON_HEDLEY_UNLIKELY(!close_bson_container(nested_size_pos)))
+                        {
+                            return false; // LCOV_EXCL_LINE (a document of 2 GiB or more)
+                        }
+                        continue;
+                    }
+                    parents.push_back(std::move(current));
+                    current = std::move(leaf);
+                    continue;
+                }
+                parents.push_back(std::move(current));
+                current = bson_frame(nested, nested_size_pos);
+                continue;
+            }
+
+            if (JSON_HEDLEY_UNLIKELY(!close_bson_container(current.size_slot)))
+            {
+                return false; // LCOV_EXCL_LINE (a document of 2 GiB or more)
+            }
+            if (parents.empty())
+            {
+                return true;
+            }
+            current = std::move(parents.back());
+            parents.pop_back();
+        }
+    }
+
     /*!
     @brief Serializes the JSON object @a document as a BSON document
 
@@ -2350,6 +2543,39 @@ class binary_writer
     @pre       document.type() == value_t::object
     */
     void write_bson_document(const BasicJsonType& document)
+    {
+        write_bson_document(document, bson_single_pass_sink());
+    }
+
+    /// the sink can overwrite: one pass, unless the error handler replaces or
+    /// drops ill-formed UTF-8, which changes the sizes the checks compute
+    void write_bson_document(const BasicJsonType& document, std::true_type /*single_pass*/)
+    {
+        const std::size_t start = oa.written();
+        if ((error_handler == error_handler_t::keep || error_handler == error_handler_t::strict)
+                && write_bson_document_single_pass(document))
+        {
+            return;
+        }
+        // a length does not fit: start over, so that it is reported as the
+        // two passes report it, before anything is written
+        oa.rewind(start);
+        write_bson_document_two_pass(document);
+    }
+
+    void write_bson_document(const BasicJsonType& document, std::false_type /*single_pass*/)
+    {
+        write_bson_document_two_pass(document);
+    }
+
+    /*!
+    @brief Serializes the JSON object @a document as a BSON document: the
+           sizes of all objects and arrays first, then the entries
+
+    @param[in] document  the JSON object to serialize
+    @pre       document.type() == value_t::object
+    */
+    void write_bson_document_two_pass(const BasicJsonType& document)
     {
         std::vector<std::size_t> nested_sizes;
         const std::size_t document_size = calc_bson_sizes(document, nested_sizes);
@@ -2552,10 +2778,10 @@ class binary_writer
 
     Selected through masks rather than branches, as the type and the sign of
     the values in an array of mixed signs alternate unpredictably (non-negative
-    integers are number_unsigned after parsing). Up to 64 bits, the sign is bit
-    63 of the result (a narrower integer is sign-extended); computing it with
-    masks keeps GCC from branching on the type. A wider integer has to be
-    compared.
+    integers are number_unsigned after parsing). The sign is bit 63 of the
+    result (a narrower integer is sign-extended); computing it with masks keeps
+    GCC from branching on the type. Only called if @ref integers_fit_64_bits();
+    a wider number type is written with range checks on the whole value.
     */
     static std::uint64_t integer_bits(const BasicJsonType& j, std::uint64_t& sign_mask) noexcept
     {
@@ -2563,9 +2789,7 @@ class binary_writer
         const std::uint64_t raw = is_signed
                                   ? static_cast<std::uint64_t>(j.m_data.m_value.number_integer)
                                   : static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned);
-        sign_mask = sizeof(typename BasicJsonType::number_integer_t) <= sizeof(std::uint64_t)
-                    ? (std::uint64_t{0} - static_cast<std::uint64_t>(is_signed)) & (std::uint64_t{0} - (raw >> 63u))
-                    : std::uint64_t{0} - static_cast<std::uint64_t>(is_signed && j.m_data.m_value.number_integer < 0);
+        sign_mask = (std::uint64_t{0} - static_cast<std::uint64_t>(is_signed)) & (std::uint64_t{0} - (raw >> 63u));
         return raw;
     }
 
@@ -2902,22 +3126,19 @@ class binary_writer
                 // negative fixnum
                 write_number(static_cast<std::int8_t>(j.m_data.m_value.number_integer));
             }
-            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int8_t>::min)() &&
-                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int8_t>::max)())
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int8_t>::min)())
             {
                 // int 8
                 oa.write_character(to_char_type(0xD0));
                 write_number(static_cast<std::int8_t>(j.m_data.m_value.number_integer));
             }
-            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int16_t>::min)() &&
-                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int16_t>::max)())
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int16_t>::min)())
             {
                 // int 16
                 oa.write_character(to_char_type(0xD1));
                 write_number(static_cast<std::int16_t>(j.m_data.m_value.number_integer));
             }
-            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int32_t>::min)() &&
-                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int32_t>::max)())
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int32_t>::min)())
             {
                 // int 32
                 oa.write_character(to_char_type(0xD2));
@@ -3080,6 +3301,25 @@ class binary_writer
         }
     }
 
+    /// write the head and the characters of @a value, at most
+    /// max_text_in_reservation of them, in one reservation
+    JSON_HEDLEY_ALWAYS_INLINE void write_cbor_string_reserved(const string_t& value)
+    {
+        CharType* const out = oa.reserve(value.size() + 2);
+        CharType* p = out;
+        if (value.size() <= 0x17)
+        {
+            *p++ = to_char_type(static_cast<std::uint8_t>(0x60 + value.size()));
+        }
+        else
+        {
+            *p++ = to_char_type(0x78);
+            *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
+        }
+        copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
+        oa.commit(static_cast<std::size_t>(p - out) + value.size());
+    }
+
     /*!
     @brief write a CBOR text string
 
@@ -3101,19 +3341,7 @@ class binary_writer
             // the string is written as it is: head and characters in one reservation
             if (JSON_HEDLEY_LIKELY(value.size() <= max_text_in_reservation))
             {
-                CharType* const out = oa.reserve(value.size() + 2);
-                CharType* p = out;
-                if (value.size() <= 0x17)
-                {
-                    *p++ = to_char_type(static_cast<std::uint8_t>(0x60 + value.size()));
-                }
-                else
-                {
-                    *p++ = to_char_type(0x78);
-                    *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
-                }
-                copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
-                oa.commit(static_cast<std::size_t>(p - out) + value.size());
+                write_cbor_string_reserved(value);
                 return;
             }
         }
@@ -3127,6 +3355,13 @@ class binary_writer
     JSON_HEDLEY_NEVER_INLINE
     void write_cbor_checked_string(const string_t& value, const BasicJsonType& context)
     {
+        if (error_handler == error_handler_t::strict && value.size() <= max_text_in_reservation)
+        {
+            check_utf8(value, context);
+            write_cbor_string_reserved(value);
+            return;
+        }
+
         string_t storage;
         const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
 
@@ -3140,6 +3375,27 @@ class binary_writer
     /////////////
     // MsgPack //
     /////////////
+
+    /// write the head and the characters of @a value, at most
+    /// max_text_in_reservation of them, in one reservation
+    JSON_HEDLEY_ALWAYS_INLINE void write_msgpack_string_reserved(const string_t& value)
+    {
+        CharType* const out = oa.reserve(value.size() + 2);
+        CharType* p = out;
+        if (value.size() <= 31)
+        {
+            // fixstr
+            *p++ = to_char_type(static_cast<std::uint8_t>(0xA0 | value.size()));
+        }
+        else
+        {
+            // str 8
+            *p++ = to_char_type(0xD9);
+            *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
+        }
+        copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
+        oa.commit(static_cast<std::size_t>(p - out) + value.size());
+    }
 
     /*!
     @brief write a MessagePack str
@@ -3158,21 +3414,7 @@ class binary_writer
             // the string is written as it is: head and characters in one reservation
             if (JSON_HEDLEY_LIKELY(value.size() <= max_text_in_reservation))
             {
-                CharType* const out = oa.reserve(value.size() + 2);
-                CharType* p = out;
-                if (value.size() <= 31)
-                {
-                    // fixstr
-                    *p++ = to_char_type(static_cast<std::uint8_t>(0xA0 | value.size()));
-                }
-                else
-                {
-                    // str 8
-                    *p++ = to_char_type(0xD9);
-                    *p++ = to_char_type(static_cast<std::uint8_t>(value.size()));
-                }
-                copy_characters(p, reinterpret_cast<const CharType*>(value.data()), value.size());
-                oa.commit(static_cast<std::size_t>(p - out) + value.size());
+                write_msgpack_string_reserved(value);
                 return;
             }
         }
@@ -3185,6 +3427,13 @@ class binary_writer
     JSON_HEDLEY_NEVER_INLINE
     void write_msgpack_checked_string(const string_t& value, const BasicJsonType& context)
     {
+        if (error_handler == error_handler_t::strict && value.size() <= max_text_in_reservation)
+        {
+            check_utf8(value, context);
+            write_msgpack_string_reserved(value);
+            return;
+        }
+
         string_t storage;
         const string_t& sanitized = sanitize_utf8_for_write(value, context, storage);
 
@@ -3805,7 +4054,7 @@ class binary_writer
     Containers, strings, high-precision numbers, booleans and null cannot be
     declared as the single type of an optimized container in BJData; such a
     container is written unoptimized. The reader rejects them with the same
-    list (binary_reader::is_bjd_excluded_optimized_type()).
+    list (binary_reader::is_valid_optimized_type()).
     */
     static constexpr bool is_bjdata_excluded_type_marker(const CharType marker) noexcept
     {
@@ -3904,57 +4153,34 @@ class binary_writer
     }
 
     /*!
-    @brief validate (dry_run) or write one BJData ND-array element of integer dtype @a T
-    @return whether @a el's value is in range of @a T; always true when @a dry_run is false
-    */
-    template<typename T>
-    bool write_bjdata_ndarray_element(const BasicJsonType& el, const bool dry_run)
-    {
-        if (dry_run)
-        {
-            return bjdata_ndarray_value_in_range<T>(el);
-        }
-        using storage_type = typename std::conditional<std::is_unsigned<T>::value, std::uint64_t, std::int64_t>::type;
-        write_number(static_cast<T>(el.template get<storage_type>()), true);
-        return true;
-    }
-
-    /*!
-    @brief validate (dry_run) or write one BJData ND-array element of dtype 'd' (single precision)
+    @brief whether the BJData ND-array element @a el can be written with dtype 'd' (single precision)
     @return whether @a el's value survives narrowing to float and back without any change
-            (so the ND-array round-trips exactly), or is infinite or NaN; always true when
-            @a dry_run is false
+            (so the ND-array round-trips exactly), or is infinite or NaN
     */
-    bool write_bjdata_ndarray_float_element(const BasicJsonType& el, const bool dry_run)
+    static bool bjdata_ndarray_float_in_range(const BasicJsonType& el) noexcept
     {
         const auto dval = static_cast<double>(el.m_data.m_value.number_float);
-        if (dry_run)
-        {
 #ifdef __GNUC__
-            JSON_HEDLEY_DIAGNOSTIC_PUSH
-            JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
-            // a value that would be rounded (rather than exactly represented) by the
-            // narrowing to float is treated like an out-of-range integer element; this
-            // is the same criterion write_compact_float() uses for CBOR/MessagePack
-            const bool in_range = std::isnan(dval) ||
-                                  (dval >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
-                                   dval <= static_cast<double>((std::numeric_limits<float>::max)()) &&
-                                   static_cast<double>(static_cast<float>(dval)) == dval) ||
-                                  std::isinf(dval);
+        // a value that would be rounded (rather than exactly represented) by the
+        // narrowing to float is treated like an out-of-range integer element; this
+        // is the same criterion write_compact_float() uses for CBOR/MessagePack
+        return std::isnan(dval) ||
+               (dval >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
+                dval <= static_cast<double>((std::numeric_limits<float>::max)()) &&
+                static_cast<double>(static_cast<float>(dval)) == dval) ||
+               std::isinf(dval);
 #ifdef __GNUC__
-            JSON_HEDLEY_DIAGNOSTIC_POP
+        JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
-            return in_range;
-        }
-        write_number(static_cast<float>(dval), true);
-        return true;
     }
 
     /*!
     @brief write the elements of an ND-array as the number kind @a dtype names
            (see @ref write_bjdata_ndarray), after they have been found to be
-           in range by a dry run of @ref write_bjdata_ndarray_elements
+           in range by @ref bjdata_ndarray_elements_in_range
 
     The elements are encoded in blocks into space reserved from the sink.
     */
@@ -4036,20 +4262,13 @@ class binary_writer
     }
 
     /*!
-    @brief validate or write every element of a BJData ND-array's `_ArrayData_`
+    @brief whether every element of a BJData ND-array's `_ArrayData_` is in range for its dtype
     @param[in] array_data  the `_ArrayData_` array
     @param[in] dtype       the ND-array dtype marker, as returned by bjdata_ndarray_type_marker()
-    @param[in] dry_run     true to only range-check each element, false to write it
-    @return whether every element is in range for @a dtype (always true when @a dry_run is false)
+    @return whether every element is in range for @a dtype
     */
-    bool write_bjdata_ndarray_elements(const BasicJsonType& array_data, const CharType dtype, const bool dry_run)
+    static bool bjdata_ndarray_elements_in_range(const BasicJsonType& array_data, const CharType dtype)
     {
-        if (!dry_run)
-        {
-            write_bjdata_ndarray_values(array_data, dtype);
-            return true;
-        }
-
         for (const auto& el : array_data)
         {
             bool ok = true;
@@ -4057,43 +4276,39 @@ class binary_writer
             {
                 case 'U':
                 case 'B':
-                    ok = write_bjdata_ndarray_element<std::uint8_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint8_t>(el);
                     break;
                 case 'C':
                     // BJData limits a char to 0..127 (the intersection of the int8 and uint8 ranges)
                     ok = bjdata_ndarray_value_in_range<std::int8_t>(el) && bjdata_ndarray_value_in_range<std::uint8_t>(el);
                     break;
                 case 'i':
-                    ok = write_bjdata_ndarray_element<std::int8_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int8_t>(el);
                     break;
                 case 'u':
-                    ok = write_bjdata_ndarray_element<std::uint16_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint16_t>(el);
                     break;
                 case 'I':
-                    ok = write_bjdata_ndarray_element<std::int16_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int16_t>(el);
                     break;
                 case 'm':
-                    ok = write_bjdata_ndarray_element<std::uint32_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint32_t>(el);
                     break;
                 case 'l':
-                    ok = write_bjdata_ndarray_element<std::int32_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int32_t>(el);
                     break;
                 case 'M':
-                    ok = write_bjdata_ndarray_element<std::uint64_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint64_t>(el);
                     break;
                 case 'L':
-                    ok = write_bjdata_ndarray_element<std::int64_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int64_t>(el);
                     break;
                 case 'd':
-                    ok = write_bjdata_ndarray_float_element(el, dry_run);
+                    ok = bjdata_ndarray_float_in_range(el);
                     break;
                 case 'D':
                 default:
                     // 'D' (double) already spans the full range of number_float_t
-                    if (!dry_run)
-                    {
-                        write_number(el.template get<double>(), true);
-                    }
                     break;
             }
             if (!ok)
@@ -4180,7 +4395,7 @@ class binary_writer
             const auto dim = el.template get<std::uint64_t>();
             if (!value_in_range_of<std::size_t>(dim))
             {
-                return true;
+                return true; // LCOV_EXCL_LINE (size_t is narrower than 64 bits)
             }
             const auto dim_size = static_cast<std::size_t>(dim);
 
@@ -4230,7 +4445,7 @@ class binary_writer
         // wrap (integers) or overflow to infinity (the "single" precision
         // float) instead of being reported, so such an object falls back to
         // a plain object encoding as well
-        if (!write_bjdata_ndarray_elements(array_data, dtype, true))
+        if (!bjdata_ndarray_elements_in_range(array_data, dtype))
         {
             return true;
         }
@@ -4242,7 +4457,7 @@ class binary_writer
 
         write_ubjson(array_size, use_count, use_type, true,  true, bjdata_version);
 
-        write_bjdata_ndarray_elements(array_data, dtype, false);
+        write_bjdata_ndarray_values(array_data, dtype);
         return false;
     }
 
@@ -4568,8 +4783,8 @@ class binary_writer
     run are encoded into space reserved from the sink, as in
     @ref write_array_elements; an integer that BON8 cannot write (an unsigned
     one above the int64 range, or one of a number type wider than 64 bits) throws
-    from write_bon8_value, like any other value that is not a number. Kept out
-    of line, like @ref write_cbor_array.
+    out_of_range.407, as write_bon8_value does. Kept out of line, like
+    @ref write_cbor_array.
     */
     template<typename ArrayType>
     JSON_HEDLEY_NEVER_INLINE
@@ -4619,10 +4834,10 @@ class binary_writer
                 string_open = false;
             }
 
-            if (unencodable)
+            if (JSON_HEDLEY_UNLIKELY(unencodable))
             {
-                write_bon8_value(*it, string_open, depth + 1);
-                ++it;
+                // an integer beyond the int64 range, as write_bon8_value would report it
+                throw_integer_out_of_range(*it, input_format_t::bon8, "int64");
             }
         }
     }
@@ -4657,14 +4872,13 @@ class binary_writer
                     break;
 
                 case value_t::number_integer:
-                    if (JSON_HEDLEY_LIKELY(integer_fits<std::int64_t>(value.m_data.m_value.number_integer)))
+                    if (JSON_HEDLEY_UNLIKELY(!integer_fits<std::int64_t>(value.m_data.m_value.number_integer)))
                     {
-                        write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_integer));
-                        string_open = false;
-                        break;
+                        // beyond 64 bits (number types wider than that)
+                        throw_integer_out_of_range(value, input_format_t::bon8, "int64");
                     }
-                    // beyond 64 bits (number types wider than that): throws
-                    write_bon8_value(value, string_open, depth + 1);
+                    write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_integer));
+                    string_open = false;
                     break;
 
                 case value_t::number_float:
@@ -4673,14 +4887,13 @@ class binary_writer
                     break;
 
                 case value_t::number_unsigned:
-                    if (JSON_HEDLEY_LIKELY(integer_fits_max<std::int64_t>(value.m_data.m_value.number_unsigned)))
+                    if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::int64_t>(value.m_data.m_value.number_unsigned)))
                     {
-                        write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_unsigned));
-                        string_open = false;
-                        break;
+                        // too large for BON8
+                        throw_integer_out_of_range(value, input_format_t::bon8, "int64");
                     }
-                    // too large for BON8: throws
-                    write_bon8_value(value, string_open, depth + 1);
+                    write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_unsigned));
+                    string_open = false;
                     break;
 
                 case value_t::object:
@@ -4794,10 +5007,9 @@ class binary_writer
     static void check_utf8(const string_t& s, const BasicJsonType& context)
     {
         const auto* data = reinterpret_cast<const unsigned char*>(s.data());
-        const std::size_t valid = valid_utf8_prefix(data, s.size());
-        if (JSON_HEDLEY_UNLIKELY(valid != s.size()))
+        if (JSON_HEDLEY_UNLIKELY(!valid_utf8_string(data, s.size())))
         {
-            throw_invalid_utf8(data, valid, context);
+            throw_invalid_utf8(data, valid_utf8_prefix(data, s.size()), context);
         }
     }
 
