@@ -58,11 +58,10 @@ inline std::uint64_t swar_string_special(std::uint64_t v) noexcept
     constexpr std::uint64_t high = 0x8080808080808080ull;
     const std::uint64_t q = v ^ 0x2222222222222222ull; // '"'  (0x22)
     const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull; // '\\' (0x5C)
-    const std::uint64_t has_quote     = (q - ones) & ~q & high;
-    const std::uint64_t has_backslash = (b - ones) & ~b & high;
-    const std::uint64_t has_control   = (v - 0x2020202020202020ull) & ~v & high; // < 0x20
-    const std::uint64_t has_non_ascii = v & high;                                // >= 0x80
-    return has_quote | has_backslash | has_control | has_non_ascii;
+    // The usual test for a zero byte is (x - ones) & ~x & high. The `& ~x`
+    // only removes bytes from 0x80, and `v & high` flags those anyway, so it
+    // can be dropped. Clang finds this reduction itself; GCC does not.
+    return ((q - ones) | (b - ones) | (v - 0x2020202020202020ull) | v) & high;
 }
 
 // return the index of the first is_string_special() byte in [data, data+n), or
@@ -143,11 +142,8 @@ inline std::size_t find_ascii_copyable_run(const unsigned char* data, std::size_
         const std::uint64_t q = v ^ 0x2222222222222222ull; // '"'  (0x22)
         const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull; // '\\' (0x5C)
         const std::uint64_t d = v ^ 0x7F7F7F7F7F7F7F7Full; // DEL  (0x7F)
-        const std::uint64_t stop = ((q - ones) & ~q & high)   // == '"'
-                                   | ((b - ones) & ~b & high)  // == '\\'
-                                   | ((d - ones) & ~d & high)  // == 0x7F
-                                   | ((v - 0x2020202020202020ull) & ~v & high) // < 0x20
-                                   | (v & high);               // >= 0x80
+        // (see swar_string_special(): the bytes from 0x80 are stops anyway)
+        const std::uint64_t stop = ((q - ones) | (b - ones) | (d - ones) | (v - 0x2020202020202020ull) | v) & high;
         if (stop != 0)
         {
             // the lowest flagged byte is the first one to stop at (see

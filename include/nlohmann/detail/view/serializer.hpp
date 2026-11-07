@@ -152,9 +152,12 @@ inline std::size_t plain_output_run(const unsigned char* s, std::size_t n) noexc
     for (; i + 16 <= n; i += 16)
     {
         const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(s + i))); // NOLINT(bugprone-casting-through-void)
-        // (a byte is below 0x20 if it is its own minimum with 0x1F)
-        const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
-                                             _mm_cmpeq_epi8(_mm_min_epu8(in, _mm_set1_epi8(0x1F)), in));
+        // the quote and the control characters are the bytes with
+        // (c ^ 2) <= 32, that is, those that are their own minimum with 32
+        // (see vector_plain_run())
+        const __m128i flipped = _mm_xor_si128(in, _mm_set1_epi8(2));
+        const __m128i special = _mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('\\')),
+                                             _mm_cmpeq_epi8(_mm_min_epu8(flipped, _mm_set1_epi8(32)), flipped));
         const auto mask = static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
         if (mask != 0)
         {
@@ -217,20 +220,21 @@ inline bool is_ascii_without_delete(const char* s, std::size_t n) noexcept
 
 #if NLOHMANN_VIEW_VECTOR
 /// the bytes of the 16 at p that ensure_ascii cannot copy (a quote, a
-/// backslash, a control character, DEL, or not ASCII; a signed compare with
-/// 0x20 finds control characters and non-ASCII bytes at once), one bit per
-/// byte (x86) or one nibble per byte (NEON)
+/// backslash, a control character, DEL, or not ASCII; the signed compare
+/// (int8_t)(c ^ 2) < 33 finds the quote, the control characters and the
+/// non-ASCII bytes at once, see vector_plain_run()), one bit per byte (x86) or
+/// one nibble per byte (NEON)
 NLOHMANN_VIEW_ALWAYS_INLINE std::uint64_t ascii_stop_mask(const unsigned char* p) noexcept
 {
 #if NLOHMANN_VIEW_NEON
     const uint8x16_t in = vld1q_u8(p);
-    const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('"')), vceqq_u8(in, vdupq_n_u8('\\'))),
-                                        vorrq_u8(vceqq_u8(in, vdupq_n_u8(0x7F)), vcltq_s8(vreinterpretq_s8_u8(in), vdupq_n_s8(0x20))));
+    const uint8x16_t special = vorrq_u8(vorrq_u8(vceqq_u8(in, vdupq_n_u8('\\')), vceqq_u8(in, vdupq_n_u8(0x7F))),
+                                        vcltq_s8(vreinterpretq_s8_u8(veorq_u8(in, vdupq_n_u8(2))), vdupq_n_s8(33)));
     return vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(special), 4)), 0);
 #else
     const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(p))); // NOLINT(bugprone-casting-through-void)
-    const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('"')), _mm_cmpeq_epi8(in, _mm_set1_epi8('\\'))),
-                                         _mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8(0x7F)), _mm_cmplt_epi8(in, _mm_set1_epi8(0x20))));
+    const __m128i special = _mm_or_si128(_mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('\\')), _mm_cmpeq_epi8(in, _mm_set1_epi8(0x7F))),
+                                         _mm_cmplt_epi8(_mm_xor_si128(in, _mm_set1_epi8(2)), _mm_set1_epi8(33)));
     return static_cast<std::uint64_t>(static_cast<unsigned>(_mm_movemask_epi8(special)));
 #endif
 }
