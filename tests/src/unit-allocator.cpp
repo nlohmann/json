@@ -1073,10 +1073,12 @@ struct sweep_allocator
         return (std::numeric_limits<std::size_t>::max)() / sizeof(T);
     }
 
+    // p may point to a const object when libc++ probes whether construct() is
+    // usable for copying, which static_cast<void*>(p) would not accept
     template<class U, class... Args>
-    void construct(U* p, Args&& ... args) noexcept(noexcept(::new (static_cast<void*>(p)) U(std::forward<Args>(args)...)))
+    void construct(U* p, Args&& ... args) noexcept(noexcept(::new (const_cast<void*>(static_cast<const volatile void*>(p))) U(std::forward<Args>(args)...)))
     {
-        ::new (static_cast<void*>(p)) U(std::forward<Args>(args)...);
+        ::new (const_cast<void*>(static_cast<const volatile void*>(p))) U(std::forward<Args>(args)...);
     }
 
     template<class U>
