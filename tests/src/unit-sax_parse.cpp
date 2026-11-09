@@ -380,9 +380,12 @@ TEST_CASE("regression test - #3989 SAX parse_error() returning true")
         CHECK(cbor_map.errors == 1);
         CHECK(cbor_map.value == json({{"a", nullptr}}));
 
+        // 2^32-1 elements: on a 32-bit target this exceeds the array's max_size(),
+        // so the array is rejected before it is started and the value stays null
         const auto msgpack_array = parse_binary_recovering({0xDD, 0xFF, 0xFF, 0xFF, 0xFF}, json::input_format_t::msgpack);
+        const bool msgpack_array_fits = json::array_t().max_size() >= 0xFFFFFFFFu;
         CHECK(msgpack_array.errors == 1);
-        CHECK(msgpack_array.value == json::array());
+        CHECK(msgpack_array.value == (msgpack_array_fits ? json::array() : json(nullptr)));
 
         const auto msgpack_map = parse_binary_recovering({0x81, 0xA1, 'a', 0x92, 0x01}, json::input_format_t::msgpack);
         CHECK(msgpack_map.errors == 1);
