@@ -18,6 +18,7 @@ using nlohmann::json;
 
 #ifdef JSON_HAS_CPP_17
 #include <cstddef>
+#include <string>
 #include <vector>
 
 // Test suite for verifying MessagePack handling with std::byte input
@@ -94,6 +95,36 @@ TEST_CASE("MessagePack with std::byte")
             CHECK(direct_result == workaround_result);
             CHECK(direct_result == original);
         }
+    }
+}
+
+// JSON text (not MessagePack) as std::byte input: the error position is
+// computed from the bytes consumed so far
+TEST_CASE("JSON text with std::byte")
+{
+    const auto to_bytes = [](const std::string & text)
+    {
+        std::vector<std::byte> bytes;
+        for (const char c : text)
+        {
+            bytes.push_back(static_cast<std::byte>(c));
+        }
+        return bytes;
+    };
+
+    SECTION("valid text")
+    {
+        const json j = json::parse(to_bytes("[1,\n2]"));
+        CHECK(j == json({1, 2}));
+        CHECK(json::accept(to_bytes("[1,\n2]")));
+    }
+
+    SECTION("invalid text")
+    {
+        CHECK_FALSE(json::accept(to_bytes("[1,\n2,")));
+        json _;
+        CHECK_THROWS_WITH_AS(_ = json::parse(to_bytes("[1,\n2,")),
+                             "[json.exception.parse_error.101] parse error at line 2, column 3: syntax error while parsing value - unexpected end of input; expected '[', '{', or a literal", json::parse_error&);
     }
 }
 #endif

@@ -49,6 +49,14 @@ file_ptr open_with(const char* name, const std::string& content)
     return {std::fopen(name, "rb"), &std::fclose};
 }
 
+// the smallest size setvbuf() accepts for _IOFBF: the Microsoft C runtime
+// rejects sizes below 2 as an invalid parameter, which ends the process
+#if defined(_WIN32)
+    constexpr int min_full_buffer = 2;
+#else
+    constexpr int min_full_buffer = 1;
+#endif
+
 // The stdio lock is recursive, so whether parsing released it can only be
 // seen from another thread: ftrylockfile() fails there while this thread
 // holds the lock. ftrylockfile() is POSIX; elsewhere, the check is skipped.
@@ -223,6 +231,131 @@ TEST_CASE("parsing from a FILE*")
         CHECK(sax.positions().size() == 5);
         CHECK(sax.positions().front() == 1);
         check_unlocked(f.get());
+    }
+
+#if !defined(JSON_NOEXCEPTION)
+    SECTION("tokens across the edges of the file's buffer")
+    {
+        // the adapter reads the buffer of the FILE directly where it can (see
+        // JSON_FILE_WINDOW): with buffers of 1 to 70 bytes and none, every
+        // token crosses an edge somewhere; the results, the error messages
+        // and their positions must be those of the string
+        const std::vector<std::string> documents =
+        {
+            input,
+            R"({"long": "a string that is longer than the buffer of the file, with \"escapes\" and \u00e4", "n": [123456789012345678901, -0.000123e-45, 1.5E+300, 0, -0]})",
+            "[\n    \"indented\",\n    \"caf\xc3\xa9 \xe2\x82\xac \xf0\x9f\x98\x80\",\n    {\n        \"key\": 1\n    }\n]",
+            R"({"a": [1, 2, 3], "b": "unterminated)",
+            R"([1, 2, 3, 1e999])",
+            R"({"a": "invalid escape \x"})",
+            "[\"invalid UTF-8 \xc3\x28\"]",
+            "[1, 2, 3] trailing",
+            R"([truex])",
+        };
+        for (const auto& document : documents)
+        {
+            std::string expected;
+            try
+            {
+                expected = json::parse(document).dump();
+            }
+            catch (const json::exception& e)
+            {
+                expected = e.what();
+            }
+            const bool expected_accept = json::accept(document);
+            for (int size = 0; size <= 70; ++size)
+            {
+                if (size != 0 && size < min_full_buffer)
+                {
+                    continue;
+                }
+                CAPTURE(document)
+                CAPTURE(size)
+                std::vector<char> buffer(static_cast<std::size_t>(size) + 1);
+                for (int pass = 0; pass < 2; ++pass)
+                {
+                    const file_ptr f = open_with(name, document);
+                    REQUIRE(f != nullptr);
+                    // size 0: unbuffered
+                    REQUIRE(std::setvbuf(f.get(), size == 0 ? nullptr : buffer.data(), size == 0 ? _IONBF : _IOFBF, static_cast<std::size_t>(size)) == 0);
+                    if (pass == 0)
+                    {
+                        std::string actual;
+                        try
+                        {
+                            actual = json::parse(f.get()).dump();
+                        }
+                        catch (const json::exception& e)
+                        {
+                            actual = e.what();
+                        }
+                        CHECK(actual == expected);
+                    }
+                    else
+                    {
+                        CHECK(json::accept(f.get()) == expected_accept);
+                    }
+                    check_unlocked(f.get());
+                }
+            }
+        }
+    }
+#endif
+
+    // the C standard guarantees only one pushed-back character (and the
+    // Windows C runtime fails further calls to ungetc()), so this is limited
+    // to the C libraries that keep them in a separate buffer
+#if !defined(JSON_NOEXCEPTION) && ((defined(__GLIBC__) && !defined(__UCLIBC__)) || defined(__APPLE__))
+    SECTION("characters pushed back with ungetc() before parsing")
+    {
+        const file_ptr f = open_with(name, "2, 3]");
+        REQUIRE(f != nullptr);
+        REQUIRE(std::ungetc(',', f.get()) == ',');
+        REQUIRE(std::ungetc('1', f.get()) == '1');
+        REQUIRE(std::ungetc('[', f.get()) == '[');
+        CHECK(json::parse(f.get()) == json({1, 2, 3}));
+    }
+#endif
+
+    SECTION("SAX events across the edges of the file's buffer")
+    {
+        const std::string document = R"({"key": "a value that is longer than the buffer", "n": [1, -2.5e3, true, null]})";
+        std::vector<long> expected;
+        {
+            const file_ptr f = open_with(name, document);
+            REQUIRE(f != nullptr);
+            position_reading_sax sax(f.get());
+            CHECK(json::sax_parse(f.get(), &sax));
+            expected = sax.positions();
+        }
+        for (int size = min_full_buffer; size <= 20; ++size)
+        {
+            CAPTURE(size)
+            std::vector<char> buffer(static_cast<std::size_t>(size));
+            const file_ptr f = open_with(name, document);
+            REQUIRE(f != nullptr);
+            REQUIRE(std::setvbuf(f.get(), buffer.data(), _IOFBF, buffer.size()) == 0);
+            position_reading_sax sax(f.get());
+            CHECK(json::sax_parse(f.get(), &sax));
+            // the events happen at the same positions of the file
+            CHECK(sax.positions() == expected);
+        }
+    }
+
+    SECTION("binary strings across the edges of the file's buffer")
+    {
+        const json value = {{"a string that is longer than the buffer of the file", "and a value that is longer, too"}, {"n", {1, 2}}};
+        const std::vector<std::uint8_t> cbor = json::to_cbor(value);
+        for (int size = min_full_buffer; size <= 20; ++size)
+        {
+            CAPTURE(size)
+            std::vector<char> buffer(static_cast<std::size_t>(size));
+            const file_ptr f = open_with(name, std::string(reinterpret_cast<const char*>(cbor.data()), cbor.size()));
+            REQUIRE(f != nullptr);
+            REQUIRE(std::setvbuf(f.get(), buffer.data(), _IOFBF, buffer.size()) == 0);
+            CHECK(json::from_cbor(f.get()) == value);
+        }
     }
 
     SECTION("binary formats read from a FILE*")

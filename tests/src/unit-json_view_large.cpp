@@ -333,6 +333,62 @@ TEST_CASE("json_view large objects")
         CHECK(without_collisions.memory_usage() >= with_collisions.memory_usage() + (table_size * sizeof(std::uint32_t)));
     }
 
+    SECTION("a lookup of a missing key stops at the end of the probe window")
+    {
+        // Every slot of the first half of the table holds a key, each at its home slot, so
+        // that the table is built; a key that is not in the object but whose home slot is
+        // the first slot finds a full window of slots with other keys.
+        constexpr std::size_t members = 128;
+        constexpr std::size_t table_size = 256; // the table size for 128 members: the next power of two >= 256
+        for (const std::size_t prefix_length :
+                {
+                    std::size_t{0}, std::size_t{20}
+                })
+        {
+            CAPTURE(prefix_length)
+            std::vector<std::string> keys(members);
+            std::vector<bool> taken(members, false);
+            std::string missing;
+            std::size_t found = 0;
+            for (std::uint64_t counter = 0; found < members || missing.empty(); ++counter)
+            {
+                std::string key(prefix_length, 'p');
+                std::uint64_t x = counter;
+                for (std::size_t i = 0; i < 8; ++i, x /= 26)
+                {
+                    key += static_cast<char>('a' + (x % 26));
+                }
+                const std::size_t slot = nlohmann::detail::conditional_static_cast<std::size_t>(nlohmann::detail::view::key_hash(key.data(), key.size())) & (table_size - 1);
+                if (slot < members && !taken[slot])
+                {
+                    taken[slot] = true;
+                    keys[slot] = key;
+                    ++found;
+                }
+                else if (slot == 0 && missing.empty())
+                {
+                    missing = key;
+                }
+            }
+            std::string text = "{";
+            for (std::size_t i = 0; i < members; ++i)
+            {
+                text += (i != 0 ? ",\"" : "\"") + keys[i] + "\":" + std::to_string(i);
+            }
+            text += "}";
+            const json_document d = json_document::parse(text);
+            const json_view v = d.root();
+            for (std::size_t i = 0; i < members; ++i)
+            {
+                CAPTURE(i)
+                CHECK(v[keys[i]].get<std::size_t>() == i);
+            }
+            CHECK(!v.contains(missing));
+            CHECK(v.find(missing) == v.end());
+            CHECK(v.count(missing) == 0);
+        }
+    }
+
     SECTION("keys that differ in their last bytes are spread over the table")
     {
         // The hash must spread the usual families of keys (numbered names, hex

@@ -65,14 +65,9 @@ struct position_source
         return token{end - start};
     }
 
-    /// the range [first, last), or none if either is npos
+    /// the range [first, last)
     void set(std::size_t first, std::size_t last) noexcept
     {
-        if (first == std::string::npos || last == std::string::npos)
-        {
-            clear();
-            return;
-        }
         start = first;
         end = last;
     }
@@ -191,11 +186,11 @@ struct position_source
                 first = n.off;
                 last = n.off + 4u;
                 break;
-            case node_kind::object:
+            case node_kind::object: // LCOV_EXCL_LINE
             case node_kind::array:
             case node_kind::link:
             default:
-                break;
+                break; // LCOV_EXCL_LINE
         }
         // (a crafted image can point past the text)
         if (last == std::string::npos || last > d.size)

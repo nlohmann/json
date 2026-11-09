@@ -2238,3 +2238,31 @@ TEST_CASE("MessagePack arrays of scalars from contiguous and non-contiguous inpu
               == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::msgpack));
     }
 }
+
+TEST_CASE("MessagePack arrays of one element from contiguous and non-contiguous input")
+{
+    // contiguous input leaves an array of one element to the general path
+    // rather than to the loop that reads arrays of scalars; both inputs must
+    // still give the same events, value, or error for the complete document
+    // and for every truncation of it, with enough bytes after each array that
+    // the loop could have been entered
+    const json j = json::parse(R"({"a": [[[[1.5]]]], "b": [7], "c": [{"x": 2.5}], "d": ["s"], "e": [[1, 2]], "f": [null], "g": 1.25})");
+    const std::vector<std::uint8_t> bytes = json::to_msgpack(j);
+
+    CHECK(json::from_msgpack(bytes) == j);
+
+    for (std::size_t length = 0; length <= bytes.size(); ++length)
+    {
+        CAPTURE(length)
+        const std::vector<std::uint8_t> contiguous(bytes.begin(), bytes.begin() + static_cast<std::ptrdiff_t>(length));
+        const std::list<std::uint8_t> bytewise(contiguous.begin(), contiguous.end());
+
+        CHECK(json::from_msgpack(contiguous, true, false).dump() == json::from_msgpack(bytewise.begin(), bytewise.end(), true, false).dump());
+
+        SaxEventLogger from_contiguous;
+        SaxEventLogger from_bytewise;
+        CHECK(json::sax_parse(contiguous, &from_contiguous, json::input_format_t::msgpack, true, false)
+              == json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, json::input_format_t::msgpack, true, false));
+        CHECK(from_contiguous.events == from_bytewise.events);
+    }
+}

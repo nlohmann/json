@@ -37,7 +37,7 @@ StringType to_string(std::size_t value)
     StringType result;
     int_to_string(result, value);
     return result;
-}
+} // LCOV_EXCL_LINE (exception cleanup only)
 
 /// @return a byte as two uppercase hexadecimal digits
 inline std::string hex_byte(const std::uint8_t byte)
@@ -47,7 +47,7 @@ inline std::string hex_byte(const std::uint8_t byte)
     result[0] = nibble_to_hex[byte / 16];
     result[1] = nibble_to_hex[byte % 16];
     return result;
-}
+} // LCOV_EXCL_LINE (exception cleanup only)
 
 /*!
 @brief write a UTF-16 code unit as four lowercase hexadecimal digits
@@ -391,7 +391,7 @@ inline StringType sanitize_utf8(const StringType& s, const error_handler_t error
     }
 
     return result;
-}
+} // LCOV_EXCL_LINE (exception cleanup only)
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END

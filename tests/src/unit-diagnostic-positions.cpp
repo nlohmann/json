@@ -193,6 +193,28 @@ TEST_CASE("Better diagnostics with positions")
         check_conversion(300);
     }
 
+    SECTION("exception about the root value (#5987)")
+    {
+        // the root has no path, but still has a byte range
+        const json root = json::parse("true");
+        const json nested = json::parse("[1, true]");
+        const json constructed = true;
+#if JSON_DIAGNOSTICS
+        CHECK_THROWS_WITH_AS(root.get<std::string>(),
+                             "[json.exception.type_error.302] (bytes 0-4) type must be string, but is boolean", json::type_error);
+        CHECK_THROWS_WITH_AS(nested[1].get<std::string>(),
+                             "[json.exception.type_error.302] (/1) (bytes 4-8) type must be string, but is boolean", json::type_error);
+#else
+        CHECK_THROWS_WITH_AS(root.get<std::string>(),
+                             "[json.exception.type_error.302] (bytes 0-4) type must be string, but is boolean", json::type_error);
+        CHECK_THROWS_WITH_AS(nested[1].get<std::string>(),
+                             "[json.exception.type_error.302] (bytes 4-8) type must be string, but is boolean", json::type_error);
+#endif
+        // a value without positions gets no range and no stray whitespace
+        CHECK_THROWS_WITH_AS(constructed.get<std::string>(),
+                             "[json.exception.type_error.302] type must be string, but is boolean", json::type_error);
+    }
+
     SECTION("JSON patch add to primitive parent (#4292)")
     {
         // the JSON Patch "add" target /foo/bar/baz has a string parent
@@ -242,4 +264,15 @@ TEST_CASE("values read from a binary format have no positions")
         CHECK(j == source);
         check_no_positions(j);
     }
+}
+
+TEST_CASE("comparing a value-initialized iterator throws invalid_iterator.212")
+{
+    // such an iterator has no value to take the byte positions from; the
+    // comparison used to dereference the null pointer instead of throwing
+    json j = {1, 2};
+    const json::iterator it{};
+    CHECK_THROWS_WITH_AS(it == j.begin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers", json::invalid_iterator);
+    CHECK_THROWS_WITH_AS(it < j.begin(), "[json.exception.invalid_iterator.212] cannot compare iterators of different containers", json::invalid_iterator);
+    CHECK_THROWS_WITH_AS(j.begin() == it, "[json.exception.invalid_iterator.212] cannot compare iterators of different containers", json::invalid_iterator);
 }

@@ -1673,6 +1673,31 @@ TEST_CASE("UBJSON")
                     return true;
                 });
                 CHECK_THROWS_AS(scp2.start_array((std::numeric_limits<std::size_t>::max)() - 1), json::out_of_range&);
+
+                // without exceptions, the error is reported to the caller
+                json l;
+                nlohmann::detail::json_sax_dom_callback_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> scp3(l, [](int /*unused*/, json::parse_event_t /*unused*/, const json& /*unused*/) noexcept
+                {
+                    return true;
+                }, false);
+                CHECK_FALSE(scp3.start_array((std::numeric_limits<std::size_t>::max)() - 1));
+                CHECK(scp3.is_errored());
+            }
+
+            SECTION("array with a known size, read without exceptions")
+            {
+                std::vector<uint8_t> const v_ubjson = {'[', '#', 'i', 2, 'i', 1, 'i', 2};
+                json j;
+                nlohmann::detail::json_sax_dom_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> sax(j, false);
+                CHECK(json::sax_parse(v_ubjson, &sax, json::input_format_t::ubjson));
+                CHECK(j == json({1, 2}));
+
+                // the readers reject a size this large before they announce
+                // it, so it can only reach start_array() directly
+                json k;
+                nlohmann::detail::json_sax_dom_parser<json, decltype(nlohmann::detail::input_adapter(v_ubjson))> sax2(k, false);
+                CHECK_FALSE(sax2.start_array((std::numeric_limits<std::size_t>::max)() - 1));
+                CHECK(sax2.is_errored());
             }
         }
     }
@@ -2358,6 +2383,18 @@ TEST_CASE("UBJSON optimized arrays of a valueless type are bounded")
             CHECK_THROWS_WITH_AS(_ = json::from_ubjson(input), "[json.exception.out_of_range.408] syntax error while parsing UBJSON size: excessive array size", json::out_of_range&);
             CHECK(json::from_ubjson(input, true, false).is_discarded());
         }
+    }
+
+    SECTION("a count equal to SIZE_MAX is rejected")
+    {
+        // the reader marks a container without a count by SIZE_MAX, so a
+        // count of that value must not be read as "no count"; UBJSON's
+        // largest count type (int64) can only reach it where size_t is 32 bits
+#if SIZE_MAX == 0xffffffff
+        const std::vector<uint8_t> input = {'[', '#', 'L', 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 'i', 0x01, ']'};
+        CHECK_THROWS_WITH_AS(_ = json::from_ubjson(input), "[json.exception.out_of_range.408] syntax error while parsing UBJSON size: integer value overflow", json::out_of_range&);
+        CHECK(json::from_ubjson(input, true, false).is_discarded());
+#endif
     }
 
     SECTION("ordinary counts are unaffected")

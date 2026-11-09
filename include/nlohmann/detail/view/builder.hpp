@@ -1168,19 +1168,20 @@ indent_done:
             if (negative)
             {
                 ++p;
+                if (NLOHMANN_VIEW_UNLIKELY(cur() < '0' || cur() > '9'))
+                {
+                    return fail(error_code::number_after_minus);
+                }
             }
             const unsigned char* const int_start = p;
             if (cur() == '0')
             {
                 ++p;
             }
-            else if (NLOHMANN_VIEW_LIKELY(cur() >= '1' && cur() <= '9'))
-            {
-                p = skip_digits(p + 1, e);
-            }
             else
             {
-                return fail(error_code::number_after_minus);
+                // (a digit: the dispatch or the check after the sign saw it)
+                p = skip_digits(p + 1, e);
             }
             const auto int_digits = static_cast<std::size_t>(p - int_start);
             std::size_t frac_digits = 0;

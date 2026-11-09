@@ -400,7 +400,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         result["compiler"] = {{"family", "clang"}, {"version", __clang_version__}};
 #elif defined(__GNUC__) || defined(__GNUG__)
         result["compiler"] = {{"family", "gcc"}, {"version", detail::concat<string_t>(
-                    detail::to_string<string_t>(static_cast<std::size_t>(__GNUC__)), '.',
+                    detail::to_string<string_t>(static_cast<std::size_t>(__GNUC__)), '.', // LCOV_EXCL_LINE
                     detail::to_string<string_t>(static_cast<std::size_t>(__GNUC_MINOR__)), '.',
                     detail::to_string<string_t>(static_cast<std::size_t>(__GNUC_PATCHLEVEL__)))
             }
@@ -543,6 +543,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     ////////////////////////
 
   JSON_PRIVATE_UNLESS_TESTED:
+    // the type and value of a basic_json without its base class (defined
+    // below); the destruction helpers of json_value use it as a stand-in
+    struct data;
+
     /*!
     @brief a JSON value
 
@@ -672,14 +676,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 case value_t::binary:
                     binary = create<binary_t>();
                     break;
-                case value_t::null:
+                case value_t::null: // LCOV_EXCL_LINE
                 case value_t::boolean:
                 case value_t::number_integer:
                 case value_t::number_unsigned:
                 case value_t::number_float:
                 case value_t::discarded:
                 default:
-                    break;
+                    break; // LCOV_EXCL_LINE
             }
         }
 
@@ -719,27 +723,28 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         explicit json_value(array_t* value) noexcept : array(value) {}
 
 private:
-        // raw, allocation-free transfer of m_data from src to dst: no
-        // set_parents()/assert_invariant() (the former is O(#children) per
-        // call under JSON_DIAGNOSTICS, which would make the walk below
-        // quadratic); dst takes ownership, src is left as value_t::null.
-        static void take(basic_json& dst, basic_json& src) noexcept
+        // raw, allocation-free transfer of the type and value from src to
+        // dst: no set_parents()/assert_invariant() (the former is
+        // O(#children) per call under JSON_DIAGNOSTICS, which would make the
+        // walk below quadratic); dst takes ownership, src is left as
+        // value_t::null.
+        static void take(data& dst, data& src) noexcept
         {
-            dst.m_data.m_type = src.m_data.m_type;
-            dst.m_data.m_value = src.m_data.m_value;
-            src.m_data.m_type = value_t::null;
+            dst.m_type = src.m_type;
+            dst.m_value = src.m_value;
+            src.m_type = value_t::null;
         }
 
         // true if v is not an array/object, or is an already-empty one
-        static bool has_no_children(const basic_json& v) noexcept
+        static bool has_no_children(const data& v) noexcept
         {
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
-                return v.m_data.m_value.array->empty();
+                return v.m_value.array->empty();
             }
-            if (v.m_data.m_type == value_t::object)
+            if (v.m_type == value_t::object)
             {
-                return v.m_data.m_value.object->empty();
+                return v.m_value.object->empty();
             }
             return true;
         }
@@ -748,21 +753,21 @@ private:
         // its own, i.e. v can be freed in one go (its destructor then
         // destroys scalars and empty containers only, so it recurses at most
         // one level deep); stops at the first structured child it meets
-        static bool all_children_leaves(const basic_json& v) noexcept
+        static bool all_children_leaves(const data& v) noexcept
         {
             // array_t only needs forward iterators (see custom_array_type)
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
-                const auto& a = *v.m_data.m_value.array;
+                const auto& a = *v.m_value.array;
                 return std::all_of(a.begin(), a.end(), [](const basic_json & el)
                 {
-                    return has_no_children(el);
+                    return has_no_children(el.m_data);
                 });
             }
-            const auto& o = *v.m_data.m_value.object;
+            const auto& o = *v.m_value.object;
             return std::all_of(o.begin(), o.end(), [](const typename object_t::value_type & el)
             {
-                return has_no_children(el.second);
+                return has_no_children(el.second.m_data);
             });
         }
 
@@ -794,30 +799,30 @@ private:
 
         // the child of a non-empty array/object v that the walk in
         // destroy_container() continues with (see walk_child_it() above)
-        static basic_json& walk_child(basic_json& v)
+        static data& walk_child(data& v)
         {
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
-                return v.m_data.m_value.array->back();
+                return v.m_value.array->back().m_data;
             }
-            JSON_ASSERT(v.m_data.m_type == value_t::object);
-            return walk_child_it(*v.m_data.m_value.object)->second;
+            JSON_ASSERT(v.m_type == value_t::object);
+            return walk_child_it(*v.m_value.object)->second.m_data;
         }
 
         // removes walk_child(v) from a non-empty array/object v; this never
         // allocates, and since it is only ever called when that child is a
         // scalar or an already-empty array/object, destroying it never
         // recurses more than one level deep (see destroy() below)
-        static void pop_walk_child(basic_json& v)
+        static void pop_walk_child(data& v)
         {
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
-                v.m_data.m_value.array->pop_back();
+                v.m_value.array->pop_back();
             }
             else
             {
-                JSON_ASSERT(v.m_data.m_type == value_t::object);
-                v.m_data.m_value.object->erase(walk_child_it(*v.m_data.m_value.object));
+                JSON_ASSERT(v.m_type == value_t::object);
+                v.m_value.object->erase(walk_child_it(*v.m_value.object));
             }
         }
 
@@ -826,23 +831,23 @@ private:
         // recurses at most one level deep); this is the same allocator-based
         // free the old recursive implementation used, just factored out so
         // every level of the walk in destroy() can share it
-        static void free_container(basic_json& v) noexcept
+        static void free_container(data& v) noexcept
         {
             JSON_ASSERT(has_no_children(v) || all_children_leaves(v));
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
                 AllocatorType<array_t> alloc;
-                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_data.m_value.array);
-                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_data.m_value.array, 1);
+                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_value.array);
+                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_value.array, 1);
             }
             else
             {
-                JSON_ASSERT(v.m_data.m_type == value_t::object);
+                JSON_ASSERT(v.m_type == value_t::object);
                 AllocatorType<object_t> alloc;
-                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_data.m_value.object);
-                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_data.m_value.object, 1);
+                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_value.object);
+                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_value.object, 1);
             }
-            v.m_data.m_type = value_t::null; // avoid a double free if v is later destructed
+            v.m_type = value_t::null; // avoid a double free if v is later destructed
         }
 
 public:
@@ -873,14 +878,15 @@ public:
 
             // This json_value is not itself a basic_json, so the top-level
             // container is first moved into a local stand-in ("cur"); a
-            // default-constructed basic_json has a null pointer in its
-            // m_value (see data::m_value's initializer), so swapping it
-            // with *this leaves this union's own pointer null, and it is
-            // never looked at or freed a second time.
-            basic_json cur;
-            cur.m_data.m_type = t;
-            using std::swap;
-            swap(cur.m_data.m_value, *this);
+            // default-constructed data has a null pointer in its m_value
+            // (see data::m_value's initializer), so swapping it with *this
+            // leaves this union's own pointer null, and it is never looked
+            // at or freed a second time. The stand-ins are data, not
+            // basic_json, so that destroying a value never constructs a
+            // CustomBaseClass, whose constructor may allocate (#5995).
+            data cur;
+            cur.m_type = t;
+            std::swap(cur.m_value, *this);
 
             destroy_bounded(cur, 0);
         }
@@ -889,7 +895,7 @@ public:
         // The first recursion_depth_limit() levels are destroyed by plain
         // recursion, which is the fastest way and cannot throw; anything
         // nested deeper is handed to destroy_walk(), which uses no call stack.
-        static void destroy_bounded(basic_json& v, std::size_t depth) noexcept
+        static void destroy_bounded(data& v, std::size_t depth) noexcept
         {
             if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
             {
@@ -897,23 +903,23 @@ public:
                 return;
             }
 
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
-                for (auto& child : *v.m_data.m_value.array)
+                for (auto& child : *v.m_value.array)
                 {
                     if (child.m_data.m_type == value_t::array || child.m_data.m_type == value_t::object)
                     {
-                        destroy_bounded(child, depth + 1);
+                        destroy_bounded(child.m_data, depth + 1);
                     }
                 }
             }
             else
             {
-                for (auto& child : *v.m_data.m_value.object)
+                for (auto& child : *v.m_value.object)
                 {
                     if (child.second.m_data.m_type == value_t::array || child.second.m_data.m_type == value_t::object)
                     {
-                        destroy_bounded(child.second, depth + 1);
+                        destroy_bounded(child.second.m_data, depth + 1);
                     }
                 }
             }
@@ -940,18 +946,15 @@ public:
         // array/object, which neither allocates nor recurses more
         // than one level deep.
         //
-        // This json_value is not itself a basic_json, so the
-        // top-level container is first moved into a local stand-in
-        // ("cur"); a default-constructed basic_json has a null
-        // pointer in its m_value (see data::m_value's initializer),
-        // so swapping it with *this leaves this union's own pointer
-        // null, and it is never looked at or freed a second time.
-        static void destroy_walk(basic_json& top) noexcept
+        // Like destroy_container(), the walk keeps the containers it
+        // holds in data stand-ins (cur, prev, gp, tmp), which never
+        // construct a CustomBaseClass.
+        static void destroy_walk(data& top) noexcept
         {
-            basic_json cur;
+            data cur;
             take(cur, top);
 
-            basic_json prev; // value_t::null: no parent
+            data prev; // value_t::null: no parent
 
             // true right after cur was entered: its children have not been
             // looked at yet. If none of them has children of its own, cur is
@@ -965,7 +968,7 @@ public:
                 fresh = false;
                 if (has_no_children(cur) || (fresh_now && all_children_leaves(cur)))
                 {
-                    if (prev.m_data.m_type == value_t::null)
+                    if (prev.m_type == value_t::null)
                     {
                         free_container(cur);
                         return; // back at the top with nothing left to do
@@ -974,7 +977,7 @@ public:
                     // ascend: detach the grandparent link from prev's
                     // walk_child() slot, drop that (now null) slot, free cur
                     // (it is empty), then move up one level
-                    basic_json gp;
+                    data gp;
                     take(gp, walk_child(prev));
                     pop_walk_child(prev);
 
@@ -985,7 +988,7 @@ public:
                     continue;
                 }
 
-                basic_json& cur_child_ref = walk_child(cur);
+                data& cur_child_ref = walk_child(cur);
 
                 if (has_no_children(cur_child_ref))
                 {
@@ -997,7 +1000,7 @@ public:
                 // descend into the non-empty child, reversing the
                 // link: its slot takes over prev, and the child becomes
                 // the new cur
-                basic_json tmp;
+                data tmp;
                 take(tmp, cur_child_ref);
                 take(cur_child_ref, prev);
                 take(prev, cur);
@@ -1034,14 +1037,14 @@ public:
                     destroy_container(t);
                     break;
 
-                case value_t::null:
+                case value_t::null: // LCOV_EXCL_LINE
                 case value_t::boolean:
                 case value_t::number_integer:
                 case value_t::number_unsigned:
                 case value_t::number_float:
                 case value_t::discarded:
                 default:
-                    break;
+                    break; // LCOV_EXCL_LINE
             }
         }
     };
@@ -1214,9 +1217,9 @@ public:
         return is_array() ? array_capacity() : object_capacity();
     }
 #else
-    static constexpr std::size_t container_capacity() noexcept
+    static constexpr std::size_t container_capacity() noexcept // LCOV_EXCL_LINE
     {
-        return detail::unknown_size();
+        return detail::unknown_size(); // LCOV_EXCL_LINE
     }
 #endif
 
@@ -1402,7 +1405,7 @@ public:
     ///       into this switch is worth a few percent when copying a value made
     ///       mostly of numbers
     JSON_HEDLEY_ALWAYS_INLINE
-    static void copy_leaf_value(const basic_json& src, basic_json& dst)
+    static void copy_leaf_value(const basic_json& src, basic_json& dst) // LCOV_EXCL_LINE
     {
         switch (src.m_data.m_type)
         {
@@ -1576,7 +1579,7 @@ public:
         auto src_it = src_object.cbegin();
         for (auto& element : *dst.m_data.m_value.object)
         {
-            if (JSON_HEDLEY_LIKELY(src_it != src_object.cend() && copy_keys_equal(src_it->first, element.first)))
+            if (JSON_HEDLEY_LIKELY(copy_keys_equal(src_it->first, element.first)))
             {
                 copy_shallow(src_it->second, element.second, worklist);
                 ++src_it;
@@ -4915,6 +4918,30 @@ public:
         return {it, res.second};
     }
 
+  private:
+    /// Sets the parents of a value when it goes out of scope, also when an
+    /// exception is thrown: a container insertion that throws may already
+    /// have added elements, whose parents must be set for the value to stay
+    /// valid (basic exception guarantee). Does nothing without JSON_DIAGNOSTICS.
+    class set_parents_on_exit
+    {
+      public:
+        explicit set_parents_on_exit(basic_json* v) noexcept : m_value(v) {}
+        set_parents_on_exit(const set_parents_on_exit&) = delete;
+        set_parents_on_exit& operator=(const set_parents_on_exit&) = delete;
+        set_parents_on_exit(set_parents_on_exit&&) = delete;
+        set_parents_on_exit& operator=(set_parents_on_exit&&) = delete;
+
+        ~set_parents_on_exit()
+        {
+            m_value->set_parents();
+        }
+
+      private:
+        basic_json* m_value;
+    };
+
+  public:
     /// Helper for insertion of an iterator
     /// @note: This uses std::distance to support GCC 4.8,
     ///        see https://github.com/nlohmann/json/pull/1257
@@ -4924,6 +4951,7 @@ public:
         iterator result(this);
         JSON_ASSERT(m_data.m_value.array != nullptr);
 
+        const set_parents_on_exit parents(this);
         auto insert_pos = std::distance(m_data.m_value.array->begin(), pos.m_it.array_iterator);
         m_data.m_value.array->insert(pos.m_it.array_iterator, std::forward<Args>(args)...);
         result.m_it.array_iterator = m_data.m_value.array->begin() + insert_pos;
@@ -4932,7 +4960,6 @@ public:
         // result.m_it.array_iterator = m_data.m_value.array->insert(pos.m_it.array_iterator, cnt, val);
         // but the return value of insert is missing in GCC 4.8, so it is written this way instead.
 
-        set_parents();
         return result;
     }
 
@@ -4952,8 +4979,16 @@ public:
             throw_iterator_from_other_value(this);
         }
 
-        // insert to array and return iterator
-        return insert_iterator(pos, val);
+        // vector::insert has no effects if copying a single element to the
+        // end throws; elsewhere, it may already have shifted the elements, so
+        // copy first and insert by move, which cannot throw but by allocating
+        if (pos.m_it.array_iterator == m_data.m_value.array->end())
+        {
+            return insert_iterator(pos, val);
+        }
+
+        basic_json tmp(val);
+        return insert_iterator(pos, std::move(tmp));
     }
 
     /// @brief inserts element into array
@@ -5085,8 +5120,8 @@ public:
             detail::throw_literal<invalid_iterator>(detail::exception_id::iterator_from_other_value, "iterators first and last must point to objects", this);
         }
 
+        const set_parents_on_exit parents(this);
         m_data.m_value.object->insert(first.m_it.object_iterator, last.m_it.object_iterator);
-        set_parents();
     }
 
     /// @brief updates a JSON object from another object, overwriting existing keys
@@ -5354,8 +5389,7 @@ public:
     /// @name lexicographical comparison operators
     /// @{
 
-    // the same-type cases for non-owning scalars, shared by JSON_IMPLEMENT_OPERATOR
-    // and JSON_IMPLEMENT_SCALAR_FAST
+    // the same-type cases for non-owning scalars, used by JSON_IMPLEMENT_SCALAR_FAST
 #define JSON_IMPLEMENT_SCALAR_CASES(op, null_result)                                                     \
   case value_t::null:                                                                                  \
         return (null_result);                                                                            \
@@ -5377,7 +5411,7 @@ public:
     // because any negative signed value is smaller than any unsigned value.
     // Otherwise, the non-negative signed value is cast to unsigned before the
     // comparison to avoid wraparound.
-#define JSON_IMPLEMENT_OPERATOR(op, null_result, unordered_result, default_result, deep_result, may_descend) \
+#define JSON_IMPLEMENT_OPERATOR(op, unordered_result, default_result, deep_result, may_descend)          \
     const auto lhs_type = lhs.type();                                                                    \
     const auto rhs_type = rhs.type();                                                                    \
     \
@@ -5405,8 +5439,15 @@ public:
                 return (*lhs.m_data.m_value.object) op (*rhs.m_data.m_value.object);                                   \
             }                                                                                            \
             \
-            JSON_IMPLEMENT_SCALAR_CASES(op, null_result)                                                 \
-            \
+                /* same-type scalars never get here: the inline fast path of the operator handles them */ \
+            case value_t::null:                                                                          \
+            case value_t::boolean:                                                                       \
+            case value_t::number_integer:                                                                \
+            case value_t::number_unsigned:                                                               \
+            case value_t::number_float:                                                                  \
+                JSON_ASSERT(false); /* NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) */ \
+                return (unordered_result);                                                               \
+                \
             case value_t::string:                                                                        \
                 return (*lhs.m_data.m_value.string) op (*rhs.m_data.m_value.string);                                   \
                 \
@@ -5446,7 +5487,7 @@ public:
                ? (number_integer_t(-1) op number_integer_t(1))                                           \
                : (static_cast<number_unsigned_t>(lhs.m_data.m_value.number_integer) op rhs.m_data.m_value.number_unsigned); \
     }                                                                                             \
-    else if(compares_unordered(lhs, rhs))\
+    else if(lhs_type == value_t::discarded || rhs_type == value_t::discarded)\
     {\
         return (unordered_result);\
     }\
@@ -5514,7 +5555,7 @@ public:
         JSON_HEDLEY_DIAGNOSTIC_PUSH
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
-        JSON_IMPLEMENT_OPERATOR( ==, true, false, false,
+        JSON_IMPLEMENT_OPERATOR( ==, false, false,
                                  compare_iteratively<false>(lhs, rhs, false) == compare_result::equal, true)
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
@@ -5528,7 +5569,6 @@ public:
         // default_result is used if we cannot compare values. In that case,
         // we compare types.
         JSON_IMPLEMENT_OPERATOR(<=>, // *NOPAD*
-                                std::partial_ordering::equivalent,
                                 std::partial_ordering::unordered,
                                 lhs_type <=> rhs_type, // *NOPAD*
                                 to_partial_ordering(compare_iteratively<true>(lhs, rhs, false)), true)
@@ -5540,7 +5580,7 @@ public:
         // default_result is used if we cannot compare values. In that case,
         // we compare types. Note we have to call the operator explicitly,
         // because MSVC has problems otherwise.
-        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type),
+        JSON_IMPLEMENT_OPERATOR( <, false, operator<(lhs_type, rhs_type),
                                  compare_iteratively<true>(lhs, rhs, true) == compare_result::less, false)
     }
 #endif
@@ -5555,7 +5595,7 @@ public:
     ///       their inlined code at each call site small. Binary values are
     ///       rare and left to equal_general().
     JSON_HEDLEY_ALWAYS_INLINE
-    static int equal_leaf(const_reference lhs, const_reference rhs) noexcept
+    static int equal_leaf(const_reference lhs, const_reference rhs) noexcept // LCOV_EXCL_LINE
     {
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_PUSH
@@ -6864,7 +6904,7 @@ public:
         basic_json result(value_t::object);
         json_pointer::flatten("", *this, result);
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief unflatten a previously flattened JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/unflatten/
@@ -7577,7 +7617,7 @@ public:
         result.append(path.data(), path.size());
         diff_append_key(result, key);
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief the path of the element @a index of the value at @a path
     static string_t diff_index_path(const string_t& path, const std::size_t index)
@@ -7587,7 +7627,7 @@ public:
         result.append(path.data(), path.size());
         diff_append_index(result, index);
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief append the "remove" operations for the elements of array
     ///        @a source from @a index on, and the "add" operations for the
@@ -7747,7 +7787,7 @@ public:
         // operations
         if (source == target)
         {
-            return false;
+            return false; // LCOV_EXCL_LINE (equal objects with the same members in the same order return early)
         }
 
         // slow path: the common keys are in a different relative

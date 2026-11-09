@@ -110,7 +110,7 @@ in the source files that need it, instantiate `basic_json` once, and consider pr
 The parser did not see any character: the file was most likely not opened. A relative path is resolved against the
 working directory of the running program, which is often the build directory of your IDE, not the source directory.
 Check `is_open()` and try an absolute path. Other causes are an empty file and a stream that was already read. See
-[`parse_error.101`](exceptions.md#jsonexceptionparse_error101).
+[`parse_error.101`](exceptions.md#jsonexceptionparse_error101) and [Reading and writing files](../features/files.md).
 
 ### Input that arrives in chunks
 

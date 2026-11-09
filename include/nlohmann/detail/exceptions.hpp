@@ -198,18 +198,19 @@ class exception : public std::exception
             // all other parent types (primitives) contribute no token
         }
 
-        if (tokens.empty())
+        // the root value has no path, but still has a byte range
+        std::string prefix;
+        if (!tokens.empty())
         {
-            return "";
+            const auto str = std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
+                                             [](const std::string & a, const std::string & b)
+            {
+                return concat(a, '/', detail::escape(b));
+            });
+            prefix = concat('(', str, ") ");
         }
 
-        auto str = std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
-                                   [](const std::string & a, const std::string & b)
-        {
-            return concat(a, '/', detail::escape(b));
-        });
-
-        return concat('(', str, ") ", get_byte_positions(leaf_element));
+        return concat(prefix, get_byte_positions(leaf_element));
 #else
         return get_byte_positions(leaf_element);
 #endif
@@ -222,7 +223,8 @@ class exception : public std::exception
     template<typename BasicJsonType>
     static std::string get_byte_positions(const BasicJsonType* leaf_element)
     {
-        if ((leaf_element->start_pos() != std::string::npos) && (leaf_element->end_pos() != std::string::npos))
+        // a value-initialized iterator has no value (invalid_iterator.212)
+        if (leaf_element != nullptr && leaf_element->start_pos() != std::string::npos && leaf_element->end_pos() != std::string::npos)
         {
             return concat("(bytes ", std::to_string(leaf_element->start_pos()), "-", std::to_string(leaf_element->end_pos()), ") ");
         }

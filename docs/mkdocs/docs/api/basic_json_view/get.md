@@ -11,7 +11,8 @@ For the types below, the conversion works directly on the flat index — no `Bas
 
 - `#!cpp bool`
 - arithmetic types other than `#!cpp bool` (for a boolean, `#!cpp 0`/`#!cpp 1`, exactly as for
-  [`BasicJsonType::get<T>()`](../basic_json/get.md))
+  [`BasicJsonType::get<T>()`](../basic_json/get.md#notes), except for `number_integer_t`, `number_unsigned_t` and
+  `number_float_t`, which throw `type_error.302` for a boolean, as `BasicJsonType::get<T>()` does)
 - `#!cpp std::nullptr_t`
 - `#!cpp std::basic_string<char, Traits, Alloc>` (including `string_t`) — a copy of the string
 - [`string_view_t`](index.md#member-types) — **no copy**: the returned view points into the document's

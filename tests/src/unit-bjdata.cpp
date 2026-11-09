@@ -78,23 +78,25 @@ TEST_CASE("BJData")
 {
     SECTION("binary_reader BJData lookup tables")
     {
-        // both lookups are static member functions
+        // bjd_type_name() is static; is_valid_optimized_type() needs a BJData reader
         std::vector<std::uint8_t> const data;
         using reader_t = nlohmann::detail::binary_reader<json, decltype(nlohmann::detail::input_adapter(data))>;
 
-        // the excluded optimized-type markers must match binary_writer's
-        // is_bjdata_excluded_type_marker(), which encodes the same 8 markers
+        // the markers BJData excludes as optimized types must match
+        // binary_writer's is_bjdata_excluded_type_marker(), which encodes the
+        // same 8 markers
+        const reader_t reader(nlohmann::detail::input_adapter(data), json::input_format_t::bjdata);
         for (const char marker :
-                {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'
+                {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z', 'x'
                 })
         {
-            CHECK(reader_t::is_bjd_excluded_optimized_type(static_cast<unsigned char>(marker)));
+            CHECK(!reader.is_valid_optimized_type(static_cast<unsigned char>(marker)));
         }
         for (const char marker :
-                {'U', 'i', 'u', 'I', 'm', 'l', 'M', 'L', 'd', 'D', 'C', 'B', 'x'
+                {'U', 'i', 'u', 'I', 'm', 'l', 'M', 'L', 'd', 'D', 'C', 'B', 'h'
                 })
         {
-            CHECK(!reader_t::is_bjd_excluded_optimized_type(static_cast<unsigned char>(marker)));
+            CHECK(reader.is_valid_optimized_type(static_cast<unsigned char>(marker)));
         }
 
         // every dtype marker must round-trip to its ND-array type name
@@ -2312,6 +2314,23 @@ TEST_CASE("BJData")
             CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
         }
 
+        SECTION("every event of an ndarray of chars")
+        {
+            // the elements of an ndarray of 'C' are read one by one
+            std::vector<uint8_t> const v = {'[', '$', 'C', '#', '[', '$', 'U', '#', 'U', 2, 2, 2, 'a', 'b', 'c', 'd'};
+            // start_object, key, string, key, start_array, 2 numbers, end_array,
+            // key, start_array, 4 chars, end_array, end_object
+            constexpr int events = 16;
+            for (int allowed = 0; allowed < events; ++allowed)
+            {
+                CAPTURE(allowed)
+                SaxCountdown scp(allowed);
+                CHECK_FALSE(json::sax_parse(v, &scp, json::input_format_t::bjdata));
+            }
+            SaxCountdown scp(events);
+            CHECK(json::sax_parse(v, &scp, json::input_format_t::bjdata));
+        }
+
         SECTION("start_array() in ndarray _ArrayData_")
         {
             std::vector<uint8_t> const v = {'[', '$', 'U', '#', '[', 'i', 2, 'i', 3, ']', 6, 5, 4, 3, 2, 1};
@@ -3095,6 +3114,15 @@ TEST_CASE("BJData")
                 json _;
                 CHECK_THROWS_WITH(_ = json::from_bjdata(v), "[json.exception.parse_error.113] parse error at byte 2: syntax error while parsing BJData char: byte after 'C' must be in range 0x00..0x7F; last byte: 0x82");
             }
+
+            SECTION("ndarray of chars cut off by the end of the input")
+            {
+                // 2x2 chars announced, three present
+                std::vector<uint8_t> const v = {'[', '$', 'C', '#', '[', '$', 'U', '#', 'U', 2, 2, 2, 'a', 'b', 'c'};
+                json _;
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(v), "[json.exception.parse_error.110] parse error at byte 16: syntax error while parsing BJData char: unexpected end of input", json::parse_error&);
+                CHECK(json::from_bjdata(v, true, false).is_discarded());
+            }
         }
 
         SECTION("byte")
@@ -3211,12 +3239,32 @@ TEST_CASE("BJData")
 #endif
                 CHECK(json::from_bjdata(vM, true, false).is_discarded());
 
-#if SIZE_MAX != 0xffffffff
-                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vMX), "[json.exception.out_of_range.408] syntax error while parsing BJData size: excessive ndarray size caused overflow", json::out_of_range&);
-#else
+                // the first dimension is 2^64-1, which is rejected as a count (see below)
                 CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vMX), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
-#endif
                 CHECK(json::from_bjdata(vMX, true, false).is_discarded());
+            }
+
+            SECTION("optimized array: count equal to SIZE_MAX")
+            {
+                // the reader marks a container without a count by SIZE_MAX, so
+                // a count of that value must not be read as "no count"
+                // (it used to parse as [1])
+                json _;
+#if SIZE_MAX != 0xffffffff
+                std::vector<uint8_t> const vM = {'[', '#', 'M', 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 'i', 0x01, ']'};
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK(json::from_bjdata(vM, true, false).is_discarded());
+                // one less is an ordinary excessive count
+                std::vector<uint8_t> const vM1 = {'[', '#', 'M', 0xFE, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 'i', 0x01, ']'};
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vM1), "[json.exception.out_of_range.408] excessive array size: 18446744073709551614", json::out_of_range&);
+#else
+                std::vector<uint8_t> const vm = {'[', '#', 'm', 0xFF, 0xFF, 0xFF, 0xFF, 'i', 0x01, ']'};
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vm), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK(json::from_bjdata(vm, true, false).is_discarded());
+                std::vector<uint8_t> const vL = {'[', '#', 'L', 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 'i', 0x01, ']'};
+                CHECK_THROWS_WITH_AS(_ = json::from_bjdata(vL), "[json.exception.out_of_range.408] syntax error while parsing BJData size: integer value overflow", json::out_of_range&);
+                CHECK(json::from_bjdata(vL, true, false).is_discarded());
+#endif
             }
 
             SECTION("optimized array: integer value overflow")

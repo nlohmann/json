@@ -3648,10 +3648,6 @@ template<typename StringType>
 inline void unescape(StringType& s)
 {
     auto pos = s.find_first_of('~', 0);
-    if (pos == StringType::npos)
-    {
-        return;
-    }
 
     StringType result;
     result.reserve(s.size());
@@ -5527,7 +5523,7 @@ inline OutStringType concat(Args && ... args)
     str.reserve(concat_length(args...));
     concat_into(str, std::forward<Args>(args)...);
     return str;
-}
+} // LCOV_EXCL_LINE (exception cleanup only)
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
@@ -5706,18 +5702,19 @@ class exception : public std::exception
             // all other parent types (primitives) contribute no token
         }
 
-        if (tokens.empty())
+        // the root value has no path, but still has a byte range
+        std::string prefix;
+        if (!tokens.empty())
         {
-            return "";
+            const auto str = std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
+                                             [](const std::string & a, const std::string & b)
+            {
+                return concat(a, '/', detail::escape(b));
+            });
+            prefix = concat('(', str, ") ");
         }
 
-        auto str = std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
-                                   [](const std::string & a, const std::string & b)
-        {
-            return concat(a, '/', detail::escape(b));
-        });
-
-        return concat('(', str, ") ", get_byte_positions(leaf_element));
+        return concat(prefix, get_byte_positions(leaf_element));
 #else
         return get_byte_positions(leaf_element);
 #endif
@@ -5730,7 +5727,8 @@ class exception : public std::exception
     template<typename BasicJsonType>
     static std::string get_byte_positions(const BasicJsonType* leaf_element)
     {
-        if ((leaf_element->start_pos() != std::string::npos) && (leaf_element->end_pos() != std::string::npos))
+        // a value-initialized iterator has no value (invalid_iterator.212)
+        if (leaf_element != nullptr && leaf_element->start_pos() != std::string::npos && leaf_element->end_pos() != std::string::npos)
         {
             return concat("(bytes ", std::to_string(leaf_element->start_pos()), "-", std::to_string(leaf_element->end_pos()), ") ");
         }
@@ -6247,7 +6245,7 @@ const typename BasicJsonType::binary_t& binary_value(const BasicJsonType& j)
 }
 
 template<typename View, enable_if_t<is_json_view<View>::value, int> = 0>
-typename View::basic_json_type::binary_t binary_value(const View& /*unused*/)
+typename View::basic_json_type::binary_t binary_value(const View& /*unused*/) // LCOV_EXCL_LINE
 {
     return {}; // LCOV_EXCL_LINE
 }
@@ -7174,7 +7172,7 @@ StringType to_string(std::size_t value)
     StringType result;
     int_to_string(result, value);
     return result;
-}
+} // LCOV_EXCL_LINE (exception cleanup only)
 
 /// @return a byte as two uppercase hexadecimal digits
 inline std::string hex_byte(const std::uint8_t byte)
@@ -7184,7 +7182,7 @@ inline std::string hex_byte(const std::uint8_t byte)
     result[0] = nibble_to_hex[byte / 16];
     result[1] = nibble_to_hex[byte % 16];
     return result;
-}
+} // LCOV_EXCL_LINE (exception cleanup only)
 
 /*!
 @brief write a UTF-16 code unit as four lowercase hexadecimal digits
@@ -7528,7 +7526,7 @@ inline StringType sanitize_utf8(const StringType& s, const error_handler_t error
     }
 
     return result;
-}
+} // LCOV_EXCL_LINE (exception cleanup only)
 
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
@@ -9181,6 +9179,19 @@ NLOHMANN_JSON_NAMESPACE_END
         #define JSON_UNLOCKED_FILE_IO 0
     #endif
     #undef JSON_UNLOCKED_FILE_IO_MSAN
+
+    // Whether file_input_adapter scans the buffer of the FILE directly, as
+    // getc_unlocked() reads it: the fields it uses are those that the C
+    // library's own getc_unlocked() macro uses (glibc: _IO_read_ptr and
+    // _IO_read_end; Apple: _p and _r). It needs the file locked for the whole
+    // parse, as JSON_UNLOCKED_FILE_IO == 1 has it (so JSON_DISABLE_UNLOCKED_FILE_IO
+    // and MemorySanitizer builds turn it off).
+    // (uClibc defines __GLIBC__ as well, but its FILE has other fields)
+    #if JSON_UNLOCKED_FILE_IO == 1 && ((defined(__GLIBC__) && !defined(__UCLIBC__)) || defined(__APPLE__))
+        #define JSON_FILE_WINDOW 1
+    #else
+        #define JSON_FILE_WINDOW 0
+    #endif
 #endif  // JSON_NO_IO
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
@@ -9302,8 +9313,12 @@ class token_carry_buffer
     char* m_capacity_end = nullptr;
 };
 /*!
-Input adapter for stdio file access. This adapter read only 1 byte and do not use any
- buffer. This adapter is a very low level adapter.
+Input adapter for stdio file access. The file is locked for the lifetime of the
+adapter and read with the unlocked stdio functions (see
+JSON_DISABLE_UNLOCKED_FILE_IO). With glibc and the Apple C library, the
+characters in the buffer of the FILE are also scanned in bulk, as the get area
+of a stream is (see input_stream_adapter): exactly the characters getc_unlocked()
+would return are consumed, so the file is left where it was left before.
 */
 class file_input_adapter
 {
@@ -9322,6 +9337,12 @@ class file_input_adapter
     file_input_adapter(const file_input_adapter&) = delete;
     file_input_adapter(file_input_adapter&& rhs) noexcept
         : m_file(rhs.m_file)
+#if JSON_FILE_WINDOW
+        , token_carry(std::move(rhs.token_carry))
+        , token_segment(rhs.token_segment)
+        , current_in_buffer(rhs.current_in_buffer)
+        , tracking_token(rhs.tracking_token)
+#endif
     {
         // the lock is owned by the thread, not the adapter: hand it over
         rhs.m_file = nullptr;
@@ -9333,6 +9354,20 @@ class file_input_adapter
         unlock();
     }
 
+#if JSON_FILE_WINDOW
+    std::char_traits<char>::int_type get_character()
+    {
+        // what getc_unlocked() does, while the buffer has characters
+        const char* const next = buffer_ptr();
+        if (JSON_HEDLEY_LIKELY(next != buffer_end()))
+        {
+            current_in_buffer = true;
+            buffer_bump(1);
+            return std::char_traits<char>::to_int_type(*next);
+        }
+        return get_character_slow();
+    }
+#else
     std::char_traits<char>::int_type get_character() noexcept
     {
         // the file is locked for the lifetime of the adapter, so the
@@ -9345,6 +9380,7 @@ class file_input_adapter
         return std::fgetc(m_file);
 #endif
     }
+#endif
 
     // returns the number of characters successfully read
     template<class T>
@@ -9353,7 +9389,134 @@ class file_input_adapter
         return fread(dest, 1, sizeof(T) * count, m_file);
     }
 
+#if JSON_FILE_WINDOW
+    // The lexer may scan the buffer of the FILE directly, as the window of
+    // input_stream_adapter: the buffer ends wherever the C library's buffer
+    // ends, and is refilled by the next get_character().
+    static constexpr bool supports_bulk_scan = true;
+    static constexpr bool bulk_window = true;
+
+    // Pointer to the next unread character; only valid when bulk_remaining() > 0.
+    const char* bulk_data() const
+    {
+        return buffer_ptr();
+    }
+
+    // Number of unread characters in the buffer.
+    std::size_t bulk_remaining() const
+    {
+        if (!current_in_buffer)
+        {
+            return 0;
+        }
+        return static_cast<std::size_t>(buffer_end() - buffer_ptr());
+    }
+
+    // Consume @a n characters previously inspected via bulk_data().
+    void bulk_skip(std::size_t n)
+    {
+        JSON_ASSERT(n <= bulk_remaining());
+        buffer_bump(n);
+    }
+
+    // The adapter keeps the current token for the lexer's error messages, as
+    // input_stream_adapter does.
+    static constexpr bool supports_token_tracking = true;
+
+    void begin_token() noexcept
+    {
+        tracking_token = true;
+        token_carry.clear();
+        token_segment = buffer_ptr();
+    }
+
+    void mark_token_start(std::char_traits<char>::int_type c)
+    {
+        tracking_token = true;
+        token_carry.clear();
+        if (current_in_buffer)
+        {
+            token_segment = buffer_ptr() - 1;
+        }
+        else
+        {
+            token_segment = nullptr;
+            token_carry.push_back(std::char_traits<char>::to_char_type(c));
+        }
+    }
+
+    void copy_token(std::vector<char>& out, bool drop_last) const
+    {
+        token_carry.copy_to(out);
+        if (token_segment != nullptr)
+        {
+            out.insert(out.end(), token_segment, buffer_ptr());
+        }
+        if (drop_last && !out.empty())
+        {
+            out.pop_back();
+        }
+    }
+#endif
+
   private:
+#if JSON_FILE_WINDOW
+    // the buffer of the FILE: [buffer_ptr(), buffer_end()) are the characters
+    // getc_unlocked() would return next
+#if defined(__GLIBC__)
+    const char* buffer_ptr() const noexcept
+    {
+        return m_file->_IO_read_ptr;
+    }
+    const char* buffer_end() const noexcept
+    {
+        return m_file->_IO_read_end;
+    }
+    void buffer_bump(std::size_t n) noexcept
+    {
+        m_file->_IO_read_ptr += n;
+    }
+#else
+    const char* buffer_ptr() const noexcept
+    {
+        return reinterpret_cast<const char*>(m_file->_p);
+    }
+    const char* buffer_end() const noexcept
+    {
+        return m_file->_r > 0 ? reinterpret_cast<const char*>(m_file->_p) + m_file->_r : reinterpret_cast<const char*>(m_file->_p);
+    }
+    void buffer_bump(std::size_t n) noexcept
+    {
+        m_file->_p += n;
+        m_file->_r -= static_cast<int>(n);
+    }
+#endif
+
+    // the buffer is exhausted: getc_unlocked() refills it
+    JSON_HEDLEY_NEVER_INLINE std::char_traits<char>::int_type get_character_slow()
+    {
+        if (token_segment != nullptr)
+        {
+            token_carry.append(token_segment, buffer_end());
+            token_segment = nullptr;
+        }
+        const auto res = getc_unlocked(m_file);
+        if (res == EOF)
+        {
+            current_in_buffer = false;
+            return std::char_traits<char>::eof();
+        }
+        // the character was taken from the refilled buffer, at buffer_ptr() - 1
+        current_in_buffer = true;
+        if (tracking_token)
+        {
+            token_segment = buffer_ptr() - 1;
+        }
+        return res;
+    }
+
+#endif
+
     // Lock the file once for the whole parse instead of once per character.
     // The lock is recursive, so fread() and the user's own stdio calls on the
     // same thread keep working.
@@ -9382,6 +9545,16 @@ class file_input_adapter
 
     /// the file pointer to read from
     std::FILE* m_file;
+#if JSON_FILE_WINDOW
+    /// the part of the current token that was in earlier buffers
+    token_carry_buffer token_carry{}; // NOLINT(readability-redundant-member-init)
+    /// start of the current token's part in the buffer, or nullptr
+    const char* token_segment = nullptr;
+    /// whether the character last returned by get_character() is in the buffer
+    bool current_in_buffer = false;
+    /// whether a token is tracked at all; the binary readers never start one
+    bool tracking_token = false;
+#endif
 };
 
 /*!
@@ -9668,12 +9841,9 @@ class input_stream_adapter
     std::char_traits<char>::int_type get_character_slow()
     {
 #if !JSON_DISABLE_STREAM_BULK_SCAN
-        // sbumpc() refills the get area if it is exhausted
-        const bool refill = streambuf_access::get_ptr(sb) == streambuf_access::get_end(sb);
-        if (JSON_HEDLEY_UNLIKELY(refill))
-        {
-            save_token_segment();
-        }
+        // the get area is exhausted (get_character() handles the other case),
+        // so sbumpc() refills it
+        save_token_segment();
 #endif
 
         auto res = sb->sbumpc();
@@ -9686,16 +9856,12 @@ class input_stream_adapter
             is->clear(is->rdstate() | std::ios::eofbit);
         }
 #if !JSON_DISABLE_STREAM_BULK_SCAN
-        else if (JSON_HEDLEY_UNLIKELY(refill))
+        else
         {
             // the consumed character is at gptr() - 1, unless the streambuf
             // has no get area and returned it from uflow()
             const char* const next = streambuf_access::get_ptr(sb);
             after_refill(res, next != nullptr && next != streambuf_access::get_begin(sb));
-        }
-        else
-        {
-            current_in_get_area = true;
         }
 #endif
         return res;
@@ -13355,14 +13521,16 @@ class lexer : public lexer_base<BasicJsonType>
     /// calls would (including the position and token bookkeeping of a
     /// streaming adapter, see bulk_consume) and leaves @a current holding the last of
     /// the 4 digits, just as the last such get() would; the codepoint is
-    /// written to @a out. Makes no state change and returns false for a
-    /// pending unget, fewer than 4 remaining bytes, or any of the 4 bytes not
-    /// being a hex digit, so the caller falls back unchanged to the
-    /// per-character loop, which then reports the same diagnostic (stopping
-    /// at the first invalid digit) as before this optimization.
+    /// written to @a out. Makes no state change and returns false for fewer
+    /// than 4 remaining bytes or any of the 4 bytes not being a hex digit, so
+    /// the caller falls back unchanged to the per-character loop, which then
+    /// reports the same diagnostic (stopping at the first invalid digit) as
+    /// before this optimization.
     bool get_codepoint_bulk(std::true_type /*bulk*/, int& out)
     {
-        if (next_unget || ia.bulk_remaining() < 4)
+        // no unget is pending inside a string (see get_after_string_run())
+        JSON_ASSERT(!next_unget);
+        if (ia.bulk_remaining() < 4)
         {
             return false;
         }
@@ -13507,11 +13675,10 @@ class lexer : public lexer_base<BasicJsonType>
     template<bool Keep>
     char_int_type get_after_string_run(std::true_type /*bulk*/, std::integral_constant<bool, Keep> keep)
     {
-        // a pending unget must be consumed through the normal path first
-        if (next_unget)
-        {
-            return get();
-        }
+        // scan_string() is entered from scan_after_whitespace(), whose current
+        // was read by skip_whitespace() (its first get() clears a pending
+        // unget), and nothing in scan_string() calls unget()
+        JSON_ASSERT(!next_unget);
         const std::size_t remaining = ia.bulk_remaining();
         if (remaining == 0)
         {
@@ -14502,7 +14669,7 @@ scan_number_done:
                 return token_type::value_unsigned;
             }
         }
-        else if (number_type == token_type::value_integer)
+        else // value_integer (the callers handle value_float themselves)
         {
             if (parse_integer_signed(first, last, value_integer))
             {
@@ -14608,11 +14775,9 @@ scan_number_done:
     */
     token_type scan_number_bulk_contiguous()
     {
-        // a pending unget offsets the buffer position from current; fall back
-        if (next_unget)
-        {
-            return token_type::uninitialized;
-        }
+        // called right after scan_after_whitespace() read current (see
+        // get_after_string_run()), so no unget is pending
+        JSON_ASSERT(!next_unget);
         const std::size_t rem = ia.bulk_remaining();
         if (rem == 0)
         {
@@ -14633,11 +14798,7 @@ scan_number_done:
         if (data[0] == '-')
         {
             number_type = token_type::value_integer;
-            i = 1;
-            if (i >= avail)
-            {
-                return token_type::uninitialized;
-            }
+            i = 1; // avail >= 2: rem == 0 returned above
         }
         const std::size_t integer_begin = i;
         if (data[i] == '0')
@@ -14880,7 +15041,10 @@ scan_number_done:
     /// the error at the right character
     JSON_HEDLEY_ALWAYS_INLINE bool scan_literal_bulk(const char* rest, const std::size_t length, std::true_type /*bulk*/)
     {
-        if (next_unget || ia.bulk_remaining() < length
+        // called right after scan_after_whitespace() read current (see
+        // get_after_string_run()), so no unget is pending
+        JSON_ASSERT(!next_unget);
+        if (ia.bulk_remaining() < length
                 || std::memcmp(ia.bulk_data(), rest, length) != 0)
         {
             return false;
@@ -17215,7 +17379,8 @@ class json_sax_dom_parser : public json_sax_dom_error_state
             {
                 hashes.push_back(hasher(element.first));
             }
-            ordered_data.key_indexes.emplace_back(new object_key_index(std::move(hashes)));
+            std::unique_ptr<object_key_index> index(new object_key_index(std::move(hashes))); // NOLINT(cppcoreguidelines-owning-memory,modernize-make-unique): std::make_unique is C++14
+            ordered_data.key_indexes.push_back(std::move(index));
             f.ordered.index = ordered_data.key_indexes.back().get();
         }
 
@@ -17310,7 +17475,7 @@ class json_sax_dom_parser : public json_sax_dom_error_state
         ordered_data.members[f.ordered.dest_member].second = std::move(value);
     }
 
-    static void place_member(const frame& /*f*/, BasicJsonType&& /*value*/, std::false_type /*indexed*/) noexcept {}
+    static void place_member(const frame& /*f*/, BasicJsonType&& /*value*/, std::false_type /*indexed*/) noexcept {} // LCOV_EXCL_LINE
 
     /// store the members of a new object directly in it
     bool start_stored_object(std::size_t len)
@@ -17614,13 +17779,33 @@ class json_sax_dom_parser : public json_sax_dom_error_state
         {
             // a new member is null and holds nothing: construct the value
             // over it instead of destroying and swapping
-            ::new (static_cast<void*>(&member)) BasicJsonType(std::forward<Value>(v));
+            construct_member(member, std::forward<Value>(v), std::is_nothrow_constructible<BasicJsonType, Value> {});
         }
         else
         {
             // the key occurred before
             member = BasicJsonType(std::forward<Value>(v));
         }
+    }
+
+    /// constructing the value cannot throw (for example a number or a boolean): construct it in place
+    template<typename Value>
+    JSON_HEDLEY_ALWAYS_INLINE
+    static void construct_member(BasicJsonType& member, Value&& v, std::true_type /*nothrow*/)
+    {
+        ::new (static_cast<void*>(&member)) BasicJsonType(std::forward<Value>(v));
+    }
+
+    /// constructing the value can throw (for example a container or a string), and a
+    /// constructor that was interrupted must not have touched the member (#5985):
+    /// create the value first, then move it over the member (the move constructor is
+    /// noexcept)
+    template<typename Value>
+    JSON_HEDLEY_ALWAYS_INLINE
+    static void construct_member(BasicJsonType& member, Value&& v, std::false_type /*may throw*/)
+    {
+        BasicJsonType value(std::forward<Value>(v));
+        ::new (static_cast<void*>(&member)) BasicJsonType(std::move(value));
     }
 
     /// a custom base class may care about the lifetime of the value
@@ -18048,7 +18233,7 @@ class json_sax_dom_callback_parser : public json_sax_dom_error_state
         key_stack.push_back(val);
 
         // add discarded value at the given key and store the reference for later
-        if (keep && ref_stack.back())
+        if (keep)
         {
             auto& obj = *ref_stack.back()->m_data.m_value.object;
             // a single lookup: insert the placeholder, or find the existing member
@@ -18105,7 +18290,7 @@ class json_sax_dom_callback_parser : public json_sax_dom_error_state
 
         const string_t object_key = pop_container();
 
-        if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_structured())
+        if (!ref_stack.empty() && ref_stack.back())
         {
             // remove discarded value
             remove_discarded_value(*ref_stack.back(), object_key);
@@ -18271,8 +18456,7 @@ class json_sax_dom_callback_parser : public json_sax_dom_error_state
     */
     string_t current_key() const
     {
-        if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_object()
-                && !key_stack.empty())
+        if (!ref_stack.empty() && ref_stack.back() && ref_stack.back()->is_object())
         {
             return key_stack.back();
         }
@@ -19044,8 +19228,8 @@ class binary_reader
     nested document could declare a length that disagrees with where its
     terminator actually falls and quietly hand the bytes in between to the
     enclosing document. A well-formed document is at least 5 bytes (the prefix
-    plus the terminator); the equality also rejects those impossible sizes,
-    since at least 5 bytes are always consumed.
+    plus the terminator); open_bson_document() rejects a smaller size before
+    it is stored, so @a document_size is never negative here.
 
     When recovering from errors, a document whose size does not match is
     accepted: its terminator was found, so everything in it has been read. A
@@ -19059,7 +19243,7 @@ class binary_reader
     */
     bool check_bson_document_size(const std::size_t document_start, const std::int32_t document_size, const bool size_repaired)
     {
-        if (JSON_HEDLEY_UNLIKELY(!size_repaired && (document_size < 0 || static_cast<std::size_t>(document_size) != chars_read - document_start)))
+        if (JSON_HEDLEY_UNLIKELY(!size_repaired && static_cast<std::size_t>(document_size) != chars_read - document_start))
         {
             static_cast<void>(bson_document_size_error(document_size, chars_read - document_start));
             return repair_requested();
@@ -19909,7 +20093,7 @@ class binary_reader
             {
                 std::uint64_t len{};
                 std::size_t size{};
-                return get_cbor_argument(len) && get_cbor_container_size(len, size, "array") && enter_cbor_array(size);
+                return get_cbor_argument(len) && get_container_size(len, size, "array") && enter_cbor_array(size);
             }
 
             case 0x9F: // array (indefinite length)
@@ -19949,7 +20133,7 @@ class binary_reader
             {
                 std::uint64_t len{};
                 std::size_t size{};
-                return get_cbor_argument(len) && get_cbor_container_size(len, size, "map") && enter_object(size);
+                return get_cbor_argument(len) && get_container_size(len, size, "map") && enter_object(size);
             }
 
             case 0xBF: // map (indefinite length)
@@ -20613,7 +20797,7 @@ class binary_reader
     }
 
     /*!
-    @brief narrow a definite CBOR array/map length to std::size_t
+    @brief narrow a definite CBOR or MessagePack array/map length to std::size_t
 
     A definite length is rejected if it does not fit in std::size_t or if it
     equals detail::unknown_size(), which is reserved to mark an indefinite-
@@ -20626,7 +20810,7 @@ class binary_reader
     @param[in]  context  "array" or "map", for the error message
     @return whether the length is usable
     */
-    bool get_cbor_container_size(const std::uint64_t len, std::size_t& result, const char* context)
+    bool get_container_size(const std::uint64_t len, std::size_t& result, const char* context)
     {
         if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::size_t>(len) || len == detail::unknown_size()))
         {
@@ -20769,14 +20953,18 @@ class binary_reader
 
     Only the start of an array is tried, which covers arrays of numbers
     (e.g. coordinates) but costs arrays of other values only one call, not one
-    per element.
+    per element. An array of one element is not tried at all: that element is
+    mostly an object or an array (`[[...]]`, the single ring of a GeoJSON
+    polygon), for which the call would find no scalar, while a single scalar,
+    which the run would read faster, is rare. The benchmarks
+    `FromBinaryShape/nested` and `FromBinaryShape/singles` show both sides.
 
     @param[in] len  the number of elements
     @return whether the SAX parser accepted the array and the values read
     */
     bool enter_cbor_array(const std::size_t len)
     {
-        return enter_array(len) && (len == 0 || parse_cbor_scalar_run(std::integral_constant<bool, bulk_scan> {}));
+        return enter_array(len) && (len <= 1 || parse_cbor_scalar_run(std::integral_constant<bool, bulk_scan> {}));
     }
 
     /// input that is not contiguous: every value is read by parse_cbor_value
@@ -21339,7 +21527,8 @@ class binary_reader
             case 0xDD: // array 32
             {
                 std::uint32_t len{};
-                return get_number(len) && enter_msgpack_array(conditional_static_cast<std::size_t>(len));
+                std::size_t size{};
+                return get_number(len) && get_container_size(len, size, "array") && enter_msgpack_array(size);
             }
 
             case 0xDE: // map 16
@@ -21351,7 +21540,8 @@ class binary_reader
             case 0xDF: // map 32
             {
                 std::uint32_t len{};
-                return get_number(len) && enter_object(conditional_static_cast<std::size_t>(len));
+                std::size_t size{};
+                return get_number(len) && get_container_size(len, size, "map") && enter_object(size);
             }
 
             // negative fixint
@@ -21801,12 +21991,16 @@ class binary_reader
     /*!
     @brief open a MessagePack array and read the scalars it begins with (see
            @ref parse_msgpack_scalar_run)
+
+    An array of one element is not tried, for the reason given at
+    @ref enter_cbor_array.
+
     @param[in] len  the number of elements
     @return whether the SAX parser accepted the array and the values read
     */
     bool enter_msgpack_array(const std::size_t len)
     {
-        return enter_array(len) && (len == 0 || parse_msgpack_scalar_run(std::integral_constant<bool, bulk_scan> {}));
+        return enter_array(len) && (len <= 1 || parse_msgpack_scalar_run(std::integral_constant<bool, bulk_scan> {}));
     }
 
     /// input that is not contiguous: every value is read by parse_msgpack_value
@@ -22269,16 +22463,13 @@ class binary_reader
         {
             if (size_and_type.second != 0)
             {
-                if (size_and_type.second != 'N')
+                for (std::size_t i = 0; i < size_and_type.first; ++i)
                 {
-                    for (std::size_t i = 0; i < size_and_type.first; ++i)
+                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, no_ndarray, size_and_type.second)))
                     {
-                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, no_ndarray, size_and_type.second)))
-                        {
-                            return false;
-                        }
-                        dim.push_back(dimlen);
+                        return false;
                     }
+                    dim.push_back(dimlen);
                 }
             }
             else
@@ -22305,6 +22496,27 @@ class binary_reader
                 get_ignore_noop();
             }
         }
+        return true;
+    }
+
+    /*!
+    @brief store the count of an optimized container (or the length of a string)
+
+    A count equal to npos is rejected: npos marks a container whose count is
+    not known, so a count of that value would be read as "no count" (compare
+    get_container_size()). No container can hold that many elements.
+
+    @param[in]  count   the count read from the input
+    @param[out] result  set to @a count unless it is rejected
+    @return whether @a count is usable
+    */
+    bool store_ubjson_count(const std::size_t count, std::size_t& result)
+    {
+        if (JSON_HEDLEY_UNLIKELY(count == npos))
+        {
+            return out_of_range_error(exception_id::container_too_large, "integer value overflow", "size");
+        }
+        result = count;
         return true;
     }
 
@@ -22338,8 +22550,7 @@ class binary_reader
         {
             return out_of_range_error(exception_id::container_too_large, "integer value overflow", "size");
         }
-        result = static_cast<std::size_t>(number); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): number is not a char
-        return true;
+        return store_ubjson_count(static_cast<std::size_t>(number), result); // NOLINT(bugprone-signed-char-misuse,cert-str34-c): number is not a char
     }
 
     /*!
@@ -22416,8 +22627,7 @@ class binary_reader
                 {
                     return false;
                 }
-                result = conditional_static_cast<std::size_t>(number);
-                return true;
+                return store_ubjson_count(conditional_static_cast<std::size_t>(number), result);
             }
 
             case 'M':
@@ -22435,8 +22645,7 @@ class binary_reader
                 {
                     return out_of_range_error(exception_id::container_too_large, "integer value overflow", "size");
                 }
-                result = detail::conditional_static_cast<std::size_t>(number);
-                return true;
+                return store_ubjson_count(detail::conditional_static_cast<std::size_t>(number), result);
             }
 
             case '[':
@@ -22482,11 +22691,9 @@ class binary_reader
                     // follow the documented _ArrayType_, _ArraySize_, _ArrayData_ order
                     if (ndarray_dtype != 0)
                     {
+                        // every optimized type marker is_valid_optimized_type() accepts for BJData has a name
                         const char* type_name = bjd_type_name(ndarray_dtype);
-                        if (JSON_HEDLEY_UNLIKELY(type_name == nullptr))
-                        {
-                            return unexpected_byte("invalid byte", "type");
-                        }
+                        JSON_ASSERT(type_name != nullptr);
 
                         string_t type_key = "_ArrayType_";
                         string_t type = type_name; // sax->string() takes a reference
@@ -22571,12 +22778,6 @@ class binary_reader
         if (current == '$')
         {
             result.second = get();  // must not ignore 'N', because 'N' maybe the type
-            if (input_format == input_format_t::bjdata
-                    && JSON_HEDLEY_UNLIKELY(is_bjd_excluded_optimized_type(result.second)))
-            {
-                return optimized_type_error();
-            }
-
             if (JSON_HEDLEY_UNLIKELY(!unexpect_eof("type")))
             {
                 return false;
@@ -22604,7 +22805,7 @@ class binary_reader
             // an ndarray was read here only if the flag flipped; when it was
             // seeded true, get_ubjson_size_value() already rejected the nested
             // dimension vector
-            if (input_format == input_format_t::bjdata && is_ndarray && !inside_ndarray)
+            if (is_ndarray && !inside_ndarray)
             {
                 result.second |= (1 << 8); // use bit 8 to indicate ndarray, all UBJSON and BJData markers should be ASCII letters
             }
@@ -22614,7 +22815,7 @@ class binary_reader
         if (current == '#')
         {
             const bool is_error = get_ubjson_size_value(result.first, is_ndarray);
-            if (input_format == input_format_t::bjdata && is_ndarray && !inside_ndarray)
+            if (is_ndarray && !inside_ndarray)
             {
                 return last_byte_error(exception_id::unexpected_byte, "ndarray requires both type and size", "size");
             }
@@ -22796,7 +22997,6 @@ class binary_reader
     JSON_HEDLEY_NEVER_INLINE
     bool parse_ubjson_typed_run(std::size_t& remaining, const char_int_type type, std::true_type /*bulk*/)
     {
-        const bool bjdata = input_format == input_format_t::bjdata;
         switch (type)
         {
             case 'U':
@@ -22810,11 +23010,11 @@ class binary_reader
             case 'L':
                 return parse_ubjson_typed_run<std::int64_t>(remaining);
             case 'u':
-                return !bjdata || parse_ubjson_typed_run<std::uint16_t>(remaining);
+                return parse_ubjson_typed_run<std::uint16_t>(remaining);
             case 'm':
-                return !bjdata || parse_ubjson_typed_run<std::uint32_t>(remaining);
+                return parse_ubjson_typed_run<std::uint32_t>(remaining);
             case 'M':
-                return !bjdata || parse_ubjson_typed_run<std::uint64_t>(remaining);
+                return parse_ubjson_typed_run<std::uint64_t>(remaining);
             case 'd':
                 return parse_ubjson_typed_run<float>(remaining);
             case 'D':
@@ -22895,7 +23095,7 @@ class binary_reader
         // if bit-8 of size_and_type.second is set to 1, encode bjdata ndarray as an object in JData annotated array format (https://github.com/NeuroJSON/jdata):
         // {"_ArrayType_" : "typeid", "_ArraySize_" : [n1, n2, ...], "_ArrayData_" : [v1, v2, ...]}
 
-        if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
+        if ((size_and_type.second & (1 << 8)) != 0)
         {
             size_and_type.second &= ~(static_cast<char_int_type>(1) << 8);  // use bit 8 to indicate ndarray, here we remove the bit to restore the type marker
 
@@ -22956,7 +23156,7 @@ class binary_reader
         }
 
         // If BJData type marker is 'B' decode as binary
-        if (input_format == input_format_t::bjdata && size_and_type.first != npos && size_and_type.second == 'B')
+        if (size_and_type.first != npos && size_and_type.second == 'B')
         {
             binary_t result;
             return get_binary(size_and_type.first, result) && sax->binary(result);
@@ -23005,7 +23205,7 @@ class binary_reader
         }
 
         // do not accept ND-array size in objects in BJData
-        if (input_format == input_format_t::bjdata && size_and_type.first != npos && (size_and_type.second & (1 << 8)) != 0)
+        if ((size_and_type.second & (1 << 8)) != 0)
         {
             return last_byte_error(exception_id::unexpected_byte, "BJData object does not support ND-array size in optimized format", "object");
         }
@@ -24283,6 +24483,14 @@ class binary_reader
                    const char* context,
                    ContainerType& result)
     {
+        // a string that is in the block of input as a whole is appended from
+        // it, without the zero-filling resize() below
+        constexpr bool from_block = bulk_scan && std::is_same<ContainerType, string_t>::value;
+        if (append_from_block(len, result, std::integral_constant<bool, from_block> {}))
+        {
+            return true;
+        }
+
         // upper bound on the number of bytes read (and allocated) per chunk
         constexpr std::size_t chunk_size = 4096;
 
@@ -24317,6 +24525,36 @@ class binary_reader
             len = static_cast<NumberType>(len - static_cast<NumberType>(wanted));
         }
         return true;
+    }
+
+    /// append the @a len bytes at the current position to @a result, if the
+    /// input holds them in one block; false (with nothing read) otherwise
+    template<typename NumberType>
+    bool append_from_block(const NumberType len, string_t& result, std::true_type /*block*/)
+    {
+        if (len <= 0)
+        {
+            return false;
+        }
+        // (len > 0, so the unsigned type holds it; casting a signed char
+        // straight to std::size_t would trip bugprone-signed-char-misuse)
+        const auto ulen = static_cast<typename std::make_unsigned<NumberType>::type>(len);
+        const std::size_t remaining = ia.bulk_remaining();
+        if (static_cast<std::uintmax_t>(ulen) > static_cast<std::uintmax_t>(remaining))
+        {
+            return false; // (the loop reports the premature end)
+        }
+        const auto n = static_cast<std::size_t>(ulen);
+        result.append(reinterpret_cast<const typename string_t::value_type*>(ia.bulk_data()), n);
+        ia.bulk_skip(n);
+        chars_read += n;
+        return true;
+    }
+
+    template<typename NumberType, typename ContainerType>
+    static bool append_from_block(const NumberType /*len*/, ContainerType& /*result*/, std::false_type /*block*/) noexcept
+    {
+        return false;
     }
 
     /*!
@@ -24805,8 +25043,9 @@ class binary_reader
   JSON_PRIVATE_UNLESS_TESTED:
     /*!
     @brief check whether @a marker is a type marker that may follow '$'
-    UBJSON: Z N T F i U I l L d D H C S [ {; BJData: the numeric markers and C
-    (BJData's excluded markers are rejected separately).
+    UBJSON: Z N T F i U I l L d D H C S [ {; BJData: the numeric markers and C.
+    The markers BJData excludes (F H N S T Z [ {) are the ones
+    binary_writer::is_bjdata_excluded_type_marker() lists; keep the two in sync.
     */
     bool is_valid_optimized_type(const char_int_type marker) const noexcept
     {
@@ -24839,20 +25078,6 @@ class binary_reader
             default:
                 return false;
         }
-    }
-
-    /*!
-    @brief whether @a marker is excluded from BJData's optimized ND-array types
-    @return whether @a marker is one of 'F', 'H', 'N', 'S', 'T', 'Z', '[', '{'
-
-    Mirrors binary_writer's @ref binary_writer::is_bjdata_excluded_type_marker
-    "is_bjdata_excluded_type_marker()`, which encodes the same list the other
-    way; keep the two in sync.
-    */
-    static constexpr bool is_bjd_excluded_optimized_type(const char_int_type marker) noexcept
-    {
-        return marker == '[' || marker == '{' || marker == 'S' || marker == 'H'
-               || marker == 'T' || marker == 'F' || marker == 'N' || marker == 'Z';
     }
 
     /*!
@@ -26205,14 +26430,7 @@ class parser
 
     std::string exception_message(const token_type expected, const std::string& context)
     {
-        std::string error_msg = "syntax error ";
-
-        if (!context.empty())
-        {
-            error_msg += concat("while parsing ", context, ' ');
-        }
-
-        error_msg += "- ";
+        std::string error_msg = concat("syntax error while parsing ", context, " - ");
 
         if (last_token == token_type::parse_error)
         {
@@ -26230,7 +26448,7 @@ class parser
         }
 
         return error_msg;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
   private:
     /// callback function
@@ -26544,6 +26762,9 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
+        // m_it is already value-initialized, so this is not needed for
+        // correctness; it is kept because GCC generates faster loops with it
+        // (iterating a parsed document is 0.5-2.7 % slower without it, #6005)
         if (m_object->is_object())
         {
             m_it.object_iterator = typename object_t::iterator();
@@ -27547,7 +27768,7 @@ class json_pointer
         result.reference_tokens.insert(result.reference_tokens.end(), lhs.reference_tokens.begin(), lhs.reference_tokens.end());
         result.reference_tokens.insert(result.reference_tokens.end(), rhs.reference_tokens.begin(), rhs.reference_tokens.end());
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief create a new JSON pointer by appending the unescaped token at the end of the JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
@@ -27558,7 +27779,7 @@ class json_pointer
         result.reference_tokens.insert(result.reference_tokens.end(), lhs.reference_tokens.begin(), lhs.reference_tokens.end());
         result.reference_tokens.push_back(std::move(token));
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief create a new JSON pointer by appending the array-index-token at the end of the JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slash/
@@ -29423,7 +29644,7 @@ class json_pointer
                     {
                         // create an entry in the array
                         current = &current->operator[](array_index<BasicJsonType>(token));
-                        break;
+                        break; // LCOV_EXCL_LINE (needs an array index with 10 or more digits: more than 1e9 elements)
                     }
 
                     /*
@@ -29460,7 +29681,7 @@ class json_pointer
         json_pointer<string_t> result;
         result.reference_tokens = reference_tokens;
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     json_pointer<string_t> convert()&&
     {
@@ -29904,6 +30125,10 @@ inline void copy_short(CharType* dst, const CharType* src, const std::size_t len
 /// the number of characters an empty vector is grown to by output_vector_sink
 constexpr std::size_t min_vector_sink_capacity = 64;
 
+/// the number of characters output_vector_sink makes writable ahead of its
+/// position at a time: 64 KiB of the vector's capacity, not all of it
+constexpr std::size_t vector_sink_window = 65536;
+
 /// @brief non-virtual output sink writing into a std::vector
 ///
 /// This sink is not part of the virtual output_adapter_protocol hierarchy: it is
@@ -29917,7 +30142,8 @@ constexpr std::size_t min_vector_sink_capacity = 64;
 /// encoding them: insert() is an out-of-line call into a routine that can insert
 /// anywhere, and resize() is one as well with libstdc++. The sink therefore keeps
 /// its own write position: it grows the vector geometrically ahead of the
-/// position and copies each write to it, so a write is a capacity check and a
+/// position (making @ref vector_sink_window characters of it writable at a
+/// time) and copies each write to it, so a write is a capacity check and a
 /// short copy. The destructor shrinks the vector to the bytes actually written,
 /// also when a write throws; shrinking a vector never allocates. The sink owns
 /// that trim, so it can be moved but not copied, and the vector must not be used
@@ -30065,9 +30291,17 @@ class output_vector_sink
         // reallocate for every few bytes
         const std::size_t written = position();
         const std::size_t needed = written + length;
-        v->resize((std::max)(min_vector_sink_capacity, needed <= v->capacity()
-                             ? v->capacity()
-                             : (std::max)(needed, v->capacity() * 2)));
+        const std::size_t capacity = (std::max)(min_vector_sink_capacity, needed <= v->capacity()
+                                                ? v->capacity()
+                                                : (std::max)(needed, v->capacity() * 2));
+        v->reserve(capacity);
+        // resize() zeroes the characters it adds. Zeroing all of a doubled
+        // capacity, megabytes of a fresh allocation, at once faults in its
+        // pages and evicts them from the cache before the writer gets there,
+        // so its stores miss again; a window ahead of the position is still
+        // cached when they come (the binary writers on a long array of
+        // numbers: 4-26 % faster on x86, 1-2.5 % on Apple M1)
+        v->resize((std::min)(capacity, (std::max)(needed, written + vector_sink_window)));
         cursor = v->data() + written;
         limit = v->data() + v->size();
     }
@@ -31230,7 +31464,7 @@ class binary_writer
         while (n != 0);
         std::reverse(result.begin(), result.end());
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /*!
     @brief the decimal digits of the integer @a n, with a leading '-' if it
@@ -31257,7 +31491,7 @@ class binary_writer
         }
         std::reverse(result.begin(), result.end());
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /*!
     @brief throws because the integer @a j is too large for @a format
@@ -32189,7 +32423,7 @@ class binary_writer
         std::memcpy(out, &n, sizeof(NumberType));
         if (!is_little_endian)
         {
-            std::reverse(out, out + sizeof(NumberType));
+            std::reverse(out, out + sizeof(NumberType)); // LCOV_EXCL_LINE (big-endian hosts only)
         }
     }
 
@@ -32318,7 +32552,7 @@ class binary_writer
             const string_t& value = *j.m_data.m_value.string;
             if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(value.size() + 1ul)))
             {
-                return false;
+                return false; // LCOV_EXCL_LINE (a string of 2 GiB or more)
             }
             out[0] = to_char_type(0x02);
             store_little_endian<std::int32_t>(p, static_cast<std::int32_t>(value.size() + 1ul));
@@ -32775,7 +33009,7 @@ class binary_writer
         const std::size_t size = oa.written() - pos;
         if (JSON_HEDLEY_UNLIKELY(!value_in_range_of<std::int32_t>(size)))
         {
-            return false;
+            return false; // LCOV_EXCL_LINE (a document of 2 GiB or more)
         }
         const auto le_size = static_cast<std::uint32_t>(size);
         oa.overwrite(pos, is_little_endian ? le_size : byteswap(le_size));
@@ -32819,7 +33053,6 @@ class binary_writer
             nothing large has been written then, and the caller writes the
             document in two passes, which reports that error
     */
-    template<typename SinkType = OutputSinkType, typename std::enable_if<is_detected<sink_written_t, SinkType>::value, int>::type = 0>
     bool write_bson_document_single_pass(const BasicJsonType& document)
     {
         const std::size_t start = oa.written();
@@ -32904,7 +33137,7 @@ class binary_writer
                     {
                         if (JSON_HEDLEY_UNLIKELY(!close_bson_container(nested_size_pos)))
                         {
-                            return false;
+                            return false; // LCOV_EXCL_LINE (a document of 2 GiB or more)
                         }
                         continue;
                     }
@@ -32919,7 +33152,7 @@ class binary_writer
 
             if (JSON_HEDLEY_UNLIKELY(!close_bson_container(current.size_slot)))
             {
-                return false;
+                return false; // LCOV_EXCL_LINE (a document of 2 GiB or more)
             }
             if (parents.empty())
             {
@@ -33176,10 +33409,10 @@ class binary_writer
 
     Selected through masks rather than branches, as the type and the sign of
     the values in an array of mixed signs alternate unpredictably (non-negative
-    integers are number_unsigned after parsing). Up to 64 bits, the sign is bit
-    63 of the result (a narrower integer is sign-extended); computing it with
-    masks keeps GCC from branching on the type. A wider integer has to be
-    compared.
+    integers are number_unsigned after parsing). The sign is bit 63 of the
+    result (a narrower integer is sign-extended); computing it with masks keeps
+    GCC from branching on the type. Only called if @ref integers_fit_64_bits();
+    a wider number type is written with range checks on the whole value.
     */
     static std::uint64_t integer_bits(const BasicJsonType& j, std::uint64_t& sign_mask) noexcept
     {
@@ -33187,9 +33420,7 @@ class binary_writer
         const std::uint64_t raw = is_signed
                                   ? static_cast<std::uint64_t>(j.m_data.m_value.number_integer)
                                   : static_cast<std::uint64_t>(j.m_data.m_value.number_unsigned);
-        sign_mask = sizeof(typename BasicJsonType::number_integer_t) <= sizeof(std::uint64_t)
-                    ? (std::uint64_t{0} - static_cast<std::uint64_t>(is_signed)) & (std::uint64_t{0} - (raw >> 63u))
-                    : std::uint64_t{0} - static_cast<std::uint64_t>(is_signed && j.m_data.m_value.number_integer < 0);
+        sign_mask = (std::uint64_t{0} - static_cast<std::uint64_t>(is_signed)) & (std::uint64_t{0} - (raw >> 63u));
         return raw;
     }
 
@@ -33526,22 +33757,19 @@ class binary_writer
                 // negative fixnum
                 write_number(static_cast<std::int8_t>(j.m_data.m_value.number_integer));
             }
-            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int8_t>::min)() &&
-                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int8_t>::max)())
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int8_t>::min)())
             {
                 // int 8
                 oa.write_character(to_char_type(0xD0));
                 write_number(static_cast<std::int8_t>(j.m_data.m_value.number_integer));
             }
-            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int16_t>::min)() &&
-                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int16_t>::max)())
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int16_t>::min)())
             {
                 // int 16
                 oa.write_character(to_char_type(0xD1));
                 write_number(static_cast<std::int16_t>(j.m_data.m_value.number_integer));
             }
-            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int32_t>::min)() &&
-                     j.m_data.m_value.number_integer <= (std::numeric_limits<std::int32_t>::max)())
+            else if (j.m_data.m_value.number_integer >= (std::numeric_limits<std::int32_t>::min)())
             {
                 // int 32
                 oa.write_character(to_char_type(0xD2));
@@ -34457,7 +34685,7 @@ class binary_writer
     Containers, strings, high-precision numbers, booleans and null cannot be
     declared as the single type of an optimized container in BJData; such a
     container is written unoptimized. The reader rejects them with the same
-    list (binary_reader::is_bjd_excluded_optimized_type()).
+    list (binary_reader::is_valid_optimized_type()).
     */
     static constexpr bool is_bjdata_excluded_type_marker(const CharType marker) noexcept
     {
@@ -34556,57 +34784,34 @@ class binary_writer
     }
 
     /*!
-    @brief validate (dry_run) or write one BJData ND-array element of integer dtype @a T
-    @return whether @a el's value is in range of @a T; always true when @a dry_run is false
-    */
-    template<typename T>
-    bool write_bjdata_ndarray_element(const BasicJsonType& el, const bool dry_run)
-    {
-        if (dry_run)
-        {
-            return bjdata_ndarray_value_in_range<T>(el);
-        }
-        using storage_type = typename std::conditional<std::is_unsigned<T>::value, std::uint64_t, std::int64_t>::type;
-        write_number(static_cast<T>(el.template get<storage_type>()), true);
-        return true;
-    }
-
-    /*!
-    @brief validate (dry_run) or write one BJData ND-array element of dtype 'd' (single precision)
+    @brief whether the BJData ND-array element @a el can be written with dtype 'd' (single precision)
     @return whether @a el's value survives narrowing to float and back without any change
-            (so the ND-array round-trips exactly), or is infinite or NaN; always true when
-            @a dry_run is false
+            (so the ND-array round-trips exactly), or is infinite or NaN
     */
-    bool write_bjdata_ndarray_float_element(const BasicJsonType& el, const bool dry_run)
+    static bool bjdata_ndarray_float_in_range(const BasicJsonType& el) noexcept
     {
         const auto dval = static_cast<double>(el.m_data.m_value.number_float);
-        if (dry_run)
-        {
 #ifdef __GNUC__
-            JSON_HEDLEY_DIAGNOSTIC_PUSH
-            JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
+        JSON_HEDLEY_DIAGNOSTIC_PUSH
+        JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
-            // a value that would be rounded (rather than exactly represented) by the
-            // narrowing to float is treated like an out-of-range integer element; this
-            // is the same criterion write_compact_float() uses for CBOR/MessagePack
-            const bool in_range = std::isnan(dval) ||
-                                  (dval >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
-                                   dval <= static_cast<double>((std::numeric_limits<float>::max)()) &&
-                                   static_cast<double>(static_cast<float>(dval)) == dval) ||
-                                  std::isinf(dval);
+        // a value that would be rounded (rather than exactly represented) by the
+        // narrowing to float is treated like an out-of-range integer element; this
+        // is the same criterion write_compact_float() uses for CBOR/MessagePack
+        return std::isnan(dval) ||
+               (dval >= static_cast<double>(std::numeric_limits<float>::lowest()) &&
+                dval <= static_cast<double>((std::numeric_limits<float>::max)()) &&
+                static_cast<double>(static_cast<float>(dval)) == dval) ||
+               std::isinf(dval);
 #ifdef __GNUC__
-            JSON_HEDLEY_DIAGNOSTIC_POP
+        JSON_HEDLEY_DIAGNOSTIC_POP
 #endif
-            return in_range;
-        }
-        write_number(static_cast<float>(dval), true);
-        return true;
     }
 
     /*!
     @brief write the elements of an ND-array as the number kind @a dtype names
            (see @ref write_bjdata_ndarray), after they have been found to be
-           in range by a dry run of @ref write_bjdata_ndarray_elements
+           in range by @ref bjdata_ndarray_elements_in_range
 
     The elements are encoded in blocks into space reserved from the sink.
     */
@@ -34688,20 +34893,13 @@ class binary_writer
     }
 
     /*!
-    @brief validate or write every element of a BJData ND-array's `_ArrayData_`
+    @brief whether every element of a BJData ND-array's `_ArrayData_` is in range for its dtype
     @param[in] array_data  the `_ArrayData_` array
     @param[in] dtype       the ND-array dtype marker, as returned by bjdata_ndarray_type_marker()
-    @param[in] dry_run     true to only range-check each element, false to write it
-    @return whether every element is in range for @a dtype (always true when @a dry_run is false)
+    @return whether every element is in range for @a dtype
     */
-    bool write_bjdata_ndarray_elements(const BasicJsonType& array_data, const CharType dtype, const bool dry_run)
+    static bool bjdata_ndarray_elements_in_range(const BasicJsonType& array_data, const CharType dtype)
     {
-        if (!dry_run)
-        {
-            write_bjdata_ndarray_values(array_data, dtype);
-            return true;
-        }
-
         for (const auto& el : array_data)
         {
             bool ok = true;
@@ -34709,43 +34907,39 @@ class binary_writer
             {
                 case 'U':
                 case 'B':
-                    ok = write_bjdata_ndarray_element<std::uint8_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint8_t>(el);
                     break;
                 case 'C':
                     // BJData limits a char to 0..127 (the intersection of the int8 and uint8 ranges)
                     ok = bjdata_ndarray_value_in_range<std::int8_t>(el) && bjdata_ndarray_value_in_range<std::uint8_t>(el);
                     break;
                 case 'i':
-                    ok = write_bjdata_ndarray_element<std::int8_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int8_t>(el);
                     break;
                 case 'u':
-                    ok = write_bjdata_ndarray_element<std::uint16_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint16_t>(el);
                     break;
                 case 'I':
-                    ok = write_bjdata_ndarray_element<std::int16_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int16_t>(el);
                     break;
                 case 'm':
-                    ok = write_bjdata_ndarray_element<std::uint32_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint32_t>(el);
                     break;
                 case 'l':
-                    ok = write_bjdata_ndarray_element<std::int32_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int32_t>(el);
                     break;
                 case 'M':
-                    ok = write_bjdata_ndarray_element<std::uint64_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::uint64_t>(el);
                     break;
                 case 'L':
-                    ok = write_bjdata_ndarray_element<std::int64_t>(el, dry_run);
+                    ok = bjdata_ndarray_value_in_range<std::int64_t>(el);
                     break;
                 case 'd':
-                    ok = write_bjdata_ndarray_float_element(el, dry_run);
+                    ok = bjdata_ndarray_float_in_range(el);
                     break;
                 case 'D':
                 default:
                     // 'D' (double) already spans the full range of number_float_t
-                    if (!dry_run)
-                    {
-                        write_number(el.template get<double>(), true);
-                    }
                     break;
             }
             if (!ok)
@@ -34832,7 +35026,7 @@ class binary_writer
             const auto dim = el.template get<std::uint64_t>();
             if (!value_in_range_of<std::size_t>(dim))
             {
-                return true;
+                return true; // LCOV_EXCL_LINE (size_t is narrower than 64 bits)
             }
             const auto dim_size = static_cast<std::size_t>(dim);
 
@@ -34882,7 +35076,7 @@ class binary_writer
         // wrap (integers) or overflow to infinity (the "single" precision
         // float) instead of being reported, so such an object falls back to
         // a plain object encoding as well
-        if (!write_bjdata_ndarray_elements(array_data, dtype, true))
+        if (!bjdata_ndarray_elements_in_range(array_data, dtype))
         {
             return true;
         }
@@ -34894,7 +35088,7 @@ class binary_writer
 
         write_ubjson(array_size, use_count, use_type, true,  true, bjdata_version);
 
-        write_bjdata_ndarray_elements(array_data, dtype, false);
+        write_bjdata_ndarray_values(array_data, dtype);
         return false;
     }
 
@@ -35220,8 +35414,8 @@ class binary_writer
     run are encoded into space reserved from the sink, as in
     @ref write_array_elements; an integer that BON8 cannot write (an unsigned
     one above the int64 range, or one of a number type wider than 64 bits) throws
-    from write_bon8_value, like any other value that is not a number. Kept out
-    of line, like @ref write_cbor_array.
+    out_of_range.407, as write_bon8_value does. Kept out of line, like
+    @ref write_cbor_array.
     */
     template<typename ArrayType>
     JSON_HEDLEY_NEVER_INLINE
@@ -35271,10 +35465,10 @@ class binary_writer
                 string_open = false;
             }
 
-            if (unencodable)
+            if (JSON_HEDLEY_UNLIKELY(unencodable))
             {
-                write_bon8_value(*it, string_open, depth + 1);
-                ++it;
+                // an integer beyond the int64 range, as write_bon8_value would report it
+                throw_integer_out_of_range(*it, input_format_t::bon8, "int64");
             }
         }
     }
@@ -35309,14 +35503,13 @@ class binary_writer
                     break;
 
                 case value_t::number_integer:
-                    if (JSON_HEDLEY_LIKELY(integer_fits<std::int64_t>(value.m_data.m_value.number_integer)))
+                    if (JSON_HEDLEY_UNLIKELY(!integer_fits<std::int64_t>(value.m_data.m_value.number_integer)))
                     {
-                        write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_integer));
-                        string_open = false;
-                        break;
+                        // beyond 64 bits (number types wider than that)
+                        throw_integer_out_of_range(value, input_format_t::bon8, "int64");
                     }
-                    // beyond 64 bits (number types wider than that): throws
-                    write_bon8_value(value, string_open, depth + 1);
+                    write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_integer));
+                    string_open = false;
                     break;
 
                 case value_t::number_float:
@@ -35325,14 +35518,13 @@ class binary_writer
                     break;
 
                 case value_t::number_unsigned:
-                    if (JSON_HEDLEY_LIKELY(integer_fits_max<std::int64_t>(value.m_data.m_value.number_unsigned)))
+                    if (JSON_HEDLEY_UNLIKELY(!integer_fits_max<std::int64_t>(value.m_data.m_value.number_unsigned)))
                     {
-                        write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_unsigned));
-                        string_open = false;
-                        break;
+                        // too large for BON8
+                        throw_integer_out_of_range(value, input_format_t::bon8, "int64");
                     }
-                    // too large for BON8: throws
-                    write_bon8_value(value, string_open, depth + 1);
+                    write_bon8_integer(static_cast<std::int64_t>(value.m_data.m_value.number_unsigned));
+                    string_open = false;
                     break;
 
                 case value_t::object:
@@ -35898,7 +36090,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 
-#include <algorithm> // remove, fill, find, none_of, min
+#include <algorithm> // copy, none_of, min, search
 #include <array> // array
 #include <clocale> // localeconv, lconv
 #include <cmath> // isfinite
@@ -38785,36 +38977,21 @@ class serializer
                 {
                     // the code point is at least 0x60 (smaller ones are handled
                     // above) and is not printable ASCII (which the scanner
-                    // copies): it is DEL (0x7F) under EnsureAscii or a non-ASCII
-                    // character
+                    // copies). Under EnsureAscii it is DEL (0x7F): every
+                    // well-formed multi-byte character is escaped by
+                    // write_u_escapes() above, so decode() only ever accepts a
+                    // single byte here, and nothing of it was buffered
                     if (EnsureAscii)
                     {
-                        JSON_ASSERT(codepoint >= 0x7F);
-                        if (error_handler == error_handler_t::keep)
-                        {
-                            // this character was buffered as raw bytes below
-                            // in case it turned out to be part of an
-                            // ill-formed sequence (which is kept as is); now
-                            // that it decoded to a well-formed code point,
-                            // undo that and \u-escape it like any other
-                            // character instead
-                            bytes = bytes_after_last_accept;
-                        }
-                        if (codepoint <= 0xFFFF)
-                        {
-                            write_u_escape(bytes, static_cast<std::uint16_t>(codepoint));
-                        }
-                        else
-                        {
-                            write_u_escape(bytes, static_cast<std::uint16_t>(0xD7C0u + (codepoint >> 10u)));
-                            write_u_escape(bytes, static_cast<std::uint16_t>(0xDC00u + (codepoint & 0x3FFu)));
-                        }
+                        JSON_ASSERT(codepoint == 0x7F);
+                        JSON_ASSERT(bytes == bytes_after_last_accept);
+                        write_u_escape(bytes, static_cast<std::uint16_t>(codepoint));
                     }
                     else
                     {
                         // copy byte to buffer (all previous bytes of the
                         // sequence have been copied in the default case below)
-                        string_buffer[bytes++] = s[i];
+                        string_buffer[bytes++] = s[i]; // LCOV_EXCL_LINE (well-formed sequences are copied in runs)
                     }
 
                     reserve_string_buffer(bytes);
@@ -39767,31 +39944,35 @@ class serializer
         // check if the buffer was large enough
         JSON_ASSERT(static_cast<std::size_t>(len) < number_buffer.size());
 
-        // look up the locale's thousands separator and decimal point now,
-        // matching what snprintf_float() just used (see lexer::get_decimal_point())
+        // look up the locale's decimal point now, matching what
+        // snprintf_float() just used (see get_decimal_point() in
+        // number_parse.hpp); it is a string, which can be longer than one
+        // byte (U+066B in ps_AF, #5993).
+        // A thousands separator needs no handling: %g never groups digits.
         const auto* loc = std::localeconv();
         JSON_ASSERT(loc != nullptr);
-        const char thousands_sep = (loc->thousands_sep == nullptr) ? '\0' : *loc->thousands_sep;
-        const char decimal_point = (loc->decimal_point == nullptr) ? '\0' : *loc->decimal_point;
-
-        // erase thousands separators
-        if (thousands_sep != '\0')
-        {
-            // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::remove returns an iterator, see https://github.com/nlohmann/json/issues/3081
-            const auto end = std::remove(number_buffer.begin(), number_buffer.begin() + len, thousands_sep);
-            std::fill(end, number_buffer.end(), '\0');
-            JSON_ASSERT((end - number_buffer.begin()) <= len);
-            len = (end - number_buffer.begin());
-        }
+        const char* const decimal_point = (loc->decimal_point == nullptr) ? "" : loc->decimal_point;
+        const std::size_t decimal_point_len = std::char_traits<char>::length(decimal_point);
 
         // convert decimal point to '.'
-        if (decimal_point != '\0' && decimal_point != '.')
+        if ((decimal_point_len > 1) || (decimal_point_len == 1 && decimal_point[0] != '.'))
         {
-            // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::find returns an iterator, see https://github.com/nlohmann/json/issues/3081
-            const auto dec_pos = std::find(number_buffer.begin(), number_buffer.end(), decimal_point);
-            if (dec_pos != number_buffer.end())
+            const auto first = number_buffer.begin();
+            const auto last = first + len;
+            // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::search returns an iterator, see https://github.com/nlohmann/json/issues/3081
+            const auto dec_pos = std::search(first, last, decimal_point, decimal_point + decimal_point_len);
+            if (dec_pos != last)
             {
                 *dec_pos = '.';
+                if (decimal_point_len > 1)
+                {
+                    // move the fraction and exponent behind the '.' (std::copy
+                    // allows the overlap, as the destination is before the source)
+                    // NOLINTNEXTLINE(readability-qualified-auto,llvm-qualified-auto): std::copy returns an iterator, see https://github.com/nlohmann/json/issues/3081
+                    const auto end = std::copy(dec_pos + static_cast<std::ptrdiff_t>(decimal_point_len), last, dec_pos + 1);
+                    *end = '\0';
+                    len = end - first;
+                }
             }
         }
 
@@ -40655,7 +40836,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         result["compiler"] = {{"family", "clang"}, {"version", __clang_version__}};
 #elif defined(__GNUC__) || defined(__GNUG__)
         result["compiler"] = {{"family", "gcc"}, {"version", detail::concat<string_t>(
-                    detail::to_string<string_t>(static_cast<std::size_t>(__GNUC__)), '.',
+                    detail::to_string<string_t>(static_cast<std::size_t>(__GNUC__)), '.', // LCOV_EXCL_LINE
                     detail::to_string<string_t>(static_cast<std::size_t>(__GNUC_MINOR__)), '.',
                     detail::to_string<string_t>(static_cast<std::size_t>(__GNUC_PATCHLEVEL__)))
             }
@@ -40798,6 +40979,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     ////////////////////////
 
   JSON_PRIVATE_UNLESS_TESTED:
+    // the type and value of a basic_json without its base class (defined
+    // below); the destruction helpers of json_value use it as a stand-in
+    struct data;
+
     /*!
     @brief a JSON value
 
@@ -40927,14 +41112,14 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                 case value_t::binary:
                     binary = create<binary_t>();
                     break;
-                case value_t::null:
+                case value_t::null: // LCOV_EXCL_LINE
                 case value_t::boolean:
                 case value_t::number_integer:
                 case value_t::number_unsigned:
                 case value_t::number_float:
                 case value_t::discarded:
                 default:
-                    break;
+                    break; // LCOV_EXCL_LINE
             }
         }
 
@@ -40974,27 +41159,28 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         explicit json_value(array_t* value) noexcept : array(value) {}
 
 private:
-        // raw, allocation-free transfer of m_data from src to dst: no
-        // set_parents()/assert_invariant() (the former is O(#children) per
-        // call under JSON_DIAGNOSTICS, which would make the walk below
-        // quadratic); dst takes ownership, src is left as value_t::null.
-        static void take(basic_json& dst, basic_json& src) noexcept
+        // raw, allocation-free transfer of the type and value from src to
+        // dst: no set_parents()/assert_invariant() (the former is
+        // O(#children) per call under JSON_DIAGNOSTICS, which would make the
+        // walk below quadratic); dst takes ownership, src is left as
+        // value_t::null.
+        static void take(data& dst, data& src) noexcept
         {
-            dst.m_data.m_type = src.m_data.m_type;
-            dst.m_data.m_value = src.m_data.m_value;
-            src.m_data.m_type = value_t::null;
+            dst.m_type = src.m_type;
+            dst.m_value = src.m_value;
+            src.m_type = value_t::null;
         }
 
         // true if v is not an array/object, or is an already-empty one
-        static bool has_no_children(const basic_json& v) noexcept
+        static bool has_no_children(const data& v) noexcept
         {
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
-                return v.m_data.m_value.array->empty();
+                return v.m_value.array->empty();
             }
-            if (v.m_data.m_type == value_t::object)
+            if (v.m_type == value_t::object)
             {
-                return v.m_data.m_value.object->empty();
+                return v.m_value.object->empty();
             }
             return true;
         }
@@ -41003,21 +41189,21 @@ private:
         // its own, i.e. v can be freed in one go (its destructor then
         // destroys scalars and empty containers only, so it recurses at most
         // one level deep); stops at the first structured child it meets
-        static bool all_children_leaves(const basic_json& v) noexcept
+        static bool all_children_leaves(const data& v) noexcept
         {
             // array_t only needs forward iterators (see custom_array_type)
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
-                const auto& a = *v.m_data.m_value.array;
+                const auto& a = *v.m_value.array;
                 return std::all_of(a.begin(), a.end(), [](const basic_json & el)
                 {
-                    return has_no_children(el);
+                    return has_no_children(el.m_data);
                 });
             }
-            const auto& o = *v.m_data.m_value.object;
+            const auto& o = *v.m_value.object;
             return std::all_of(o.begin(), o.end(), [](const typename object_t::value_type & el)
             {
-                return has_no_children(el.second);
+                return has_no_children(el.second.m_data);
             });
         }
 
@@ -41049,30 +41235,30 @@ private:
 
         // the child of a non-empty array/object v that the walk in
         // destroy_container() continues with (see walk_child_it() above)
-        static basic_json& walk_child(basic_json& v)
+        static data& walk_child(data& v)
         {
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
-                return v.m_data.m_value.array->back();
+                return v.m_value.array->back().m_data;
             }
-            JSON_ASSERT(v.m_data.m_type == value_t::object);
-            return walk_child_it(*v.m_data.m_value.object)->second;
+            JSON_ASSERT(v.m_type == value_t::object);
+            return walk_child_it(*v.m_value.object)->second.m_data;
         }
 
         // removes walk_child(v) from a non-empty array/object v; this never
         // allocates, and since it is only ever called when that child is a
         // scalar or an already-empty array/object, destroying it never
         // recurses more than one level deep (see destroy() below)
-        static void pop_walk_child(basic_json& v)
+        static void pop_walk_child(data& v)
         {
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
-                v.m_data.m_value.array->pop_back();
+                v.m_value.array->pop_back();
             }
             else
             {
-                JSON_ASSERT(v.m_data.m_type == value_t::object);
-                v.m_data.m_value.object->erase(walk_child_it(*v.m_data.m_value.object));
+                JSON_ASSERT(v.m_type == value_t::object);
+                v.m_value.object->erase(walk_child_it(*v.m_value.object));
             }
         }
 
@@ -41081,23 +41267,23 @@ private:
         // recurses at most one level deep); this is the same allocator-based
         // free the old recursive implementation used, just factored out so
         // every level of the walk in destroy() can share it
-        static void free_container(basic_json& v) noexcept
+        static void free_container(data& v) noexcept
         {
             JSON_ASSERT(has_no_children(v) || all_children_leaves(v));
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
                 AllocatorType<array_t> alloc;
-                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_data.m_value.array);
-                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_data.m_value.array, 1);
+                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_value.array);
+                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_value.array, 1);
             }
             else
             {
-                JSON_ASSERT(v.m_data.m_type == value_t::object);
+                JSON_ASSERT(v.m_type == value_t::object);
                 AllocatorType<object_t> alloc;
-                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_data.m_value.object);
-                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_data.m_value.object, 1);
+                std::allocator_traits<decltype(alloc)>::destroy(alloc, v.m_value.object);
+                std::allocator_traits<decltype(alloc)>::deallocate(alloc, v.m_value.object, 1);
             }
-            v.m_data.m_type = value_t::null; // avoid a double free if v is later destructed
+            v.m_type = value_t::null; // avoid a double free if v is later destructed
         }
 
 public:
@@ -41128,14 +41314,15 @@ public:
 
             // This json_value is not itself a basic_json, so the top-level
             // container is first moved into a local stand-in ("cur"); a
-            // default-constructed basic_json has a null pointer in its
-            // m_value (see data::m_value's initializer), so swapping it
-            // with *this leaves this union's own pointer null, and it is
-            // never looked at or freed a second time.
-            basic_json cur;
-            cur.m_data.m_type = t;
-            using std::swap;
-            swap(cur.m_data.m_value, *this);
+            // default-constructed data has a null pointer in its m_value
+            // (see data::m_value's initializer), so swapping it with *this
+            // leaves this union's own pointer null, and it is never looked
+            // at or freed a second time. The stand-ins are data, not
+            // basic_json, so that destroying a value never constructs a
+            // CustomBaseClass, whose constructor may allocate (#5995).
+            data cur;
+            cur.m_type = t;
+            std::swap(cur.m_value, *this);
 
             destroy_bounded(cur, 0);
         }
@@ -41144,7 +41331,7 @@ public:
         // The first recursion_depth_limit() levels are destroyed by plain
         // recursion, which is the fastest way and cannot throw; anything
         // nested deeper is handed to destroy_walk(), which uses no call stack.
-        static void destroy_bounded(basic_json& v, std::size_t depth) noexcept
+        static void destroy_bounded(data& v, std::size_t depth) noexcept
         {
             if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
             {
@@ -41152,23 +41339,23 @@ public:
                 return;
             }
 
-            if (v.m_data.m_type == value_t::array)
+            if (v.m_type == value_t::array)
             {
-                for (auto& child : *v.m_data.m_value.array)
+                for (auto& child : *v.m_value.array)
                 {
                     if (child.m_data.m_type == value_t::array || child.m_data.m_type == value_t::object)
                     {
-                        destroy_bounded(child, depth + 1);
+                        destroy_bounded(child.m_data, depth + 1);
                     }
                 }
             }
             else
             {
-                for (auto& child : *v.m_data.m_value.object)
+                for (auto& child : *v.m_value.object)
                 {
                     if (child.second.m_data.m_type == value_t::array || child.second.m_data.m_type == value_t::object)
                     {
-                        destroy_bounded(child.second, depth + 1);
+                        destroy_bounded(child.second.m_data, depth + 1);
                     }
                 }
             }
@@ -41195,18 +41382,15 @@ public:
         // array/object, which neither allocates nor recurses more
         // than one level deep.
         //
-        // This json_value is not itself a basic_json, so the
-        // top-level container is first moved into a local stand-in
-        // ("cur"); a default-constructed basic_json has a null
-        // pointer in its m_value (see data::m_value's initializer),
-        // so swapping it with *this leaves this union's own pointer
-        // null, and it is never looked at or freed a second time.
-        static void destroy_walk(basic_json& top) noexcept
+        // Like destroy_container(), the walk keeps the containers it
+        // holds in data stand-ins (cur, prev, gp, tmp), which never
+        // construct a CustomBaseClass.
+        static void destroy_walk(data& top) noexcept
         {
-            basic_json cur;
+            data cur;
             take(cur, top);
 
-            basic_json prev; // value_t::null: no parent
+            data prev; // value_t::null: no parent
 
             // true right after cur was entered: its children have not been
             // looked at yet. If none of them has children of its own, cur is
@@ -41220,7 +41404,7 @@ public:
                 fresh = false;
                 if (has_no_children(cur) || (fresh_now && all_children_leaves(cur)))
                 {
-                    if (prev.m_data.m_type == value_t::null)
+                    if (prev.m_type == value_t::null)
                     {
                         free_container(cur);
                         return; // back at the top with nothing left to do
@@ -41229,7 +41413,7 @@ public:
                     // ascend: detach the grandparent link from prev's
                     // walk_child() slot, drop that (now null) slot, free cur
                     // (it is empty), then move up one level
-                    basic_json gp;
+                    data gp;
                     take(gp, walk_child(prev));
                     pop_walk_child(prev);
 
@@ -41240,7 +41424,7 @@ public:
                     continue;
                 }
 
-                basic_json& cur_child_ref = walk_child(cur);
+                data& cur_child_ref = walk_child(cur);
 
                 if (has_no_children(cur_child_ref))
                 {
@@ -41252,7 +41436,7 @@ public:
                 // descend into the non-empty child, reversing the
                 // link: its slot takes over prev, and the child becomes
                 // the new cur
-                basic_json tmp;
+                data tmp;
                 take(tmp, cur_child_ref);
                 take(cur_child_ref, prev);
                 take(prev, cur);
@@ -41289,14 +41473,14 @@ public:
                     destroy_container(t);
                     break;
 
-                case value_t::null:
+                case value_t::null: // LCOV_EXCL_LINE
                 case value_t::boolean:
                 case value_t::number_integer:
                 case value_t::number_unsigned:
                 case value_t::number_float:
                 case value_t::discarded:
                 default:
-                    break;
+                    break; // LCOV_EXCL_LINE
             }
         }
     };
@@ -41469,9 +41653,9 @@ public:
         return is_array() ? array_capacity() : object_capacity();
     }
 #else
-    static constexpr std::size_t container_capacity() noexcept
+    static constexpr std::size_t container_capacity() noexcept // LCOV_EXCL_LINE
     {
-        return detail::unknown_size();
+        return detail::unknown_size(); // LCOV_EXCL_LINE
     }
 #endif
 
@@ -41657,7 +41841,7 @@ public:
     ///       into this switch is worth a few percent when copying a value made
     ///       mostly of numbers
     JSON_HEDLEY_ALWAYS_INLINE
-    static void copy_leaf_value(const basic_json& src, basic_json& dst)
+    static void copy_leaf_value(const basic_json& src, basic_json& dst) // LCOV_EXCL_LINE
     {
         switch (src.m_data.m_type)
         {
@@ -41831,7 +42015,7 @@ public:
         auto src_it = src_object.cbegin();
         for (auto& element : *dst.m_data.m_value.object)
         {
-            if (JSON_HEDLEY_LIKELY(src_it != src_object.cend() && copy_keys_equal(src_it->first, element.first)))
+            if (JSON_HEDLEY_LIKELY(copy_keys_equal(src_it->first, element.first)))
             {
                 copy_shallow(src_it->second, element.second, worklist);
                 ++src_it;
@@ -45170,6 +45354,30 @@ public:
         return {it, res.second};
     }
 
+  private:
+    /// Sets the parents of a value when it goes out of scope, also when an
+    /// exception is thrown: a container insertion that throws may already
+    /// have added elements, whose parents must be set for the value to stay
+    /// valid (basic exception guarantee). Does nothing without JSON_DIAGNOSTICS.
+    class set_parents_on_exit
+    {
+      public:
+        explicit set_parents_on_exit(basic_json* v) noexcept : m_value(v) {}
+        set_parents_on_exit(const set_parents_on_exit&) = delete;
+        set_parents_on_exit& operator=(const set_parents_on_exit&) = delete;
+        set_parents_on_exit(set_parents_on_exit&&) = delete;
+        set_parents_on_exit& operator=(set_parents_on_exit&&) = delete;
+
+        ~set_parents_on_exit()
+        {
+            m_value->set_parents();
+        }
+
+      private:
+        basic_json* m_value;
+    };
+
+  public:
     /// Helper for insertion of an iterator
     /// @note: This uses std::distance to support GCC 4.8,
     ///        see https://github.com/nlohmann/json/pull/1257
@@ -45179,6 +45387,7 @@ public:
         iterator result(this);
         JSON_ASSERT(m_data.m_value.array != nullptr);
 
+        const set_parents_on_exit parents(this);
         auto insert_pos = std::distance(m_data.m_value.array->begin(), pos.m_it.array_iterator);
         m_data.m_value.array->insert(pos.m_it.array_iterator, std::forward<Args>(args)...);
         result.m_it.array_iterator = m_data.m_value.array->begin() + insert_pos;
@@ -45187,7 +45396,6 @@ public:
         // result.m_it.array_iterator = m_data.m_value.array->insert(pos.m_it.array_iterator, cnt, val);
         // but the return value of insert is missing in GCC 4.8, so it is written this way instead.
 
-        set_parents();
         return result;
     }
 
@@ -45207,8 +45415,16 @@ public:
             throw_iterator_from_other_value(this);
         }
 
-        // insert to array and return iterator
-        return insert_iterator(pos, val);
+        // vector::insert has no effects if copying a single element to the
+        // end throws; elsewhere, it may already have shifted the elements, so
+        // copy first and insert by move, which cannot throw but by allocating
+        if (pos.m_it.array_iterator == m_data.m_value.array->end())
+        {
+            return insert_iterator(pos, val);
+        }
+
+        basic_json tmp(val);
+        return insert_iterator(pos, std::move(tmp));
     }
 
     /// @brief inserts element into array
@@ -45340,8 +45556,8 @@ public:
             detail::throw_literal<invalid_iterator>(detail::exception_id::iterator_from_other_value, "iterators first and last must point to objects", this);
         }
 
+        const set_parents_on_exit parents(this);
         m_data.m_value.object->insert(first.m_it.object_iterator, last.m_it.object_iterator);
-        set_parents();
     }
 
     /// @brief updates a JSON object from another object, overwriting existing keys
@@ -45609,8 +45825,7 @@ public:
     /// @name lexicographical comparison operators
     /// @{
 
-    // the same-type cases for non-owning scalars, shared by JSON_IMPLEMENT_OPERATOR
-    // and JSON_IMPLEMENT_SCALAR_FAST
+    // the same-type cases for non-owning scalars, used by JSON_IMPLEMENT_SCALAR_FAST
 #define JSON_IMPLEMENT_SCALAR_CASES(op, null_result)                                                     \
   case value_t::null:                                                                                  \
         return (null_result);                                                                            \
@@ -45632,7 +45847,7 @@ public:
     // because any negative signed value is smaller than any unsigned value.
     // Otherwise, the non-negative signed value is cast to unsigned before the
     // comparison to avoid wraparound.
-#define JSON_IMPLEMENT_OPERATOR(op, null_result, unordered_result, default_result, deep_result, may_descend) \
+#define JSON_IMPLEMENT_OPERATOR(op, unordered_result, default_result, deep_result, may_descend)          \
     const auto lhs_type = lhs.type();                                                                    \
     const auto rhs_type = rhs.type();                                                                    \
     \
@@ -45660,8 +45875,15 @@ public:
                 return (*lhs.m_data.m_value.object) op (*rhs.m_data.m_value.object);                                   \
             }                                                                                            \
             \
-            JSON_IMPLEMENT_SCALAR_CASES(op, null_result)                                                 \
-            \
+                /* same-type scalars never get here: the inline fast path of the operator handles them */ \
+            case value_t::null:                                                                          \
+            case value_t::boolean:                                                                       \
+            case value_t::number_integer:                                                                \
+            case value_t::number_unsigned:                                                               \
+            case value_t::number_float:                                                                  \
+                JSON_ASSERT(false); /* NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) */ \
+                return (unordered_result);                                                               \
+                \
             case value_t::string:                                                                        \
                 return (*lhs.m_data.m_value.string) op (*rhs.m_data.m_value.string);                                   \
                 \
@@ -45701,7 +45923,7 @@ public:
                ? (number_integer_t(-1) op number_integer_t(1))                                           \
                : (static_cast<number_unsigned_t>(lhs.m_data.m_value.number_integer) op rhs.m_data.m_value.number_unsigned); \
     }                                                                                             \
-    else if(compares_unordered(lhs, rhs))\
+    else if(lhs_type == value_t::discarded || rhs_type == value_t::discarded)\
     {\
         return (unordered_result);\
     }\
@@ -45769,7 +45991,7 @@ public:
         JSON_HEDLEY_DIAGNOSTIC_PUSH
         JSON_HEDLEY_PRAGMA(GCC diagnostic ignored "-Wfloat-equal")
 #endif
-        JSON_IMPLEMENT_OPERATOR( ==, true, false, false,
+        JSON_IMPLEMENT_OPERATOR( ==, false, false,
                                  compare_iteratively<false>(lhs, rhs, false) == compare_result::equal, true)
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_POP
@@ -45783,7 +46005,6 @@ public:
         // default_result is used if we cannot compare values. In that case,
         // we compare types.
         JSON_IMPLEMENT_OPERATOR(<=>, // *NOPAD*
-                                std::partial_ordering::equivalent,
                                 std::partial_ordering::unordered,
                                 lhs_type <=> rhs_type, // *NOPAD*
                                 to_partial_ordering(compare_iteratively<true>(lhs, rhs, false)), true)
@@ -45795,7 +46016,7 @@ public:
         // default_result is used if we cannot compare values. In that case,
         // we compare types. Note we have to call the operator explicitly,
         // because MSVC has problems otherwise.
-        JSON_IMPLEMENT_OPERATOR( <, false, false, operator<(lhs_type, rhs_type),
+        JSON_IMPLEMENT_OPERATOR( <, false, operator<(lhs_type, rhs_type),
                                  compare_iteratively<true>(lhs, rhs, true) == compare_result::less, false)
     }
 #endif
@@ -45810,7 +46031,7 @@ public:
     ///       their inlined code at each call site small. Binary values are
     ///       rare and left to equal_general().
     JSON_HEDLEY_ALWAYS_INLINE
-    static int equal_leaf(const_reference lhs, const_reference rhs) noexcept
+    static int equal_leaf(const_reference lhs, const_reference rhs) noexcept // LCOV_EXCL_LINE
     {
 #ifdef __GNUC__
         JSON_HEDLEY_DIAGNOSTIC_PUSH
@@ -47119,7 +47340,7 @@ public:
         basic_json result(value_t::object);
         json_pointer::flatten("", *this, result);
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief unflatten a previously flattened JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/unflatten/
@@ -47832,7 +48053,7 @@ public:
         result.append(path.data(), path.size());
         diff_append_key(result, key);
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief the path of the element @a index of the value at @a path
     static string_t diff_index_path(const string_t& path, const std::size_t index)
@@ -47842,7 +48063,7 @@ public:
         result.append(path.data(), path.size());
         diff_append_index(result, index);
         return result;
-    }
+    } // LCOV_EXCL_LINE (exception cleanup only)
 
     /// @brief append the "remove" operations for the elements of array
     ///        @a source from @a index on, and the "add" operations for the
@@ -48002,7 +48223,7 @@ public:
         // operations
         if (source == target)
         {
-            return false;
+            return false; // LCOV_EXCL_LINE (equal objects with the same members in the same order return early)
         }
 
         // slow path: the common keys are in a different relative
@@ -48767,6 +48988,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 #undef JSON_DISABLE_ENUM_SERIALIZATION
 #undef JSON_DISABLE_TUPLE_REFERENCE_CONVERSION
 #undef JSON_UNLOCKED_FILE_IO
+#undef JSON_FILE_WINDOW
 #undef JSON_DTOA_SSE2
 #undef JSON_DTOA_NEON
 #undef JSON_LITTLE_ENDIAN_TARGET

@@ -19,11 +19,13 @@
 using nlohmann::json;
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <fstream>
 #include <istream>
+#include <limits>
 #include <random>
 #include <sstream>
 #include <streambuf>
@@ -92,6 +94,34 @@ class chunked_streambuf : public std::streambuf
     std::size_t m_chunk_size;
     std::size_t m_unbuffered;
 };
+
+#if TEST_STREAM_BULK_SCAN
+// A streambuf that claims a get area of several gigabytes, of which only the
+// first bytes exist. It is only used to move the read position of the adapter,
+// never to read beyond them, so that skipping more than gbump() can bump at
+// once can be tested without allocating that much.
+class oversized_get_area_streambuf : public std::streambuf
+{
+  public:
+    explicit oversized_get_area_streambuf(std::size_t claimed_size)
+    {
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        setg(m_data.data(), m_data.data(), m_data.data() + claimed_size);
+    }
+
+    // Give the get area back its real size, so that the adapter may read the
+    // character at the read position when it is destroyed (with
+    // JSON_PRECISE_STREAM_POSITION, it consumes the last character returned).
+    void restore_get_area()
+    {
+        setg(m_data.data(), m_data.data(), m_data.data() + m_data.size());
+    }
+
+  private:
+    std::array<char, 8> m_data{{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}};
+};
+
+#endif
 
 // how a test reads from the stream
 enum class read_mode
@@ -433,6 +463,39 @@ TEST_CASE("parsing from a std::istream scans the get area in bulk")
         ia.copy_token(token, false);
         CHECK(token.empty());
     }
+
+#if SIZE_MAX > UINT32_MAX
+    // a get area larger than an int needs a 64-bit std::size_t (checked by the
+    // preprocessor, as a constant condition triggers MSVC's C4127)
+    SECTION("skipping more characters than gbump() takes at once")
+    {
+        // gbump() takes an int, but a get area can be larger
+        const std::size_t claimed = std::size_t{3} << 30u;
+        oversized_get_area_streambuf buf(claimed);
+        if (static_cast<std::size_t>(buf.in_avail()) != claimed)
+        {
+            // a standard library whose streambuf stores the size of the get
+            // area in an int (MSVC)
+            MESSAGE("a get area larger than an int is not supported");
+        }
+        else
+        {
+            std::istream is(&buf);
+            nlohmann::detail::input_stream_adapter ia(is);
+            CHECK(ia.get_character() == 'a');
+            CHECK(ia.bulk_remaining() == claimed - 1);
+
+            const std::size_t skipped = static_cast<std::size_t>((std::numeric_limits<int>::max)()) + 10;
+            ia.bulk_skip(skipped);
+            CHECK(ia.bulk_remaining() == claimed - 1 - skipped);
+
+            ia.bulk_skip(ia.bulk_remaining());
+            CHECK(ia.bulk_remaining() == 0);
+
+            buf.restore_get_area();
+        }
+    }
+#endif
 #endif
 
     SECTION("SAX parsing from a stream")

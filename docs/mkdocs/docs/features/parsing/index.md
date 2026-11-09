@@ -35,6 +35,8 @@ std::ifstream f("example.json");
 json data = json::parse(f);
 ```
 
+See [Reading and writing files](../files.md) for checking that the file was opened and for writing files safely.
+
 The input must be encoded in UTF-8; other encodings are not supported. The exception is wide-character input, which
 is read as UTF-16 or UTF-32 — depending on the character type — and converted to UTF-8; see the
 [`parse`](../../api/basic_json/parse.md) page for an example. A single input may contain only one JSON value.
@@ -75,7 +77,7 @@ them faster than others:
 |--------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
 | strings, string views, string literals, contiguous containers, pointer or iterator ranges over contiguous memory | the whole input is scanned in bulk: runs of string characters, numbers, and indentation are recognized several bytes at a time |
 | `#!cpp std::istream` (`#!cpp std::ifstream`, `#!cpp std::istringstream`, ...)            | the characters the stream buffer holds are scanned in bulk like a string; the stream buffer is asked for more when they are used up |
-| `#!cpp FILE*`                                                                              | one character at a time, with the file locked once for the whole parse              |
+| `#!cpp FILE*`                                                                              | with glibc and the Apple C library, the characters the `FILE` holds in its buffer are scanned in bulk like a stream's; elsewhere one character at a time; the file is locked once for the whole parse |
 | other iterator ranges (e.g., `#!cpp std::list<char>`, `#!cpp std::istreambuf_iterator<char>`), wide strings | one character at a time                                                             |
 
 Parsing a file from a `#!cpp std::ifstream` is therefore only about 10 to 20 % slower than reading the whole file into a
@@ -83,6 +85,9 @@ Parsing a file from a `#!cpp std::ifstream` is therefore only about 10 to 20 % s
 ahead: after parsing, it is positioned exactly as if every character had been read one at a time, so
 [`operator>>`](../../api/operator_gtgt.md) can still read several values from one stream (see also
 [JSON Lines](json_lines.md)).
+
+This does not hold for [`json_document`](../json_view.md): it reads a stream into a buffer it owns, so the stream saves
+no memory, and reading the file into a `#!cpp std::string` yourself and borrowing it is about 6 to 12 % faster.
 
 Two macros switch these optimizations off without changing any result:
 [`JSON_DISABLE_STREAM_BULK_SCAN`](../../api/macros/json_disable_stream_bulk_scan.md) for stream buffers that do not
