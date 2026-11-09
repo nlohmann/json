@@ -1,0 +1,66 @@
+<svg class="nj-fig nj-charts nj-charts--swar" viewBox="0 0 600 430" role="img" aria-labelledby="nj-blog-digits nj-blog-digits-d" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-blog-digits">Converting eight A&#8203;SCII digits to their value with three multiplications</title>
+<desc id="nj-blog-digits-d">The text 12345678 as one word. Masking gives the digit values 1 to 8, one per byte. Multiplying by 10 times 2 to the 8 plus 1 and shifting gives 12, 34, 56 and 78 in 16-bit lanes; multiplying by 100 times 2 to the 16 plus 1 gives 1234 and 5678 in 32-bit lanes; multiplying by 10000 times 2 to the 32 plus 1 gives 12345678.</desc>
+<text class="fg-h" x="40" y="20">eight A&#8203;SCII digits in one 64-bit word (byte 0 is the lowest)</text>
+<rect class="fg-cell" x="40" y="30" width="58" height="34" rx="4"/>
+<text class="fg-code" x="69" y="53" text-anchor="middle">1</text>
+<text class="nj-charts-tick" x="69" y="80">0x31</text>
+<rect class="fg-cell" x="104" y="30" width="58" height="34" rx="4"/>
+<text class="fg-code" x="133" y="53" text-anchor="middle">2</text>
+<text class="nj-charts-tick" x="133" y="80">0x32</text>
+<rect class="fg-cell" x="168" y="30" width="58" height="34" rx="4"/>
+<text class="fg-code" x="197" y="53" text-anchor="middle">3</text>
+<text class="nj-charts-tick" x="197" y="80">0x33</text>
+<rect class="fg-cell" x="232" y="30" width="58" height="34" rx="4"/>
+<text class="fg-code" x="261" y="53" text-anchor="middle">4</text>
+<text class="nj-charts-tick" x="261" y="80">0x34</text>
+<rect class="fg-cell" x="296" y="30" width="58" height="34" rx="4"/>
+<text class="fg-code" x="325" y="53" text-anchor="middle">5</text>
+<text class="nj-charts-tick" x="325" y="80">0x35</text>
+<rect class="fg-cell" x="360" y="30" width="58" height="34" rx="4"/>
+<text class="fg-code" x="389" y="53" text-anchor="middle">6</text>
+<text class="nj-charts-tick" x="389" y="80">0x36</text>
+<rect class="fg-cell" x="424" y="30" width="58" height="34" rx="4"/>
+<text class="fg-code" x="453" y="53" text-anchor="middle">7</text>
+<text class="nj-charts-tick" x="453" y="80">0x37</text>
+<rect class="fg-cell" x="488" y="30" width="58" height="34" rx="4"/>
+<text class="fg-code" x="517" y="53" text-anchor="middle">8</text>
+<text class="nj-charts-tick" x="517" y="80">0x38</text>
+<text class="fg-h" x="40" y="112">&amp; 0x0F0F0F0F0F0F0F0F: one digit value per byte</text>
+<rect class="fg-cell" x="40" y="122" width="58" height="34" rx="4"/>
+<text class="fg-code" x="69" y="145" text-anchor="middle">1</text>
+<rect class="fg-cell" x="104" y="122" width="58" height="34" rx="4"/>
+<text class="fg-code" x="133" y="145" text-anchor="middle">2</text>
+<rect class="fg-cell" x="168" y="122" width="58" height="34" rx="4"/>
+<text class="fg-code" x="197" y="145" text-anchor="middle">3</text>
+<rect class="fg-cell" x="232" y="122" width="58" height="34" rx="4"/>
+<text class="fg-code" x="261" y="145" text-anchor="middle">4</text>
+<rect class="fg-cell" x="296" y="122" width="58" height="34" rx="4"/>
+<text class="fg-code" x="325" y="145" text-anchor="middle">5</text>
+<rect class="fg-cell" x="360" y="122" width="58" height="34" rx="4"/>
+<text class="fg-code" x="389" y="145" text-anchor="middle">6</text>
+<rect class="fg-cell" x="424" y="122" width="58" height="34" rx="4"/>
+<text class="fg-code" x="453" y="145" text-anchor="middle">7</text>
+<rect class="fg-cell" x="488" y="122" width="58" height="34" rx="4"/>
+<text class="fg-code" x="517" y="145" text-anchor="middle">8</text>
+<text class="fg-h" x="40" y="186">× (10 · 2⁸ + 1) &gt;&gt; 8, every second byte kept: two digits per 16 bits</text>
+<rect class="fg-cell" x="40" y="196" width="122" height="34" rx="4"/>
+<text class="fg-code" x="101" y="219" text-anchor="middle">12</text>
+<rect class="fg-cell" x="168" y="196" width="122" height="34" rx="4"/>
+<text class="fg-code" x="229" y="219" text-anchor="middle">34</text>
+<rect class="fg-cell" x="296" y="196" width="122" height="34" rx="4"/>
+<text class="fg-code" x="357" y="219" text-anchor="middle">56</text>
+<rect class="fg-cell" x="424" y="196" width="122" height="34" rx="4"/>
+<text class="fg-code" x="485" y="219" text-anchor="middle">78</text>
+<text class="fg-h" x="40" y="260">× (100 · 2¹⁶ + 1) &gt;&gt; 16, every second lane kept: four digits per 32 bits</text>
+<rect class="fg-cell" x="40" y="270" width="250" height="34" rx="4"/>
+<text class="fg-code" x="165" y="293" text-anchor="middle">1234</text>
+<rect class="fg-cell" x="296" y="270" width="250" height="34" rx="4"/>
+<text class="fg-code" x="421" y="293" text-anchor="middle">5678</text>
+<text class="fg-h" x="40" y="334">× (10000 · 2³² + 1) &gt;&gt; 32: the value</text>
+<rect class="fg-cell" x="40" y="344" width="506" height="34" rx="4"/>
+<rect class="nj-charts-c1" fill-opacity=".25" x="40" y="344" width="506" height="34" rx="4"/>
+<text class="fg-code" x="293" y="367" text-anchor="middle">12345678</text>
+<text class="fg-note fg-note--l" x="40" y="400">Each step combines neighboring lanes, in all lanes of the word at once:</text>
+<text class="fg-note fg-note--l" x="40" y="418">three multiplications instead of eight, and no branch.</text>
+</svg>

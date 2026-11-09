@@ -41,7 +41,7 @@ members [`set`](basic_json_document/set.md) added — instead of sorting them li
   specialization
 - [Object Order](../features/object_order.md) - preserving the insertion order of object keys
 - [Edits](basic_json_document/index.md#edits) - what an edit guarantees
-- [Zero-copy JSON views](../features/json_view.md#editing-a-document) - editing a document in place and writing it back
+- [Zero-copy JSON views](../features/json_view/editing.md) - editing a document in place and writing it back
 
 ## Version history
 

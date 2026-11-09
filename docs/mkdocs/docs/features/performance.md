@@ -40,7 +40,7 @@ optimization but not the second, since the byte-scanning fast path requires cont
 
 Practically: a file can be passed directly to `parse`, which also avoids the memory for a copy of the file. Reading it
 into a string first is no longer necessary for speed (this is for `#!cpp json::parse`; a
-[`json_document`](json_view.md) reads a stream into an owned buffer anyway, so for it reading the file into a string
+[`json_document`](json_view/index.md) reads a stream into an owned buffer anyway, so for it reading the file into a string
 and borrowing that is the faster way):
 
 ```cpp
@@ -73,12 +73,12 @@ a DOM, three alternatives avoid building it:
   discard finished elements as soon as they are handled, so memory usage stays bounded by one element (plus the
   unparsed remainder of the input) instead of the whole document — see the [recipe for streaming a large homogeneous
   array](parsing/parser_callbacks.md#recipe-streaming-a-large-homogeneous-array).
-- Parse into a [`json_document`](json_view.md) (`#!cpp <nlohmann/json_view.hpp>`) instead of a `basic_json`. It keeps
+- Parse into a [`json_document`](json_view/index.md) (`#!cpp <nlohmann/json_view.hpp>`) instead of a `basic_json`. It keeps
   the input text and builds a flat index of 16 bytes per value; strings and floating-point numbers are not copied, but
   read from the text when needed. Read-only [views](../api/basic_json_view/index.md) give the familiar element access, and only the
   parts you [`materialize()`](../api/basic_json_view/materialize.md) become `basic_json` values. A document that
   borrows the text instead of owning a copy needs the text to outlive it; see
-  [choosing between `json`, the SAX interface, and `json_view`](json_view.md#choosing-between-json-ordered_json-the-sax-interface-and-json_view).
+  [choosing between `json`, the SAX interface, and `json_view`](json_view/index.md#choosing-between-json-ordered_json-the-sax-interface-and-json_view).
 
 If the data is naturally record-oriented, consider [JSON Lines](parsing/json_lines.md) instead of one large JSON
 document: reading and parsing it line by line with `#!cpp std::getline` means only one line's value is ever in memory
@@ -182,11 +182,11 @@ an adapter, since their template argument order does not match what `basic_json`
   large value therefore doubles its memory; see [Avoiding copies](#avoiding-copies). `#!cpp auto x = j["key"];` is a
   copy, `#!cpp auto& x = j["key"];` is not.
 - **A moved-from value is `null`.** After `#!cpp json c = std::move(a);` the value `a` is `#!json null` and owns nothing.
-- **Reading does not require a tree.** If you only read the data, parse it into a [`json_document`](json_view.md)
+- **Reading does not require a tree.** If you only read the data, parse it into a [`json_document`](json_view/index.md)
   (`#!cpp <nlohmann/json_view.hpp>`, added in version 3.13.0) instead of a `basic_json`. It stores 16 bytes per value, does not copy floating-point
   numbers or strings without escape sequences out of the text, and creates no `basic_json` value except for the parts
   you [`materialize()`](../api/basic_json_view/materialize.md). A document that borrows the text needs the text to
-  outlive it; see [Zero-copy JSON views](json_view.md).
+  outlive it; see [Zero-copy JSON views](json_view/index.md).
 - **Containers keep their capacity.** `clear()` and `erase()` on an array remove the elements, but the underlying
   `#!cpp std::vector` keeps its allocated capacity, like `#!cpp std::vector::clear` does. To give the memory back,
   assign a new value (`#!cpp j = json::array();`) or destroy the value.
@@ -267,7 +267,7 @@ those headers are then never processed by the compiler at all.
 - [Architecture](../home/architecture.md) - how input adapters, the lexer, and the serializer fit together
 - [Parsing](parsing/index.md) - the available parsing functions and inputs
 - [SAX interface](parsing/sax_interface.md) - parse without building a DOM
-- [Zero-copy JSON views](json_view.md) - parse into a flat index of the text and read it without building a DOM
+- [Zero-copy JSON views](json_view/index.md) - parse into a flat index of the text and read it without building a DOM
 - [Binary formats](binary_formats/index.md) - compact alternatives to JSON text
 - [Object Order](object_order.md) - `json` vs. `ordered_json` and other `ObjectType` choices
 - [Template Parameter Requirements](types/template_parameters.md) - custom container and allocator types

@@ -195,7 +195,7 @@ one-node scalar.
 - [`basic_json_view::dump`](../basic_json_view/dump.md) - serialize the document, keeping an untouched number's
   spelling with `#!cpp number_format::source`
 - [Edits](index.md#edits) - what an edit guarantees, for every overload
-- [Editing a document](../../features/json_view.md#editing-a-document) - why editable documents keep the source
+- [Editing a document](../../features/json_view/editing.md) - why editable documents keep the source
   text's order and number spelling
 
 ## Version history

@@ -438,7 +438,7 @@ A UBJSON or BJData high-precision number could not be parsed.
 ### json.exception.parse_error.116
 
 [`basic_json_document::load()`](../api/basic_json_document/load.md) rejected an
-[image](../features/json_view.md#images): either the bytes are not one [`save()`](../api/basic_json_document/save.md)
+[image](../features/json_view/images.md): either the bytes are not one [`save()`](../api/basic_json_document/save.md)
 could have written (too short, an unknown magic number or format version, or sizes that do not fit the buffer), or
 they are, but fail the requested [`image_check`](../api/basic_json_document/load.md#image_check).
 
@@ -450,7 +450,7 @@ they are, but fail the requested [`image_check`](../api/basic_json_document/load
 
 !!! note
 
-    This exception was added in version 3.13.0, together with [images](../features/json_view.md#images).
+    This exception was added in version 3.13.0, together with [images](../features/json_view/images.md).
 
 ## Iterator errors
 
@@ -889,12 +889,12 @@ from JSON text.
 
 !!! note
 
-    This exception was added in version 3.13.0, together with editable [`json_document`s](../features/json_view.md).
+    This exception was added in version 3.13.0, together with editable [`json_document`s](../features/json_view/editing.md).
 
 ### json.exception.type_error.320
 
 [`basic_json_document::save()`](../api/basic_json_document/save.md) cannot write an
-[image](../features/json_view.md#images) of a [discarded](../api/basic_json_document/is_discarded.md) document.
+[image](../features/json_view/images.md) of a [discarded](../api/basic_json_document/is_discarded.md) document.
 
 !!! failure "Example messages"
 
@@ -904,7 +904,7 @@ from JSON text.
 
 !!! note
 
-    This exception was added in version 3.13.0, together with [images](../features/json_view.md#images).
+    This exception was added in version 3.13.0, together with [images](../features/json_view/images.md).
 
 ### json.exception.type_error.321
 
@@ -1192,7 +1192,7 @@ so they do not support an input of 4294967280 bytes (4 GiB minus 16 bytes) or mo
 storage: [`set`](../api/basic_json_document/set.md) and [`push_back`](../api/basic_json_document/push_back.md) throw
 this exception once the strings and number tokens written by edits reach 4 GiB in total, or once more than
 4294967295 arrays/objects have had an element set or appended to them. The same limit applies to an
-[image](../features/json_view.md#images): [`save()`](../api/basic_json_document/save.md) throws it if the node
+[image](../features/json_view/images.md): [`save()`](../api/basic_json_document/save.md) throws it if the node
 count, the text, or the decoded strings it would write would individually reach 4 GiB.
 
 !!! failure "Example messages"
@@ -1209,7 +1209,7 @@ count, the text, or the decoded strings it would write would individually reach 
 
 !!! note
 
-    This exception was added in version 3.13.0, together with [`<nlohmann/json_view.hpp>`](../features/json_view.md).
+    This exception was added in version 3.13.0, together with [`<nlohmann/json_view.hpp>`](../features/json_view/index.md).
     [`basic_json::parse()`](../api/basic_json/parse.md) has no such limit.
 
 ## Further exceptions

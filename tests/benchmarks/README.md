@@ -138,6 +138,9 @@ the `View*` benchmarks (in `src/benchmarks_view.cpp`) are only built if the dire
 Only benchmarks present in both result files are compared, so for older releases, either filter the benchmarks or
 build that release's own `tests/benchmarks` against its own header.
 
+To find out *which commit* changed a number, [`history/`](history/README.md) times one fixed program against the
+header of every commit that changed it.
+
 ## Getting stable numbers
 
 - Build and run both versions on the same machine with the same compiler and Google Benchmark, one right after the

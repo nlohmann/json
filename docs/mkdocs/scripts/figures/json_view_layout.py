@@ -104,10 +104,8 @@ def ribbon(body, x0, y, cw, prefix, label=True):
 
 
 # ---------------------------------------------------------------- figure 1: parse() vs json_document
-def layout():
-    W, H, P = 840, 692, "jvl"
-    b = markers(P)
-    # --- panel A: basic_json::parse()
+def layout_tree(b, P):
+    """panel A: basic_json::parse(), y from 0 to 220"""
     b.append(text(16, 26, "basic_json::parse(): a tree, every array, object, and string in its own heap allocation", "nj-jsonview-h"))
     b.append(rect(16, 98, 60, 34, "nj-jsonview-box"))
     b.append(text(46, 120, "json", "nj-jsonview-mono", anchor="middle"))
@@ -117,7 +115,7 @@ def layout():
     rows = [('"port"', "6379", None), ('"price"', "19.9", "double: 19.90 is gone"), ('"tags"', "\u2022", None)]
     for i, (k, v, note) in enumerate(rows):
         y = 50 + i * 48
-        b.append(curve(192, 115, 226, y + 17, LINE, P, bend=0))
+        b.append(line(192, 115, 226, y + 17, LINE, P))
         b.append(rect(228, y, 180, 34, "nj-jsonview-heap"))
         b.append(text(240, y + 22, k, "nj-jsonview-mono", KEY))
         b.append(text(396, y + 22, v, "nj-jsonview-mono", NUM if i < 2 else LINE, anchor="end"))
@@ -132,8 +130,9 @@ def layout():
     b.append('<path class="nj-jsonview-sep" d="M624 %g V%g"/>' % (yt - 17, yt + 17))
     b.append(text(601, yt + 5, "json", "nj-jsonview-mono", anchor="middle"))
     b.append(text(647, yt + 5, "json", "nj-jsonview-mono", anchor="middle"))
-    b.append(curve(601, yt - 17, 706, 130, LINE, P, bend=-20))
-    b.append(curve(647, yt + 17, 706, 196, LINE, P, bend=20))
+    for x1, y1, y2 in ((601, yt - 17, 130), (647, yt + 17, 196)):
+        b.append('<path class="nj-jsonview-arr nj-jsonview-c-%s" d="M%g %g C%g %g %g %g %g %g" marker-end="url(#%s-%s)"/>'
+                 % (LINE, x1, y1, x1, y2, x1 + 40, y2, 706, y2, P, LINE))
     b.append(rect(708, 113, 126, 34, "nj-jsonview-heap"))
     b.append(text(771, 135, "std::string eu", "nj-jsonview-mono nj-jsonview-sm", STR, anchor="middle"))
     b.append(rect(708, 179, 126, 34, "nj-jsonview-heap"))
@@ -141,9 +140,10 @@ def layout():
     # legend
     b.append(rect(16, 186, 18, 14, "nj-jsonview-heap", rx=3))
     b.append(text(42, 198, "a separate heap allocation", "nj-jsonview-note"))
-    # --- panel B: json_document::parse()
-    y0 = 252
-    b.append('<path class="nj-jsonview-sep" d="M16 %g H824"/>' % (y0 - 18))
+
+
+def layout_index(b, P, y0):
+    """panel B: json_document::parse(), y from y0 - 16 to y0 + 440"""
     b.append(text(16, y0 + 10, "json_document::parse(): the source text stays where it is; one flat index of 16-byte nodes", "nj-jsonview-h"))
     b.append(text(16, y0 + 38, "source text, 54 bytes (borrowed, or owned by the document)", "nj-jsonview-note"))
     cw, rx0, ry = 14, 42, y0 + 48
@@ -185,6 +185,25 @@ def layout():
     b.append(curve(vx + 105, vy, n6x, ny + nh, STRUCT, P))
     b.append(text(30, ny + nh + 50, "integers are converted while parsing and kept in their node;", "nj-jsonview-note"))
     b.append(text(30, ny + nh + 68, "floats and strings point back into the text", "nj-jsonview-note"))
+
+
+TREE_DESC = ("The text {\"port\": 6379, \"price\": 19.90, \"tags\": [\"eu\", \"a\\\"b\"]} parsed by basic_json::parse(): "
+             "the root json value points to a std::map whose three nodes are separate heap allocations; the price is stored "
+             "as the double 19.9; the tags array is a std::vector of two json values, each pointing to its own std::string.")
+INDEX_DESC = ("The same text parsed by json_document::parse(): it keeps the 54 bytes of source text and builds a flat index of "
+              "nine 16-byte nodes in document order: object, key port, unsigned integer 6379 (the converted value is in the "
+              "node), key price, float, key tags, array, string eu, and an escaped string. Keys, the float, and the plain "
+              "string point back into the source text; the escaped string points into the document's buffer of decoded "
+              "strings. A json_view is two pointers: one to the document and one to a node, here the array.")
+
+
+def layout():
+    # both panels in one figure (features/json_view.md)
+    W, H, P = 840, 692, "jvl"
+    b = markers(P)
+    layout_tree(b, P)
+    b.append('<path class="nj-jsonview-sep" d="M16 234 H824"/>')
+    layout_index(b, P, 252)
     write("json_view_layout.svg", W, H, "fig-jvl-title",
           "The same J\u200bSON text parsed by basic_json::parse() and by json_document::parse()",
           "The text {\"port\": 6379, \"price\": 19.90, \"tags\": [\"eu\", \"a\\\"b\"]}. Top: basic_json::parse() builds a tree: "
@@ -195,6 +214,16 @@ def layout():
           "key tags, array, string eu, and an escaped string. Keys, the float, and the plain string point back into the "
           "source text; the escaped string points into the document's buffer of decoded strings. A json_view is two "
           "pointers: one to the document and one to a node, here the array.", b)
+    # each panel on its own (home/blog/how_3_13_0_got_faster.md), with their own marker ids
+    b = markers("jvlt")
+    layout_tree(b, "jvlt")
+    write("json_view_layout_tree.svg", W, 222, "fig-jvlt-title",
+          "A J\u200bSON text parsed by basic_json::parse()", TREE_DESC, b)
+    b = markers("jvli") + ['<g transform="translate(0 -236)">']
+    layout_index(b, "jvli", 252)
+    b.append('</g>')
+    write("json_view_layout_index.svg", W, H - 236, "fig-jvli-title",
+          "The same J\u200bSON text parsed by json_document::parse()", INDEX_DESC, b)
 
 
 # ---------------------------------------------------------------- figure 2: lifetimes

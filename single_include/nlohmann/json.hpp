@@ -24564,16 +24564,20 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        if (JSON_HEDLEY_LIKELY(m_object->m_data.m_type == value_t::array))
-        {
-            JSON_ASSERT(m_it.array_iterator != m_object->m_data.m_value.array->end());
-            return *m_it.array_iterator;
-        }
-
+        // objects are tested before arrays here and in the other operators:
+        // with arrays first, walking a document of objects such as
+        // twitter.json took 14% more cycles than with 3.12.0's switch; with
+        // objects first, no document walks slower than with 3.12.0
         if (JSON_HEDLEY_LIKELY(m_object->m_data.m_type == value_t::object))
         {
             JSON_ASSERT(m_it.object_iterator != m_object->m_data.m_value.object->end());
             return m_it.object_iterator->second;
+        }
+
+        if (JSON_HEDLEY_LIKELY(m_object->m_data.m_type == value_t::array))
+        {
+            JSON_ASSERT(m_it.array_iterator != m_object->m_data.m_value.array->end());
+            return *m_it.array_iterator;
         }
 
         // neither array nor object: a primitive value (null has no value to point to)
@@ -24593,16 +24597,16 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        if (JSON_HEDLEY_LIKELY(m_object->m_data.m_type == value_t::array))
-        {
-            JSON_ASSERT(m_it.array_iterator != m_object->m_data.m_value.array->end());
-            return &*m_it.array_iterator;
-        }
-
         if (JSON_HEDLEY_LIKELY(m_object->m_data.m_type == value_t::object))
         {
             JSON_ASSERT(m_it.object_iterator != m_object->m_data.m_value.object->end());
             return &(m_it.object_iterator->second);
+        }
+
+        if (JSON_HEDLEY_LIKELY(m_object->m_data.m_type == value_t::array))
+        {
+            JSON_ASSERT(m_it.array_iterator != m_object->m_data.m_value.array->end());
+            return &*m_it.array_iterator;
         }
 
         // neither array nor object: a primitive value
@@ -24633,15 +24637,15 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        if (JSON_HEDLEY_LIKELY(m_object->m_data.m_type == value_t::array))
-        {
-            ++m_it.array_iterator;
-            return *this;
-        }
-
         if (JSON_HEDLEY_LIKELY(m_object->m_data.m_type == value_t::object))
         {
             std::advance(m_it.object_iterator, 1);
+            return *this;
+        }
+
+        if (JSON_HEDLEY_LIKELY(m_object->m_data.m_type == value_t::array))
+        {
+            ++m_it.array_iterator;
             return *this;
         }
 
@@ -24669,15 +24673,15 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
     {
         JSON_ASSERT(m_object != nullptr);
 
-        if (JSON_HEDLEY_LIKELY(m_object->m_data.m_type == value_t::array))
-        {
-            --m_it.array_iterator;
-            return *this;
-        }
-
         if (JSON_HEDLEY_LIKELY(m_object->m_data.m_type == value_t::object))
         {
             std::advance(m_it.object_iterator, -1);
+            return *this;
+        }
+
+        if (JSON_HEDLEY_LIKELY(m_object->m_data.m_type == value_t::array))
+        {
+            --m_it.array_iterator;
             return *this;
         }
 
@@ -24702,14 +24706,14 @@ class iter_impl // NOLINT(cppcoreguidelines-special-member-functions,hicpp-speci
             return true;
         }
 
-        if (JSON_HEDLEY_LIKELY(m_object->m_data.m_type == value_t::array))
-        {
-            return (m_it.array_iterator == other.m_it.array_iterator);
-        }
-
         if (JSON_HEDLEY_LIKELY(m_object->m_data.m_type == value_t::object))
         {
             return (m_it.object_iterator == other.m_it.object_iterator);
+        }
+
+        if (JSON_HEDLEY_LIKELY(m_object->m_data.m_type == value_t::array))
+        {
+            return (m_it.array_iterator == other.m_it.array_iterator);
         }
 
         // neither array nor object: a primitive value

@@ -77,7 +77,7 @@ compile; see [`parse`](parse.md#notes).
 
 - [`parse`](parse.md) - deserialize from a compatible input
 - [`BasicJsonType::accept`](../basic_json/accept.md) - the corresponding function of `basic_json`
-- [Zero-copy JSON views](../../features/json_view.md#what-is-the-same-as-parse) - how parsing a document differs from, and matches, basic_json::parse
+- [Zero-copy JSON views](../../features/json_view/differences.md#what-is-the-same) - how parsing a document differs from, and matches, basic_json::parse
 
 ## Version history
 
