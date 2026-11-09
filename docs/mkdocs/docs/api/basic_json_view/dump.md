@@ -70,7 +70,7 @@ except that `#!cpp -0` is written as `#!cpp 0`, the way [`BasicJsonType::parse()
 `#!cpp number_format::source` copies every number exactly as written in the source text instead, with no exception
 for `#!cpp -0` — `#!cpp 1.50`, `#!cpp 1E2`, `#!cpp -0.0`, `#!cpp -0`, or all digits of an integer literal with more
 digits than any number type holds (such a literal is itself classified as a float, see
-[What is different](../../features/json_view.md#what-is-different)) — something `BasicJsonType` cannot do, since
+[What is different](../../features/json_view/differences.md)) — something `BasicJsonType` cannot do, since
 parsing already reduces every number to its parsed value.
 
 ## Examples
@@ -98,7 +98,7 @@ parsing already reduces every number to its parsed value.
 - [`operator<<`](operator_ltlt.md) - serialize this value to a stream
 - [`materialize`](materialize.md) - build a `BasicJsonType` value, e.g. to use `BasicJsonType::dump`'s `error_handler`
 - [`BasicJsonType::dump`](../basic_json/dump.md) - the corresponding function of `basic_json`
-- [Zero-copy JSON views](../../features/json_view.md#writing-a-view-back) - writing a view back without building a tree
+- [Zero-copy JSON views](../../features/json_view/reading.md#writing-a-view-back) - writing a view back without building a tree
 
 ## Version history
 

@@ -35,7 +35,7 @@ still referring to it seeing the change, see [Edits](basic_json_document/index.m
 - [`json_view`](json_view.md) - the corresponding read-only view
 - [`ordered_json_editable_view`](ordered_json_editable_view.md) - the corresponding view for
   `ordered_json_editable_document`
-- [Zero-copy JSON views](../features/json_view.md#editing-a-document) - editing a document in place and writing it back
+- [Zero-copy JSON views](../features/json_view/editing.md) - editing a document in place and writing it back
 
 ## Version history
 

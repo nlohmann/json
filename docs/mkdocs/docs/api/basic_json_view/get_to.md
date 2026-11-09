@@ -75,7 +75,7 @@ them with those of a default-constructed `T`.
 
 - [`get`](get.md) - convert the value to a given type
 - [`BasicJsonType::get_to`](../basic_json/get_to.md) - the corresponding function of `basic_json`
-- [Zero-copy JSON views](../../features/json_view.md#getting-values-out-without-copying) - which conversions avoid building a basic_json value
+- [Zero-copy JSON views](../../features/json_view/reading.md#getting-values-out-without-copying) - which conversions avoid building a basic_json value
 
 ## Version history
 

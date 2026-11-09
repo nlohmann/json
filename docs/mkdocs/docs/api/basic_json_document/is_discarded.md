@@ -43,7 +43,7 @@ When the document is discarded, [`root()`](root.md) returns a discarded view (it
 
 - [`parse`](parse.md) - deserialize from a compatible input
 - [`basic_json_view::is_discarded`](../basic_json_view/is_discarded.md) - return whether a view is invalid
-- [Zero-copy JSON views](../../features/json_view.md#what-is-the-same-as-parse) - how a discarded document arises
+- [Zero-copy JSON views](../../features/json_view/differences.md#what-is-the-same) - how a discarded document arises
 
 ## Version history
 
