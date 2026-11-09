@@ -22,7 +22,7 @@ Since 2016, the [README](https://github.com/nlohmann/json#readme) of this librar
 That sentence is still true, but the gap is a lot smaller now. Swap the 3.12.0 header for the 3.13.0 one, recompile, and
 the 182 benchmarks of the library's own suite run 3.0× as fast on an Apple M1 Max (geometric mean; 3.1× on an Intel
 MacBook Pro from 2016). Not a line of your code changes. Parsing typical documents got 3.1–4.3× as fast, and writing
-them 3.0–6.7×. The new version also adds [`json_document`](../../features/json_view.md), a second way to hold a parsed
+them 3.0–6.7×. The new version also adds [`json_document`](../../features/json_view/index.md), a second way to hold a parsed
 document, which competes with the fastest C++ and Rust JSON libraries; [How it compares](#how-it-compares) has the
 numbers, including where it loses. The price is compile time: two small example programs take 34–62% longer to compile.
 A precompiled header or a C++20 module wins back most or all of that in debug builds, and 41–91% of it in optimized
@@ -397,7 +397,7 @@ runs one word first. Inlining the vector code into the lexer cost 5% of validati
 no string of that file is long enough to reach it: the scan function, which runs once per token, saved more registers
 and needed a stack slot.
 
-[`json_document`](../../features/json_view.md), the new document type of `json_view.hpp`, also skips the digits after a
+[`json_document`](../../features/json_view/index.md), the new document type of `json_view.hpp`, also skips the digits after a
 decimal point 16 bytes at a time with SSE2: a compare and a bit mask instead of a branch per digit, about 33% of the
 instructions for a 12-digit fraction. Parsing `canada.json` got 22% faster on x86-64, a file of 10,000 floats 28–32%.
 
@@ -1132,7 +1132,7 @@ million small objects 1.39×.
 After all of the above, [`json::parse()`](../../api/basic_json/parse.md) is still bound by what it builds: one heap
 allocation per string, array and object, and a `std::map` node per member, all of which have to be freed again. Many
 programs only parse a document, read some fields and throw it away, or change a few values and write it back. For them,
-3.13.0 adds [`json_document`](../../features/json_view.md) and `json_view` in a new header, `<nlohmann/json_view.hpp>`.
+3.13.0 adds [`json_document`](../../features/json_view/index.md) and `json_view` in a new header, `<nlohmann/json_view.hpp>`.
 The two figures below show what each parser makes of this 54-byte text:
 
 ```json
@@ -1215,7 +1215,7 @@ static_assert(sizeof(node) == 16, "node must stay 16 bytes");
 ### It can be edited, too
 
 A read-only index is the easy case, and a fair objection is that `json_document` is only fast because it can't change.
-[`json_editable_document`](../../features/json_view.md#editing-a-document) has `set()`, `insert()`, `erase()` and
+[`json_editable_document`](../../features/json_view/editing.md) has `set()`, `insert()`, `erase()` and
 `push_back()`. An edit never writes into the source text and never moves the parsed index:
 
 - a new scalar is written over its own node, with new string and number text in an append-only arena;
