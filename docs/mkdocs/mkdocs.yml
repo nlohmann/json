@@ -104,6 +104,8 @@ nav:
           - 'v2.0.0': home/releases/v2.0.0.md
           - 'v1.1.0': home/releases/v1.1.0.md
           - 'v1.0.0': home/releases/v1.0.0.md
+      - Blog:
+          - 'How 3.13.0 got faster': home/blog/how_3_13_0_got_faster.md
       - home/design_goals.md
       - home/architecture.md
       - home/customers.md
@@ -610,6 +612,7 @@ plugins:
         Home:
           - index.md
           - home/*.md
+          - home/blog/*.md
         Features:
           - features/*.md
           - features/binary_formats/*.md
