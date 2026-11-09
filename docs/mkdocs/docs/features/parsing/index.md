@@ -86,7 +86,7 @@ ahead: after parsing, it is positioned exactly as if every character had been re
 [`operator>>`](../../api/operator_gtgt.md) can still read several values from one stream (see also
 [JSON Lines](json_lines.md)).
 
-This does not hold for [`json_document`](../json_view.md): it reads a stream into a buffer it owns, so the stream saves
+This does not hold for [`json_document`](../json_view/index.md): it reads a stream into a buffer it owns, so the stream saves
 no memory, and reading the file into a `#!cpp std::string` yourself and borrowing it is about 6 to 12 % faster.
 
 Two macros switch these optimizations off without changing any result:
@@ -115,7 +115,7 @@ The library offers two parsing models, and a third, read-only alternative:
   reads the same JSON grammar but builds a flat, read-only index of the values instead of a `basic_json` tree. Strings and
   floating-point numbers are read from the text on demand, and only the parts you
   [`materialize()`](../../api/basic_json_view/materialize.md) become `basic_json` values. This avoids most of the work when you
-  need only a few values from a large or frequently parsed text; see [Zero-copy JSON views](../json_view.md). It is read-only, so use
+  need only a few values from a large or frequently parsed text; see [Zero-copy JSON views](../json_view/index.md). It is read-only, so use
   `parse` when you need to modify the value.
 
 You can influence a DOM parse without switching to the SAX interface by passing a
@@ -139,7 +139,7 @@ json_document doc = json_document::parse(R"({"happy": true, "pi": 3.141})");
 std::cout << doc.root()["happy"].get<bool>() << '\n';
 ```
 
-See [Zero-copy JSON views](../json_view.md) for the concept and the trade-offs.
+See [Zero-copy JSON views](../json_view/index.md) for the concept and the trade-offs.
 
 ## Exceptions
 
@@ -158,7 +158,7 @@ options.
 - [Large, streamed, and partial input](large_and_partial_input.md) - chunked, concatenated, and very large input
 - [parser callbacks](parser_callbacks.md) - influence the parsing by a callback function
 - [SAX interface](sax_interface.md) - implement a custom SAX handler
-- [Zero-copy JSON views](../json_view.md) - parse into a read-only document and read it through views
+- [Zero-copy JSON views](../json_view/index.md) - parse into a read-only document and read it through views
 - [parsing and exceptions](parse_exceptions.md) - control error handling
 - [parsing untrusted input](untrusted_input.md) - what to consider when parsing input from untrusted sources
 - [`operator>>`](../../api/operator_gtgt.md) - deserialize from stream

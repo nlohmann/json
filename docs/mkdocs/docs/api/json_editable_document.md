@@ -10,7 +10,7 @@ This type is an **editable** [`basic_json_document`](basic_json_document/index.m
 [`json`](json.md) specialization: in addition to everything [`json_document`](json_document.md) offers,
 [`set`](basic_json_document/set.md) and [`push_back`](basic_json_document/push_back.md) change values after
 parsing, without ever rewriting the source text — see [Edits](basic_json_document/index.md#edits) and
-[Editing a document](../features/json_view.md#editing-a-document).
+[Editing a document](../features/json_view/editing.md).
 
 ## Examples
 

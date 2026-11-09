@@ -34,7 +34,7 @@ This type is a [`basic_json_view`](basic_json_view/index.md) of a value of an
 - [`ordered_json_editable_document`](ordered_json_editable_document.md) - the document type this view refers into
 - [`ordered_json_view`](ordered_json_view.md) - the corresponding read-only view
 - [`json_editable_view`](json_editable_view.md) - the corresponding view for `json_editable_document`
-- [Zero-copy JSON views](../features/json_view.md#editing-a-document) - editing a document in place and writing it back
+- [Zero-copy JSON views](../features/json_view/editing.md) - editing a document in place and writing it back
 
 ## Version history
 

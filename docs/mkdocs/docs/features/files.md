@@ -37,7 +37,7 @@ json read_json_file(const std::string& path)
   [input sources and performance](parsing/index.md#input-sources-and-performance)). The common way to read a file with
   `#!cpp std::istreambuf_iterator<char>` is so slow that it takes about twice as long as parsing from the stream. Read
   the file into a string only if you need the text itself, for example for an error message. This advice is for
-  `#!cpp json::parse`. [`json_document`](json_view.md) reads a stream into a buffer that it owns anyway, so there is no
+  `#!cpp json::parse`. [`json_document`](json_view/index.md) reads a stream into a buffer that it owns anyway, so there is no
   copy to save: reading the file into a `#!cpp std::string` yourself and passing that as an lvalue, which the document
   borrows, was about 6 to 12 % faster than parsing from the stream, with the same single buffer.
 - `parse` requires the file to hold exactly one JSON value. Files with one value per line are read with

@@ -42,7 +42,7 @@ is; see [`owns_source`](owns_source.md).
 
 - [`owns_source`](owns_source.md) - return whether the document holds its own copy of the text
 - [`source_offset`](../basic_json_view/source_offset.md) - byte offset of a value in the source text
-- [Zero-copy JSON views](../../features/json_view.md#ownership-and-lifetime) - who owns the source text and for how long
+- [Zero-copy JSON views](../../features/json_view/lifetime.md) - who owns the source text and for how long
 
 ## Version history
 

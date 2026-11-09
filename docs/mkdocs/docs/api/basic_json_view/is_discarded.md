@@ -54,7 +54,7 @@ A `basic_json_view` is not convertible to `#!cpp bool`: such a conversion would 
 - [`(constructor)`](basic_json_view.md) - the default constructor creates a discarded view
 - [`basic_json_document::is_discarded`](../basic_json_document/is_discarded.md) - return whether the last parse failed
 - [`BasicJsonType::is_discarded`](../basic_json/is_discarded.md) - the corresponding function of `basic_json`
-- [Zero-copy JSON views](../../features/json_view.md#what-is-different) - how views differ from basic_json
+- [Zero-copy JSON views](../../features/json_view/differences.md) - how views differ from basic_json
 
 ## Version history
 

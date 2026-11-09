@@ -160,7 +160,14 @@ nav:
           - features/types/index.md
           - features/types/number_handling.md
           - features/types/template_parameters.md
-      - features/json_view.md
+      - Zero-copy views:
+          - features/json_view/index.md
+          - features/json_view/lifetime.md
+          - features/json_view/differences.md
+          - features/json_view/reading.md
+          - features/json_view/generic_code.md
+          - features/json_view/editing.md
+          - features/json_view/images.md
   - Integration:
       - integration/index.md
       - integration/migration_guide.md

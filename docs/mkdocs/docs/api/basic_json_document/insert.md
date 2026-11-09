@@ -108,7 +108,7 @@ an edit in general.
 - [`set`](set.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers to
 - [`BasicJsonType::insert`](../basic_json/insert.md) - the corresponding function of `basic_json`
 - [Edits](index.md#edits) - what an edit guarantees, for every overload
-- [Zero-copy JSON views](../../features/json_view.md#editing-a-document) - what an edit guarantees and costs
+- [Zero-copy JSON views](../../features/json_view/editing.md) - what an edit guarantees and costs
 
 ## Version history
 

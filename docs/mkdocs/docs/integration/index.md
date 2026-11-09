@@ -58,7 +58,7 @@ Clang).
     anything, or link a library. Put the file in a directory named `nlohmann` that is on your include path (for
     example `third_party/nlohmann/json.hpp` with `-I third_party`), so that `#include <nlohmann/json.hpp>` works.
     Download the companion headers listed below only if you use them: `json_view.hpp` for the
-    [zero-copy views](../features/json_view.md), `json_fwd.hpp` for forward declarations, and `json_literals.hpp` if
+    [zero-copy views](../features/json_view/index.md), `json_fwd.hpp` for forward declarations, and `json_literals.hpp` if
     you define `JSON_NO_AUTOMATIC_UDLS`. Keep them in the same `nlohmann` directory.
 
     Do not copy only parts of the repository's `include/` directory: the headers in it include each other and must be
@@ -75,7 +75,7 @@ for the user-defined string literals if you define
 For the read-only, non-owning [`basic_json_document`](../api/basic_json_document/index.md)/[`basic_json_view`](../api/basic_json_view/index.md)
 types, additionally include
 [`single_include/nlohmann/json_view.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json_view.hpp);
-see [Zero-copy JSON views](../features/json_view.md).
+see [Zero-copy JSON views](../features/json_view/index.md).
 
 ## Notes for builds and distribution
 

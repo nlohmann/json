@@ -39,14 +39,14 @@ as [`BasicJsonType::parse()`](../basic_json/parse.md) does), as well as the type
 accept views, e.g. with [`is_json_view`](../is_json_view.md). A `from_json()` that also accepts types that are no JSON
 values at all, such as the unconstrained `#!cpp template<typename BasicJsonType> void from_json(const BasicJsonType&,
 T&)` of [arbitrary type conversions](../../features/arbitrary_types.md), is not called with a view: it may use
-`BasicJsonType` functions a view does not have. See [Writing generic code](../../features/json_view.md#writing-generic-code).
+`BasicJsonType` functions a view does not have. See [Writing generic code](../../features/json_view/generic_code.md).
 
 !!! warning "Duplicate keys"
 
     Such a `from_json()` looks members up in the view, where a repeated key finds the **first** member, while
     `#!cpp materialize().get<T>()` sees the **last** one, as [`BasicJsonType::parse()`](../basic_json/parse.md)
     keeps it: for `#!cpp {"x":1,"x":2}`, `#!cpp get<point>()` reads `#!cpp x == 1`. See
-    [Duplicate keys](../../features/json_view.md#duplicate-keys).
+    [Duplicate keys](../../features/json_view/differences.md#duplicate-keys).
 
 Every other `T` — user types whose `from_json()` is written for `BasicJsonType` only, types without a default
 constructor, `#!cpp std::tuple`s holding references, ... — is converted by `#!cpp materialize().get<T>()`: the subtree is built into a real `BasicJsonType`
@@ -152,7 +152,7 @@ instead: its path is relative to the root of the view's subtree, because `materi
 - [`number_token`](number_token.md) - a number's token text, without a copy
 - [`materialize`](materialize.md) - build the `BasicJsonType` value of this subtree
 - [`BasicJsonType::get`](../basic_json/get.md) - the corresponding function of `basic_json`
-- [Zero-copy JSON views](../../features/json_view.md#getting-values-out-without-copying) - which conversions avoid building a basic_json value
+- [Zero-copy JSON views](../../features/json_view/reading.md#getting-values-out-without-copying) - which conversions avoid building a basic_json value
 
 ## Version history
 

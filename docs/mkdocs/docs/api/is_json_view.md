@@ -49,7 +49,7 @@ view class.
 - [basic_json_view](basic_json_view/index.md) - a handle to one value of a document
 - [get](basic_json_view/get.md) - which conversions read the view directly
 - [view_mode](view_mode.md) - read-only or editable
-- [Writing generic code](../features/json_view.md#writing-generic-code) - functions and `from_json()` for views
+- [Writing generic code](../features/json_view/generic_code.md) - functions and `from_json()` for views
 
 ## Version history
 
