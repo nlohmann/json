@@ -174,7 +174,7 @@ Output:
 - [`root`](https://json.nlohmann.me/api/basic_json_document/root/index.md) - the view of the root value, the starting point of overload 4
 - [`basic_json_view::dump`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) - serialize the document, keeping an untouched number's spelling with `number_format::source`
 - [Edits](https://json.nlohmann.me/api/basic_json_document/#edits) - what an edit guarantees, for every overload
-- [Editing a document](https://json.nlohmann.me/features/json_view/#editing-a-document) - why editable documents keep the source text's order and number spelling
+- [Editing a document](https://json.nlohmann.me/features/json_view/editing/index.md) - why editable documents keep the source text's order and number spelling
 
 ## Version history
 

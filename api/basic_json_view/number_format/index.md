@@ -62,7 +62,7 @@ Output:
 - [`dump`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) - serialize to a JSON-formatted string
 - [`number_token`](https://json.nlohmann.me/api/basic_json_view/number_token/index.md) - get a single number's token text without dumping the whole value
 - [`BasicJsonType::error_handler_t`](https://json.nlohmann.me/api/basic_json/error_handler_t/index.md) - the analogous enumeration for `BasicJsonType::dump`'s decoding-error behavior
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#writing-a-view-back) - writing numbers as they appeared in the source
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/reading/#writing-a-view-back) - writing numbers as they appeared in the source
 
 ## Version history
 

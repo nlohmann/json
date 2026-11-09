@@ -74,7 +74,7 @@ Ada 36
 - [basic_json_view](https://json.nlohmann.me/api/basic_json_view/index.md) - a handle to one value of a document
 - [get](https://json.nlohmann.me/api/basic_json_view/get/index.md) - which conversions read the view directly
 - [view_mode](https://json.nlohmann.me/api/view_mode/index.md) - read-only or editable
-- [Writing generic code](https://json.nlohmann.me/features/json_view/#writing-generic-code) - functions and `from_json()` for views
+- [Writing generic code](https://json.nlohmann.me/features/json_view/generic_code/index.md) - functions and `from_json()` for views
 
 ## Version history
 

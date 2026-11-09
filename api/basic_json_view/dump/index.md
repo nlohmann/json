@@ -43,7 +43,7 @@ Strings are escaped by the same rules as [`BasicJsonType::dump`](https://json.nl
 
 With `numbers == number_format::shortest`, floats are written with the library's shortest round-trip conversion, exactly as [`BasicJsonType::dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) would (e.g. `1.5`, `100.0`, `1e+100`), and integers are copied from the source text — already canonical in JSON, so this matches their shortest form too — except that `-0` is written as `0`, the way [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) reads it.
 
-`number_format::source` copies every number exactly as written in the source text instead, with no exception for `-0` — `1.50`, `1E2`, `-0.0`, `-0`, or all digits of an integer literal with more digits than any number type holds (such a literal is itself classified as a float, see [What is different](https://json.nlohmann.me/features/json_view/#what-is-different)) — something `BasicJsonType` cannot do, since parsing already reduces every number to its parsed value.
+`number_format::source` copies every number exactly as written in the source text instead, with no exception for `-0` — `1.50`, `1E2`, `-0.0`, `-0`, or all digits of an integer literal with more digits than any number type holds (such a literal is itself classified as a float, see [What is different](https://json.nlohmann.me/features/json_view/differences/index.md)) — something `BasicJsonType` cannot do, since parsing already reduces every number to its parsed value.
 
 ## Examples
 
@@ -104,7 +104,7 @@ Output:
 - [`operator<<`](https://json.nlohmann.me/api/basic_json_view/operator_ltlt/index.md) - serialize this value to a stream
 - [`materialize`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) - build a `BasicJsonType` value, e.g. to use `BasicJsonType::dump`'s `error_handler`
 - [`BasicJsonType::dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) - the corresponding function of `basic_json`
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#writing-a-view-back) - writing a view back without building a tree
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/reading/#writing-a-view-back) - writing a view back without building a tree
 
 ## Version history
 

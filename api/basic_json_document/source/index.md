@@ -61,7 +61,7 @@ true
 
 - [`owns_source`](https://json.nlohmann.me/api/basic_json_document/owns_source/index.md) - return whether the document holds its own copy of the text
 - [`source_offset`](https://json.nlohmann.me/api/basic_json_view/source_offset/index.md) - byte offset of a value in the source text
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#ownership-and-lifetime) - who owns the source text and for how long
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/lifetime/index.md) - who owns the source text and for how long
 
 ## Version history
 

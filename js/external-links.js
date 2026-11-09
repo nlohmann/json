@@ -1,7 +1,8 @@
 /*
  * Marks links that leave the site with the class "nj-external", which brand.css turns into a small icon in front of
  * the link. A link is external when its host is neither the current one nor the production site. Links in the page
- * actions (edit, raw), buttons, header anchors, and links that only wrap an image (badges) are left alone.
+ * actions (edit, raw), buttons, header anchors, a blog post's byline, and links that only wrap an image (badges) are
+ * left alone.
  * Runs through Material's document$ (navigation.instant), so it also applies after an instant page switch.
  */
 (function () {
@@ -17,7 +18,7 @@
             if (a.protocol !== "http:" && a.protocol !== "https:") {
                 continue;
             }
-            if (a.matches(".md-button, .md-content__button, .headerlink") || a.querySelector("img, svg")) {
+            if (a.matches(".md-button, .md-content__button, .headerlink, .nj-byline a") || a.querySelector("img, svg")) {
                 continue;
             }
             a.classList.add("nj-external");

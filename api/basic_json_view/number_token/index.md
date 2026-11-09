@@ -83,7 +83,7 @@ Output:
 - [`get`](https://json.nlohmann.me/api/basic_json_view/get/index.md) - convert the value to a given type
 - [`get_string`](https://json.nlohmann.me/api/basic_json_view/get_string/index.md) - the string, without a copy
 - [`BasicJsonType::number_integer_t`](https://json.nlohmann.me/api/basic_json/number_integer_t/index.md), [`number_unsigned_t`](https://json.nlohmann.me/api/basic_json/number_unsigned_t/index.md), [`number_float_t`](https://json.nlohmann.me/api/basic_json/number_float_t/index.md) - the number types `get<T>()` and `materialize()` convert into
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#getting-values-out-without-copying) - reading a number exactly as written
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/reading/#getting-values-out-without-copying) - reading a number exactly as written
 
 ## Version history
 

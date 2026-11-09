@@ -140,7 +140,7 @@ Read newline-delimited input line by line ([JSON Lines](../features/parsing/json
 
 Handle and discard the records of a large array with a [parser callback](../features/parsing/parser_callbacks.md), stop
 early with the [SAX interface](../features/parsing/sax_interface.md), or read parts of the text through a
-[`json_document`](../features/json_view.md) (added in version 3.13.0). See
+[`json_document`](../features/json_view/index.md) (added in version 3.13.0). See
 [Input too large for memory](../features/parsing/large_and_partial_input.md#input-too-large-for-memory).
 
 ### Position of a parse error

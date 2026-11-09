@@ -85,7 +85,7 @@ false
 - [`get`](https://json.nlohmann.me/api/basic_json_view/get/index.md) - convert the value to a given type (`get<string_view_t>()` is equivalent to this function)
 - [`number_token`](https://json.nlohmann.me/api/basic_json_view/number_token/index.md) - a number's token text, without a copy
 - [`BasicJsonType::get_ref`](https://json.nlohmann.me/api/basic_json/get_ref/index.md) - the closest counterpart of `basic_json`
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#getting-values-out-without-copying) - borrowing strings instead of copying them
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/reading/#getting-values-out-without-copying) - borrowing strings instead of copying them
 
 ## Version history
 

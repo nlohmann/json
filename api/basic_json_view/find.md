@@ -37,7 +37,7 @@ constant time on average.
 
     If the source text repeats a key, this resolves to the *first* member with it, not to the last one that
     [`materialize()`](materialize.md) and `parse()` keep. See the [Notes on duplicate keys](operator[].md#notes) of
-    `operator[]` and [Duplicate keys](../../features/json_view.md#duplicate-keys) for the reasons and for how to get
+    `operator[]` and [Duplicate keys](../../features/json_view/differences.md#duplicate-keys) for the reasons and for how to get
     the last value.
 
 Unlike [`BasicJsonType::find`](../basic_json/find.md), which always returns `#!cpp end()` for a non-object type, this

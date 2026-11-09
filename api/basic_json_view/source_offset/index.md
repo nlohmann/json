@@ -76,7 +76,7 @@ true
 
 - [`source`](https://json.nlohmann.me/api/basic_json_document/source/index.md) - the parsed text
 - [`is_string`](https://json.nlohmann.me/api/basic_json_view/is_string/index.md) - return whether the value is a string
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#images) - images and the source text
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/images/index.md) - images and the source text
 
 ## Version history
 

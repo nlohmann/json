@@ -99,7 +99,7 @@ true
 - [basic_json_view](https://json.nlohmann.me/api/basic_json_view/index.md) - a handle to one value of a document
 - [json_editable_document](https://json.nlohmann.me/api/json_editable_document/index.md) - an editable document of `json`
 - [(constructor)](https://json.nlohmann.me/api/basic_json_view/basic_json_view/index.md) - the conversion from a read-only to an editable view
-- [Writing generic code](https://json.nlohmann.me/features/json_view/#writing-generic-code) - functions that accept views
+- [Writing generic code](https://json.nlohmann.me/features/json_view/generic_code/index.md) - functions that accept views
 
 ## Version history
 

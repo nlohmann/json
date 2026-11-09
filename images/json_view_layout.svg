@@ -17,16 +17,16 @@
 <path class="nj-jsonview-arr nj-jsonview-c-line" d="M76 115 L106 115" marker-end="url(#jvl-line)"/>
 <rect class="nj-jsonview-heap" x="108" y="98" width="84" height="34" rx="5"/>
 <text class="nj-jsonview-mono" x="150" y="120" text-anchor="middle" xml:space="preserve">std::map</text>
-<path class="nj-jsonview-arr nj-jsonview-c-line" d="M192 115 C192 115 226 67 226 67" marker-end="url(#jvl-line)"/>
+<path class="nj-jsonview-arr nj-jsonview-c-line" d="M192 115 L226 67" marker-end="url(#jvl-line)"/>
 <rect class="nj-jsonview-heap" x="228" y="50" width="180" height="34" rx="5"/>
 <text class="nj-jsonview-mono nj-jsonview-c-key" x="240" y="72" xml:space="preserve">&quot;port&quot;</text>
 <text class="nj-jsonview-mono nj-jsonview-c-num" x="396" y="72" text-anchor="end" xml:space="preserve">6379</text>
-<path class="nj-jsonview-arr nj-jsonview-c-line" d="M192 115 C192 115 226 115 226 115" marker-end="url(#jvl-line)"/>
+<path class="nj-jsonview-arr nj-jsonview-c-line" d="M192 115 L226 115" marker-end="url(#jvl-line)"/>
 <rect class="nj-jsonview-heap" x="228" y="98" width="180" height="34" rx="5"/>
 <text class="nj-jsonview-mono nj-jsonview-c-key" x="240" y="120" xml:space="preserve">&quot;price&quot;</text>
 <text class="nj-jsonview-mono nj-jsonview-c-num" x="396" y="120" text-anchor="end" xml:space="preserve">19.9</text>
 <text class="nj-jsonview-note" x="418" y="120" xml:space="preserve">double: 19.90 is gone</text>
-<path class="nj-jsonview-arr nj-jsonview-c-line" d="M192 115 C192 115 226 163 226 163" marker-end="url(#jvl-line)"/>
+<path class="nj-jsonview-arr nj-jsonview-c-line" d="M192 115 L226 163" marker-end="url(#jvl-line)"/>
 <rect class="nj-jsonview-heap" x="228" y="146" width="180" height="34" rx="5"/>
 <text class="nj-jsonview-mono nj-jsonview-c-key" x="240" y="168" xml:space="preserve">&quot;tags&quot;</text>
 <text class="nj-jsonview-mono nj-jsonview-c-line" x="396" y="168" text-anchor="end" xml:space="preserve">•</text>
@@ -38,8 +38,8 @@
 <path class="nj-jsonview-sep" d="M624 146 V180"/>
 <text class="nj-jsonview-mono" x="601" y="168" text-anchor="middle" xml:space="preserve">json</text>
 <text class="nj-jsonview-mono" x="647" y="168" text-anchor="middle" xml:space="preserve">json</text>
-<path class="nj-jsonview-arr nj-jsonview-c-line" d="M601 146 C601 126 706 150 706 130" marker-end="url(#jvl-line)"/>
-<path class="nj-jsonview-arr nj-jsonview-c-line" d="M647 180 C647 200 706 176 706 196" marker-end="url(#jvl-line)"/>
+<path class="nj-jsonview-arr nj-jsonview-c-line" d="M601 146 C601 130 641 130 706 130" marker-end="url(#jvl-line)"/>
+<path class="nj-jsonview-arr nj-jsonview-c-line" d="M647 180 C647 196 687 196 706 196" marker-end="url(#jvl-line)"/>
 <rect class="nj-jsonview-heap" x="708" y="113" width="126" height="34" rx="5"/>
 <text class="nj-jsonview-mono nj-jsonview-sm nj-jsonview-c-str" x="771" y="135" text-anchor="middle" xml:space="preserve">std::string eu</text>
 <rect class="nj-jsonview-heap" x="708" y="179" width="126" height="34" rx="5"/>

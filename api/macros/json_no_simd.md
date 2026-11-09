@@ -80,7 +80,7 @@ By default, `#!cpp JSON_NO_SIMD` is not defined, and vector instructions are use
 - [Parsing: input sources and performance](../../features/parsing/index.md#input-sources-and-performance) - how input
   sources affect parsing performance
 - [Serialization](../../features/serialization.md) - pretty-printing, UTF-8 handling, and number output
-- [Zero-copy JSON views](../../features/json_view.md) - the zero-copy view, whose parser the macro also affects
+- [Zero-copy JSON views](../../features/json_view/index.md) - the zero-copy view, whose parser the macro also affects
 
 ## Version history
 

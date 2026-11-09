@@ -112,7 +112,7 @@ told apart from other class-type iterators, so their range is read into an owned
 range (e.g. of a `#!cpp std::list<char>`).
 
 See [`owns_source`](owns_source.md) to check which happened after a call, and the
-[feature page](../../features/json_view.md) for the reasoning.
+[feature page](../../features/json_view/index.md) for the reasoning.
 
 **Numbers.** As for [`BasicJsonType::parse()`](../basic_json/parse.md), an integer literal too large for the 64-bit
 integer type becomes a floating-point value.

@@ -127,7 +127,7 @@ Output:
 - [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) - replace a value, or set an object member, an array element, or the value a JSON pointer refers to
 - [`BasicJsonType::insert`](https://json.nlohmann.me/api/basic_json/insert/index.md) - the corresponding function of `basic_json`
 - [Edits](https://json.nlohmann.me/api/basic_json_document/#edits) - what an edit guarantees, for every overload
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#editing-a-document) - what an edit guarantees and costs
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/editing/index.md) - what an edit guarantees and costs
 
 ## Version history
 

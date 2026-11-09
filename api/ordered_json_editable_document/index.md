@@ -45,7 +45,7 @@ Output:
 - [`json_editable_document`](https://json.nlohmann.me/api/json_editable_document/index.md) - the corresponding editable document for the default `json` specialization
 - [Object Order](https://json.nlohmann.me/features/object_order/index.md) - preserving the insertion order of object keys
 - [Edits](https://json.nlohmann.me/api/basic_json_document/#edits) - what an edit guarantees
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#editing-a-document) - editing a document in place and writing it back
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/editing/index.md) - editing a document in place and writing it back
 
 ## Version history
 

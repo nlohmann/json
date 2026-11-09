@@ -1,4 +1,4 @@
-/* figures: jsonview (features/json_view.md; SVGs from scripts/figures/json_view_layout.py, stepper in js/fig-jsonview.js) */
+/* figures: jsonview (features/json_view/*.md; SVGs from scripts/figures/json_view_layout.py, stepper in js/fig-jsonview.js) */
 
 /* one colour per concept, the same in every figure: structure (object/array, views) blue, keys navy, strings green,
    numbers orange, decoded strings purple, owned edit storage teal, dangling/invalid red */

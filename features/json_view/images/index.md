@@ -1,0 +1,78 @@
+# Images
+
+[`save()`](https://json.nlohmann.me/api/basic_json_document/save/index.md) writes a document as an *image*: a byte buffer that [`load()`](https://json.nlohmann.me/api/basic_json_document/load/index.md) reads back into a document without parsing — no lexing, no building the node index, nothing but copying the nodes and pointing the text and the decoded strings at the image. Where [`parse_copy()`](https://json.nlohmann.me/api/basic_json_document/parse_copy/index.md) still has to scan the whole input, [`load()`](https://json.nlohmann.me/api/basic_json_document/load/index.md) turns that scan into a copy of the node index alone.
+
+## Why
+
+A document that is parsed once and then read many times — a configuration loaded at startup, a template rendered on every request, a large reference dataset a worker process needs in memory — pays for parsing once but can amortize [`save()`](https://json.nlohmann.me/api/basic_json_document/save/index.md)'s cost across every later load. That makes images useful for a cache: save a document the first time it is parsed (to a file, a shared-memory segment, an in-process cache), and [`load()`](https://json.nlohmann.me/api/basic_json_document/load/index.md) it on every later use instead of parsing the source text again. They are just as useful for handing a parsed document to another process (or a forked worker) running the same build of the library, since [`load()`](https://json.nlohmann.me/api/basic_json_document/load/index.md) turns the transfer into a copy of the node index plus pointers into the received bytes, not a re-parse.
+
+## Choosing a check
+
+[`load()`](https://json.nlohmann.me/api/basic_json_document/load/index.md) takes an [`image_check`](https://json.nlohmann.me/api/basic_json_document/load/#image_check) that trades validation against speed:
+
+- `image_check::full` (the default) checks everything the parser itself guarantees, so a checked image is exactly as safe to read and serialize as a freshly parsed document — the right choice whenever the image did not come straight from this process's own [`save()`](https://json.nlohmann.me/api/basic_json_document/save/index.md), such as a file or a network peer.
+- `image_check::bounds` only checks structure and bounds — cheaper, since it skips scanning the text and the decoded strings — and fits a cache the process trusts, one it wrote and reads back itself.
+- `image_check::none` skips validation entirely, for an image trusted as much as the process's own memory.
+
+See [`load()`'s Notes](https://json.nlohmann.me/api/basic_json_document/load/#notes) for exactly what each level does and does not guarantee.
+
+Example: cache a parsed configuration as an image
+
+```
+#include <cstdint>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <nlohmann/json_view.hpp>
+
+using nlohmann::json_document;
+
+int main()
+{
+    std::cout << std::boolalpha;
+
+    // a configuration a service parses once and then caches as an image, so
+    // that later requests can load() it instead of parsing the text again
+    const std::string text = R"({"name": "cache", "host": "db1", "port": 6379, "replicas": ["db2", "db3"]})";
+    const json_document config = json_document::parse(text);
+
+    // save() turns the parsed document into a byte buffer: a 64-byte header,
+    // the node index, the source text, and the decoded strings
+    const std::vector<std::uint8_t> image = config.save();
+    std::cout << image.size() << '\n';
+
+    // the same document always saves to the same bytes
+    std::cout << (image == json_document::parse(text).save()) << '\n';
+
+    // loading the image back needs no parsing, yet dumps exactly what
+    // parsing the text produced
+    const json_document reloaded = json_document::load(image);
+    std::cout << (reloaded.root().dump() == config.root().dump()) << '\n';
+}
+```
+
+Output:
+
+```
+316
+true
+true
+```
+
+Experimental
+
+The image format is versioned but not yet stable, and may change in an incompatible way before it is declared stable. It is little-endian only (on big-endian targets, `save()` and `load()` do not exist), and tied to the library build that wrote it — use it to cache a document or to hand one to another process running the *same* build, not as a long-term storage format; keep the original JSON text if a saved document needs to be readable by a future library version.
+
+## Credits
+
+The idea of a document you can read without parsing comes from zero-copy formats such as [FlatBuffers](https://github.com/google/flatbuffers) and [YaFF](https://github.com/yandex/yaff); the check [`load()`](https://json.nlohmann.me/api/basic_json_document/load/index.md) runs follows the idea of FlatBuffers' Verifier. No code is taken from either.
+
+## See also
+
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/index.md) - overview
+- [`save()`](https://json.nlohmann.me/api/basic_json_document/save/index.md) - write a document as an image
+- [`load()`](https://json.nlohmann.me/api/basic_json_document/load/index.md) - read an image back into a document
+
+## Version history
+
+- Added in version 3.13.0 unreleased.

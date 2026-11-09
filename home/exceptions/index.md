@@ -483,7 +483,7 @@ Example messages
 
 ### json.exception.parse_error.116
 
-[`basic_json_document::load()`](https://json.nlohmann.me/api/basic_json_document/load/index.md) rejected an [image](https://json.nlohmann.me/features/json_view/#images): either the bytes are not one [`save()`](https://json.nlohmann.me/api/basic_json_document/save/index.md) could have written (too short, an unknown magic number or format version, or sizes that do not fit the buffer), or they are, but fail the requested [`image_check`](https://json.nlohmann.me/api/basic_json_document/load/#image_check).
+[`basic_json_document::load()`](https://json.nlohmann.me/api/basic_json_document/load/index.md) rejected an [image](https://json.nlohmann.me/features/json_view/images/index.md): either the bytes are not one [`save()`](https://json.nlohmann.me/api/basic_json_document/save/index.md) could have written (too short, an unknown magic number or format version, or sizes that do not fit the buffer), or they are, but fail the requested [`image_check`](https://json.nlohmann.me/api/basic_json_document/load/#image_check).
 
 Example message
 
@@ -493,7 +493,7 @@ Example message
 
 Note
 
-This exception was added in version 3.13.0 unreleased, together with [images](https://json.nlohmann.me/features/json_view/#images).
+This exception was added in version 3.13.0 unreleased, together with [images](https://json.nlohmann.me/features/json_view/images/index.md).
 
 ## Iterator errors
 
@@ -966,11 +966,11 @@ Example message
 
 Note
 
-This exception was added in version 3.13.0 unreleased, together with editable [`json_document`s](https://json.nlohmann.me/features/json_view/index.md).
+This exception was added in version 3.13.0 unreleased, together with editable [`json_document`s](https://json.nlohmann.me/features/json_view/editing/index.md).
 
 ### json.exception.type_error.320
 
-[`basic_json_document::save()`](https://json.nlohmann.me/api/basic_json_document/save/index.md) cannot write an [image](https://json.nlohmann.me/features/json_view/#images) of a [discarded](https://json.nlohmann.me/api/basic_json_document/is_discarded/index.md) document.
+[`basic_json_document::save()`](https://json.nlohmann.me/api/basic_json_document/save/index.md) cannot write an [image](https://json.nlohmann.me/features/json_view/images/index.md) of a [discarded](https://json.nlohmann.me/api/basic_json_document/is_discarded/index.md) document.
 
 Example messages
 
@@ -980,7 +980,7 @@ Example messages
 
 Note
 
-This exception was added in version 3.13.0 unreleased, together with [images](https://json.nlohmann.me/features/json_view/#images).
+This exception was added in version 3.13.0 unreleased, together with [images](https://json.nlohmann.me/features/json_view/images/index.md).
 
 ### json.exception.type_error.321
 
@@ -1255,7 +1255,7 @@ This exception was added in version 3.13.0 unreleased. Before that, subtypes abo
 
 ### json.exception.out_of_range.416
 
-[`basic_json_document::parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) and the other parsing functions of [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) index a value's position in the source text in 32 bits, so they do not support an input of 4294967280 bytes (4 GiB minus 16 bytes) or more. The same 32-bit limit applies to an **editable** document's own storage: [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) and [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) throw this exception once the strings and number tokens written by edits reach 4 GiB in total, or once more than 4294967295 arrays/objects have had an element set or appended to them. The same limit applies to an [image](https://json.nlohmann.me/features/json_view/#images): [`save()`](https://json.nlohmann.me/api/basic_json_document/save/index.md) throws it if the node count, the text, or the decoded strings it would write would individually reach 4 GiB.
+[`basic_json_document::parse()`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) and the other parsing functions of [`basic_json_document`](https://json.nlohmann.me/api/basic_json_document/index.md) index a value's position in the source text in 32 bits, so they do not support an input of 4294967280 bytes (4 GiB minus 16 bytes) or more. The same 32-bit limit applies to an **editable** document's own storage: [`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md) and [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md) throw this exception once the strings and number tokens written by edits reach 4 GiB in total, or once more than 4294967295 arrays/objects have had an element set or appended to them. The same limit applies to an [image](https://json.nlohmann.me/features/json_view/images/index.md): [`save()`](https://json.nlohmann.me/api/basic_json_document/save/index.md) throws it if the node count, the text, or the decoded strings it would write would individually reach 4 GiB.
 
 Example messages
 

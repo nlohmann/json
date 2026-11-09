@@ -1,0 +1,102 @@
+<svg class="nj-fig nj-charts nj-charts--blog" viewBox="0 0 620 482" role="img" aria-labelledby="nj-blog-heldout nj-blog-heldout-d" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-blog-heldout">Validating 19 files 3.13.0 was not tuned on: json_document&#x27;s time relative to the fastest other library per file</title>
+<desc id="nj-blog-heldout-d">Dot plot per file, less is better; below 1.0 json_document is the fastest fully validating library. mesh: Mac 0.68, x86-64 0.44 (serde_json (Rust)); marine_ik: Mac 0.59, x86-64 0.64 (Boost.J&#8203;SON); semanticscholar-corpus: Mac 0.79, x86-64 0.65 (sonic-rs (Rust)); gsoc-2018: Mac 0.60, x86-64 0.66 (Boost.J&#8203;SON); twitter_api_compact_response: Mac 0.91, x86-64 0.70 (simdjson); twitterescaped: Mac 0.93, x86-64 0.76 (simdjson); numbers: Mac 0.67, x86-64 0.77 (Boost.J&#8203;SON); github_events: Mac 0.79, x86-64 0.77 (simdjson); update-center: Mac 0.88, x86-64 0.79 (simdjson); twitter_timeline: Mac 0.97, x86-64 0.80 (yyjson); twitter_api_response: Mac 0.93, x86-64 0.81 (simdjson); google_maps_api_compact_response: Mac 0.86, x86-64 0.81 (yyjson); repeat: Mac 0.65, x86-64 0.82 (simdjson); random: Mac 0.81, x86-64 0.88 (simdjson); apache_builds: Mac 1.08, x86-64 0.90 (simdjson); instruments: Mac 0.90, x86-64 0.92 (simdjson); mesh.pretty: Mac 0.86, x86-64 0.92 (Boost.J&#8203;SON); tree-pretty: Mac 0.93, x86-64 0.96 (simdjson); google_maps_api_response: Mac 0.93, x86-64 0.99 (simdjson).</desc>
+<line class="nj-charts-grid" x1="262" y1="50" x2="262" y2="438"/>
+<text class="nj-charts-tick" x="262" y="454">0.4&#215;</text>
+<line class="nj-charts-grid" x1="291.867" y1="50" x2="291.867" y2="438"/>
+<text class="nj-charts-tick" x="291.867" y="454">0.5&#215;</text>
+<line class="nj-charts-grid" x1="321.733" y1="50" x2="321.733" y2="438"/>
+<text class="nj-charts-tick" x="321.733" y="454">0.6&#215;</text>
+<line class="nj-charts-grid" x1="351.6" y1="50" x2="351.6" y2="438"/>
+<text class="nj-charts-tick" x="351.6" y="454">0.7&#215;</text>
+<line class="nj-charts-grid" x1="381.467" y1="50" x2="381.467" y2="438"/>
+<text class="nj-charts-tick" x="381.467" y="454">0.8&#215;</text>
+<line class="nj-charts-grid" x1="411.333" y1="50" x2="411.333" y2="438"/>
+<text class="nj-charts-tick" x="411.333" y="454">0.9&#215;</text>
+<line class="nj-charts-grid" x1="441.2" y1="50" x2="441.2" y2="438"/>
+<text class="nj-charts-tick" x="441.2" y="454">1.0&#215;</text>
+<line class="nj-charts-grid" x1="471.067" y1="50" x2="471.067" y2="438"/>
+<text class="nj-charts-tick" x="471.067" y="454">1.1&#215;</text>
+<text class="nj-charts-tick" x="374" y="472">json&#95;document&#8217;s time / the fastest other library&#8217;s, less is better</text>
+<circle class="nj-charts-json-dot" cx="13" cy="14" r="5"/><text class="nj-charts-leg" x="23" y="18.5">Apple M1 Max</text>
+<circle class="nj-charts-ojson-dot" cx="134.2" cy="14" r="5"/><text class="nj-charts-leg" x="144.2" y="18.5">x86-64, G&#8203;CC 16.2</text>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="48">next on x86-64</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="68" text-anchor="end">mesh</text>
+<circle class="nj-charts-json-dot" cx="344.8" cy="60.5" r="4.5"><title>mesh, Apple M1 Max: 0.68&#215; the time of Glaze</title></circle>
+<circle class="nj-charts-ojson-dot" cx="273.6" cy="67.5" r="4.5"><title>mesh, x86-64, G&#8203;CC 16.2: 0.44&#215; the time of serde&#95;json (Rust)</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="68">serde&#95;json (Rust)</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="88" text-anchor="end">marine&#95;ik</text>
+<circle class="nj-charts-json-dot" cx="319.5" cy="80.5" r="4.5"><title>marine&#95;ik, Apple M1 Max: 0.59&#215; the time of Glaze</title></circle>
+<circle class="nj-charts-ojson-dot" cx="334.2" cy="87.5" r="4.5"><title>marine&#95;ik, x86-64, G&#8203;CC 16.2: 0.64&#215; the time of Boost.J&#8203;SON</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="88">Boost.J&#8203;SON</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="108" text-anchor="end">semanticscholar-corpus</text>
+<circle class="nj-charts-json-dot" cx="377.9" cy="100.5" r="4.5"><title>semanticscholar-corpus, Apple M1 Max: 0.79&#215; the time of sonic-rs (Rust)</title></circle>
+<circle class="nj-charts-ojson-dot" cx="336.0" cy="107.5" r="4.5"><title>semanticscholar-corpus, x86-64, G&#8203;CC 16.2: 0.65&#215; the time of sonic-rs (Rust)</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="108">sonic-rs (Rust)</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="128" text-anchor="end">gsoc-2018</text>
+<circle class="nj-charts-json-dot" cx="322.9" cy="120.5" r="4.5"><title>gsoc-2018, Apple M1 Max: 0.60&#215; the time of sonic-rs (Rust)</title></circle>
+<circle class="nj-charts-ojson-dot" cx="338.8" cy="127.5" r="4.5"><title>gsoc-2018, x86-64, G&#8203;CC 16.2: 0.66&#215; the time of Boost.J&#8203;SON</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="128">Boost.J&#8203;SON</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="148" text-anchor="end">twitter&#95;api&#95;compact&#95;response</text>
+<circle class="nj-charts-json-dot" cx="414.0" cy="140.5" r="4.5"><title>twitter&#95;api&#95;compact&#95;response, Apple M1 Max: 0.91&#215; the time of yyjson</title></circle>
+<circle class="nj-charts-ojson-dot" cx="352.1" cy="147.5" r="4.5"><title>twitter&#95;api&#95;compact&#95;response, x86-64, G&#8203;CC 16.2: 0.70&#215; the time of simdjson</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="148">simdjson</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="168" text-anchor="end">twitterescaped</text>
+<circle class="nj-charts-json-dot" cx="419.5" cy="160.5" r="4.5"><title>twitterescaped, Apple M1 Max: 0.93&#215; the time of yyjson</title></circle>
+<circle class="nj-charts-ojson-dot" cx="370.8" cy="167.5" r="4.5"><title>twitterescaped, x86-64, G&#8203;CC 16.2: 0.76&#215; the time of simdjson</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="168">simdjson</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="188" text-anchor="end">numbers</text>
+<circle class="nj-charts-json-dot" cx="343.3" cy="180.5" r="4.5"><title>numbers, Apple M1 Max: 0.67&#215; the time of Boost.J&#8203;SON</title></circle>
+<circle class="nj-charts-ojson-dot" cx="373.1" cy="187.5" r="4.5"><title>numbers, x86-64, G&#8203;CC 16.2: 0.77&#215; the time of Boost.J&#8203;SON</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="188">Boost.J&#8203;SON</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="208" text-anchor="end">github&#95;events</text>
+<circle class="nj-charts-json-dot" cx="379.5" cy="200.5" r="4.5"><title>github&#95;events, Apple M1 Max: 0.79&#215; the time of simdjson</title></circle>
+<circle class="nj-charts-ojson-dot" cx="373.4" cy="207.5" r="4.5"><title>github&#95;events, x86-64, G&#8203;CC 16.2: 0.77&#215; the time of simdjson</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="208">simdjson</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="228" text-anchor="end">update-center</text>
+<circle class="nj-charts-json-dot" cx="405.1" cy="220.5" r="4.5"><title>update-center, Apple M1 Max: 0.88&#215; the time of sonic-rs (Rust)</title></circle>
+<circle class="nj-charts-ojson-dot" cx="377.7" cy="227.5" r="4.5"><title>update-center, x86-64, G&#8203;CC 16.2: 0.79&#215; the time of simdjson</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="228">simdjson</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="248" text-anchor="end">twitter&#95;timeline</text>
+<circle class="nj-charts-json-dot" cx="431.6" cy="240.5" r="4.5"><title>twitter&#95;timeline, Apple M1 Max: 0.97&#215; the time of yyjson</title></circle>
+<circle class="nj-charts-ojson-dot" cx="381.3" cy="247.5" r="4.5"><title>twitter&#95;timeline, x86-64, G&#8203;CC 16.2: 0.80&#215; the time of yyjson</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="248">yyjson</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="268" text-anchor="end">twitter&#95;api&#95;response</text>
+<circle class="nj-charts-json-dot" cx="420.4" cy="260.5" r="4.5"><title>twitter&#95;api&#95;response, Apple M1 Max: 0.93&#215; the time of simdjson</title></circle>
+<circle class="nj-charts-ojson-dot" cx="384.1" cy="267.5" r="4.5"><title>twitter&#95;api&#95;response, x86-64, G&#8203;CC 16.2: 0.81&#215; the time of simdjson</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="268">simdjson</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="288" text-anchor="end">google&#95;maps&#95;api&#95;compact&#95;response</text>
+<circle class="nj-charts-json-dot" cx="399.2" cy="280.5" r="4.5"><title>google&#95;maps&#95;api&#95;compact&#95;response, Apple M1 Max: 0.86&#215; the time of yyjson</title></circle>
+<circle class="nj-charts-ojson-dot" cx="384.2" cy="287.5" r="4.5"><title>google&#95;maps&#95;api&#95;compact&#95;response, x86-64, G&#8203;CC 16.2: 0.81&#215; the time of yyjson</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="288">yyjson</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="308" text-anchor="end">repeat</text>
+<circle class="nj-charts-json-dot" cx="336.7" cy="300.5" r="4.5"><title>repeat, Apple M1 Max: 0.65&#215; the time of simdjson</title></circle>
+<circle class="nj-charts-ojson-dot" cx="388.2" cy="307.5" r="4.5"><title>repeat, x86-64, G&#8203;CC 16.2: 0.82&#215; the time of simdjson</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="308">simdjson</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="328" text-anchor="end">random</text>
+<circle class="nj-charts-json-dot" cx="383.7" cy="320.5" r="4.5"><title>random, Apple M1 Max: 0.81&#215; the time of simdjson</title></circle>
+<circle class="nj-charts-ojson-dot" cx="404.9" cy="327.5" r="4.5"><title>random, x86-64, G&#8203;CC 16.2: 0.88&#215; the time of simdjson</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="328">simdjson</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="348" text-anchor="end">apache&#95;builds</text>
+<circle class="nj-charts-json-dot" cx="463.6" cy="340.5" r="4.5"><title>apache&#95;builds, Apple M1 Max: 1.08&#215; the time of simdjson</title></circle>
+<circle class="nj-charts-ojson-dot" cx="412.4" cy="347.5" r="4.5"><title>apache&#95;builds, x86-64, G&#8203;CC 16.2: 0.90&#215; the time of simdjson</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="348">simdjson</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="368" text-anchor="end">instruments</text>
+<circle class="nj-charts-json-dot" cx="412.5" cy="360.5" r="4.5"><title>instruments, Apple M1 Max: 0.90&#215; the time of yyjson</title></circle>
+<circle class="nj-charts-ojson-dot" cx="416.2" cy="367.5" r="4.5"><title>instruments, x86-64, G&#8203;CC 16.2: 0.92&#215; the time of simdjson</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="368">simdjson</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="388" text-anchor="end">mesh.pretty</text>
+<circle class="nj-charts-json-dot" cx="398.9" cy="380.5" r="4.5"><title>mesh.pretty, Apple M1 Max: 0.86&#215; the time of Glaze</title></circle>
+<circle class="nj-charts-ojson-dot" cx="418.6" cy="387.5" r="4.5"><title>mesh.pretty, x86-64, G&#8203;CC 16.2: 0.92&#215; the time of Boost.J&#8203;SON</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="388">Boost.J&#8203;SON</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="408" text-anchor="end">tree-pretty</text>
+<circle class="nj-charts-json-dot" cx="420.1" cy="400.5" r="4.5"><title>tree-pretty, Apple M1 Max: 0.93&#215; the time of simdjson</title></circle>
+<circle class="nj-charts-ojson-dot" cx="429.3" cy="407.5" r="4.5"><title>tree-pretty, x86-64, G&#8203;CC 16.2: 0.96&#215; the time of simdjson</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="408">simdjson</text>
+<text class="nj-charts-rowlabel nj-charts-code" x="252" y="428" text-anchor="end">google&#95;maps&#95;api&#95;response</text>
+<circle class="nj-charts-json-dot" cx="419.0" cy="420.5" r="4.5"><title>google&#95;maps&#95;api&#95;response, Apple M1 Max: 0.93&#215; the time of simdjson</title></circle>
+<circle class="nj-charts-ojson-dot" cx="439.0" cy="427.5" r="4.5"><title>google&#95;maps&#95;api&#95;response, x86-64, G&#8203;CC 16.2: 0.99&#215; the time of simdjson</title></circle>
+<text class="nj-charts-tick nj-charts-tick--l" x="500" y="428">simdjson</text>
+<line class="nj-charts-ref" x1="441.2" y1="50" x2="441.2" y2="438"/>
+<text class="nj-charts-tick" x="441.2" y="44">as fast as the next</text>
+</svg>

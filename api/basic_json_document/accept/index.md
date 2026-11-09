@@ -80,7 +80,7 @@ true
 
 - [`parse`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) - deserialize from a compatible input
 - [`BasicJsonType::accept`](https://json.nlohmann.me/api/basic_json/accept/index.md) - the corresponding function of `basic_json`
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#what-is-the-same-as-parse) - how parsing a document differs from, and matches, basic_json::parse
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/differences/#what-is-the-same) - how parsing a document differs from, and matches, basic_json::parse
 
 ## Version history
 

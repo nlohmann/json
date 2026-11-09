@@ -99,7 +99,7 @@ true
 - [`(constructor)`](https://json.nlohmann.me/api/basic_json_view/basic_json_view/index.md) - the default constructor creates a discarded view
 - [`basic_json_document::is_discarded`](https://json.nlohmann.me/api/basic_json_document/is_discarded/index.md) - return whether the last parse failed
 - [`BasicJsonType::is_discarded`](https://json.nlohmann.me/api/basic_json/is_discarded/index.md) - the corresponding function of `basic_json`
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#what-is-different) - how views differ from basic_json
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/differences/index.md) - how views differ from basic_json
 
 ## Version history
 

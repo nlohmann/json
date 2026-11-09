@@ -94,7 +94,7 @@ true
 - [`parse`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) - deserialize from a compatible input
 - [`root`](https://json.nlohmann.me/api/basic_json_document/root/index.md) - the view of the root value
 - [`load`](https://json.nlohmann.me/api/basic_json_document/load/index.md) - read a document from an image instead of parsing JSON text
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#ownership-and-lifetime) - reusing a document and what it invalidates
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/lifetime/index.md) - reusing a document and what it invalidates
 
 ## Version history
 

@@ -98,7 +98,7 @@ true
 - [`load`](https://json.nlohmann.me/api/basic_json_document/load/index.md) - read an image written by `save()`
 - [`owns_source`](https://json.nlohmann.me/api/basic_json_document/owns_source/index.md) - return whether the document holds its own copy of the text
 - [`basic_json_view::dump`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) - serialize the document to JSON text instead of an image
-- [Images](https://json.nlohmann.me/features/json_view/#images) - why and when to use images
+- [Images](https://json.nlohmann.me/features/json_view/images/index.md) - why and when to use images
 
 ## Version history
 

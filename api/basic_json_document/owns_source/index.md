@@ -66,7 +66,7 @@ true
 - [`parse`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) - deserialize from a compatible input
 - [`parse_copy`](https://json.nlohmann.me/api/basic_json_document/parse_copy/index.md) - deserialize a copy of a compatible input, always owned
 - [`source`](https://json.nlohmann.me/api/basic_json_document/source/index.md) - the parsed text
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#ownership-and-lifetime) - who owns the source text and for how long
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/lifetime/index.md) - who owns the source text and for how long
 
 ## Version history
 

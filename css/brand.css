@@ -759,9 +759,14 @@ body:has(.nj-hero) .md-content {
     }
 }
 
+/* blog posts: author and date right below the title */
+.md-typeset .nj-byline { margin: -.8rem 0 1.6rem; font-size: .75rem; color: var(--md-default-fg-color--light); }
+.md-typeset .nj-byline a { color: inherit; }
+.md-typeset .nj-byline a:hover { color: var(--md-accent-fg-color); }
+
 /* figure captions: "Figure N." in bold, close to the figure, set in from the text column; figures and tables are
    numbered per page, each with its own counter */
-.md-content__inner { counter-reset: nj-figure nj-table; }
+.md-content__inner { counter-reset: nj-figure nj-table nj-listing; }
 .md-typeset :is(.nj-caption, .nj-charts-caption) {
     max-width: none;
     margin: .3rem 2rem 1.5rem;
@@ -780,6 +785,25 @@ body:has(.nj-hero) .md-content {
 }
 @media screen and (max-width: 44.9375em) {
     .md-typeset :is(.nj-caption, .nj-charts-caption) { margin-inline: 1rem; }
+}
+
+/* code captions: "Listing N." in bold, directly below the code block, in the figure caption style */
+.md-typeset .nj-code-caption {
+    max-width: none;
+    margin: -.4rem 2rem 1.5rem;
+    font-size: .75rem;
+    line-height: 1.5;
+    text-align: left;
+    color: var(--md-default-fg-color--light);
+}
+.md-typeset .nj-code-caption::before {
+    counter-increment: nj-listing;
+    content: "Listing " counter(nj-listing) ". ";
+    font-weight: 700;
+    color: var(--md-default-fg-color);
+}
+@media screen and (max-width: 44.9375em) {
+    .md-typeset .nj-code-caption { margin-inline: 1rem; }
 }
 
 /* table captions: "Table N." in bold, directly below the table, in the figure caption style */

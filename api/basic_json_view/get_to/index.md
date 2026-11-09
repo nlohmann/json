@@ -90,7 +90,7 @@ db.example.com:5432 (tls)
 
 - [`get`](https://json.nlohmann.me/api/basic_json_view/get/index.md) - convert the value to a given type
 - [`BasicJsonType::get_to`](https://json.nlohmann.me/api/basic_json/get_to/index.md) - the corresponding function of `basic_json`
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#getting-values-out-without-copying) - which conversions avoid building a basic_json value
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/reading/#getting-values-out-without-copying) - which conversions avoid building a basic_json value
 
 ## Version history
 

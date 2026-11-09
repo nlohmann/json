@@ -67,7 +67,7 @@ true
 - [`is_discarded`](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) - return whether the view is invalid
 - [`root`](https://json.nlohmann.me/api/basic_json_document/root/index.md) - the view of a document's root value
 - [`view_mode`](https://json.nlohmann.me/api/view_mode/index.md) - whether a document and its views can be edited
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#ownership-and-lifetime) - how long a view stays valid
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/lifetime/index.md) - how long a view stays valid
 
 ## Version history
 

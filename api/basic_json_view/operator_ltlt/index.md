@@ -87,7 +87,7 @@ Output:
 - [`dump`](https://json.nlohmann.me/api/basic_json_view/dump/index.md) - serialize to a JSON-formatted string
 - [`operator<<(std::ostream&)`](https://json.nlohmann.me/api/operator_ltlt/index.md) - the corresponding operator for `basic_json`
 - [`JSON_NO_IO`](https://json.nlohmann.me/api/macros/json_no_io/index.md) - switch off functions relying on certain C++ I/O headers
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#writing-a-view-back) - writing a view back without building a tree
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/reading/#writing-a-view-back) - writing a view back without building a tree
 
 ## Version history
 

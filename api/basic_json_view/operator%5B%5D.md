@@ -120,7 +120,7 @@ document.
     [`materialize()`](materialize.md) or iterate the members with [`items()`](items.md) and keep the last match.
     The key hash index of a larger object (128 members or more) leads to the first member of a key as well.
     [`begin()`](begin.md)/[`end()`](end.md) and [`items()`](items.md) iterate over *all* members, including
-    duplicates, in document order. See [Duplicate keys](../../features/json_view.md#duplicate-keys) and
+    duplicates, in document order. See [Duplicate keys](../../features/json_view/differences.md#duplicate-keys) and
     [`size()`](size.md#notes).
 
 !!! info "JSON pointer resolution"

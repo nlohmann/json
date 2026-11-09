@@ -93,7 +93,7 @@ skipped
 - [`root`](https://json.nlohmann.me/api/basic_json_document/root/index.md) - the view of a document's root value
 - [`BasicJsonType::parse`](https://json.nlohmann.me/api/basic_json/parse/index.md) - build a `BasicJsonType` value directly from a JSON text
 - [`JSON_DIAGNOSTIC_POSITIONS`](https://json.nlohmann.me/api/macros/json_diagnostic_positions/index.md) - source positions on parsed values
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#getting-values-out-without-copying) - when to build a basic_json value from a view
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/reading/#getting-values-out-without-copying) - when to build a basic_json value from a view
 
 ## Version history
 

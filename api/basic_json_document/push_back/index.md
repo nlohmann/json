@@ -110,7 +110,7 @@ Output:
 - [`root`](https://json.nlohmann.me/api/basic_json_document/root/index.md) - the view of the root value
 - [`BasicJsonType::push_back`](https://json.nlohmann.me/api/basic_json/push_back/index.md) - the corresponding function of `basic_json`
 - [Edits](https://json.nlohmann.me/api/basic_json_document/#edits) - what an edit guarantees, for every overload
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#editing-a-document) - what an edit guarantees and costs
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/editing/index.md) - what an edit guarantees and costs
 
 ## Version history
 

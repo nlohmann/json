@@ -70,7 +70,7 @@ true
 
 - [`parse`](https://json.nlohmann.me/api/basic_json_document/parse/index.md) - deserialize from a compatible input
 - [`is_discarded`](https://json.nlohmann.me/api/basic_json_document/is_discarded/index.md) - return whether the last parse failed
-- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/#ownership-and-lifetime) - who owns the source text and for how long
+- [Zero-copy JSON views](https://json.nlohmann.me/features/json_view/lifetime/index.md) - who owns the source text and for how long
 
 ## Version history
 

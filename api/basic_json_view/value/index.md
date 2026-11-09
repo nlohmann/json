@@ -54,7 +54,7 @@ As for `BasicJsonType`, with [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/m
 
 Duplicate keys: the first member wins
 
-If the source text repeats a key, this resolves to the *first* member with it, not to the last one that [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) and `parse()` keep. See the [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes) of `operator[]` and [Duplicate keys](https://json.nlohmann.me/features/json_view/#duplicate-keys) for the reasons and for how to get the last value.
+If the source text repeats a key, this resolves to the *first* member with it, not to the last one that [`materialize()`](https://json.nlohmann.me/api/basic_json_view/materialize/index.md) and `parse()` keep. See the [Notes on duplicate keys](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/#notes) of `operator[]` and [Duplicate keys](https://json.nlohmann.me/features/json_view/differences/#duplicate-keys) for the reasons and for how to get the last value.
 
 Differences to `at` and `operator[]`
 
