@@ -1,0 +1,15 @@
+[package]
+name = "bench_rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+simd-json = "*"
+sonic-rs = "*"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "*", features = ["float_roundtrip"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1

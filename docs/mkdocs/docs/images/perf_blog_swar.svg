@@ -1,0 +1,60 @@
+<svg class="nj-fig nj-charts nj-charts--swar" viewBox="0 0 640 312" role="img" aria-labelledby="nj-blog-swar nj-blog-swar-d" xmlns="http://www.w3.org/2000/svg">
+<title id="nj-blog-swar">Finding the end of a run of ordinary string characters eight bytes at a time</title>
+<desc id="nj-blog-swar-d">The eight bytes w, i, t, t, e, r, quote and comma are loaded as one word. The test sets the high bit only in byte 6, the quote. Counting trailing zero bits gives 55, divided by eight gives 6: bytes 0 to 5 are copied at once, then the quote ends the string.</desc>
+<text class="fg-h" x="40" y="20">eight input bytes, loaded as one 64-bit word (byte 0 is the lowest)</text>
+<rect class="fg-cell" x="40" y="34" width="64" height="40" rx="4"/>
+<text class="fg-code" x="72" y="60" text-anchor="middle">w</text>
+<text class="nj-charts-tick" x="72" y="92">0x77</text>
+<text class="nj-charts-tick" x="72" y="108">byte 0</text>
+<rect class="fg-cell" x="110" y="34" width="64" height="40" rx="4"/>
+<text class="fg-code" x="142" y="60" text-anchor="middle">i</text>
+<text class="nj-charts-tick" x="142" y="92">0x69</text>
+<text class="nj-charts-tick" x="142" y="108">byte 1</text>
+<rect class="fg-cell" x="180" y="34" width="64" height="40" rx="4"/>
+<text class="fg-code" x="212" y="60" text-anchor="middle">t</text>
+<text class="nj-charts-tick" x="212" y="92">0x74</text>
+<text class="nj-charts-tick" x="212" y="108">byte 2</text>
+<rect class="fg-cell" x="250" y="34" width="64" height="40" rx="4"/>
+<text class="fg-code" x="282" y="60" text-anchor="middle">t</text>
+<text class="nj-charts-tick" x="282" y="92">0x74</text>
+<text class="nj-charts-tick" x="282" y="108">byte 3</text>
+<rect class="fg-cell" x="320" y="34" width="64" height="40" rx="4"/>
+<text class="fg-code" x="352" y="60" text-anchor="middle">e</text>
+<text class="nj-charts-tick" x="352" y="92">0x65</text>
+<text class="nj-charts-tick" x="352" y="108">byte 4</text>
+<rect class="fg-cell" x="390" y="34" width="64" height="40" rx="4"/>
+<text class="fg-code" x="422" y="60" text-anchor="middle">r</text>
+<text class="nj-charts-tick" x="422" y="92">0x72</text>
+<text class="nj-charts-tick" x="422" y="108">byte 5</text>
+<rect class="fg-cell" x="460" y="34" width="64" height="40" rx="4"/>
+<rect class="nj-charts-c2" fill-opacity=".25" x="460" y="34" width="64" height="40" rx="4"/>
+<text class="fg-code" x="492" y="60" text-anchor="middle">&quot;</text>
+<text class="nj-charts-tick" x="492" y="92">0x22</text>
+<text class="nj-charts-tick" x="492" y="108">byte 6</text>
+<rect class="fg-cell" x="530" y="34" width="64" height="40" rx="4"/>
+<text class="fg-code" x="562" y="60" text-anchor="middle">,</text>
+<text class="nj-charts-tick" x="562" y="92">0x2C</text>
+<text class="nj-charts-tick" x="562" y="108">byte 7</text>
+<text class="fg-h" x="40" y="132">swar_string_special(): the high bit of each byte that needs handling</text>
+<rect class="fg-cell" x="40" y="146" width="64" height="34" rx="4"/>
+<text class="fg-code" x="72" y="169" text-anchor="middle">0x00</text>
+<rect class="fg-cell" x="110" y="146" width="64" height="34" rx="4"/>
+<text class="fg-code" x="142" y="169" text-anchor="middle">0x00</text>
+<rect class="fg-cell" x="180" y="146" width="64" height="34" rx="4"/>
+<text class="fg-code" x="212" y="169" text-anchor="middle">0x00</text>
+<rect class="fg-cell" x="250" y="146" width="64" height="34" rx="4"/>
+<text class="fg-code" x="282" y="169" text-anchor="middle">0x00</text>
+<rect class="fg-cell" x="320" y="146" width="64" height="34" rx="4"/>
+<text class="fg-code" x="352" y="169" text-anchor="middle">0x00</text>
+<rect class="fg-cell" x="390" y="146" width="64" height="34" rx="4"/>
+<text class="fg-code" x="422" y="169" text-anchor="middle">0x00</text>
+<rect class="fg-cell" x="460" y="146" width="64" height="34" rx="4"/>
+<rect class="nj-charts-c2" fill-opacity=".25" x="460" y="146" width="64" height="34" rx="4"/>
+<text class="fg-code" x="492" y="169" text-anchor="middle">0x80</text>
+<rect class="fg-cell" x="530" y="146" width="64" height="34" rx="4"/>
+<text class="fg-code" x="562" y="169" text-anchor="middle">0x00</text>
+<text class="fg-code" x="40" y="216">count_trailing_zeros(0x0080000000000000) = 55</text>
+<text class="fg-code" x="40" y="242">55 / 8 = 6: copy bytes 0 to 5 in one go, then handle the quote</text>
+<text class="fg-note fg-note--l" x="40" y="272">No branch per byte: a few subtractions, ANDs and ORs per word,</text>
+<text class="fg-note fg-note--l" x="40" y="290">then one count of trailing zeros.</text>
+</svg>

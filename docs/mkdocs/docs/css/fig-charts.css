@@ -27,6 +27,10 @@
 
 .md-typeset svg.nj-charts--compile, .md-typeset svg.nj-charts--scaling { max-width: 26rem; }
 .md-typeset svg.nj-charts--sizes { max-width: 26rem; }
+/* home/blog/how_3_13_0_got_faster.md (scripts/figures/perf_blog.py) */
+.md-typeset svg.nj-charts--blog { max-width: 34rem; }
+.md-typeset svg.nj-charts--swar { max-width: 34rem; }
+.md-typeset svg.nj-charts--timeline { max-width: 22rem; }
 
 .nj-charts text { fill: currentColor; font-size: 13px; }
 .nj-charts .nj-charts-leg { font-size: 13.5px; }
@@ -43,10 +47,34 @@
     paint-order: stroke; stroke: var(--md-default-bg-color); stroke-width: 4px; stroke-linejoin: round; }
 .nj-charts .nj-charts-factor { fill: var(--nj-charts-ink2); font-size: 12px; font-weight: 600; text-anchor: middle; }
 .nj-charts .nj-charts-note { fill: var(--nj-charts-ink2); font-size: 12px; }
+/* heatmap cells (perf_blog_usecases_*.svg): green for the fastest, gray around twice the time, red for the slowest;
+   adjacent steps checked for CVD separation on the light and the slate surface; the numbers are in every cell */
+.md-typeset svg.nj-charts--heat { max-width: 49rem; }
+.nj-charts--heat { --nj-heat-0: #3fa557; --nj-heat-1: #8bcc95; --nj-heat-2: #ebeae6; --nj-heat-3: #f2ae9b;
+                   --nj-heat-4: #dc5a43; --nj-heat-ink: #1b1b1b; --nj-heat-ink-strong: #1b1b1b; }
+[data-md-color-scheme="slate"] .nj-charts--heat { --nj-heat-0: #3a9d50; --nj-heat-1: #2c6b3a; --nj-heat-2: #33353a;
+                   --nj-heat-3: #8a3f2e; --nj-heat-4: #d95b3a; --nj-heat-ink: #e8e8e6; --nj-heat-ink-strong: #141414; }
+.nj-charts .nj-heat-0 { fill: var(--nj-heat-0); }
+.nj-charts .nj-heat-1 { fill: var(--nj-heat-1); }
+.nj-charts .nj-heat-2 { fill: var(--nj-heat-2); }
+.nj-charts .nj-heat-3 { fill: var(--nj-heat-3); }
+.nj-charts .nj-heat-4 { fill: var(--nj-heat-4); }
+.nj-charts .nj-heat-na { fill: none; stroke: var(--nj-charts-grid); stroke-width: 1; }
+.nj-charts .nj-charts-cell { fill: var(--nj-heat-ink); font-size: 12px; font-variant-numeric: tabular-nums; }
+.nj-charts :is(.nj-heat-0, .nj-heat-4) ~ .nj-charts-cell { fill: var(--nj-heat-ink-strong); }
+.nj-charts .nj-charts-cell--small { font-size: 10.5px; }
+.nj-charts .nj-heat-cell { cursor: default; outline: none; }
+.nj-charts .nj-heat-cell:is(:hover, :focus-visible, .nj-heat-on) rect { stroke: var(--md-default-fg-color); stroke-width: 1.5; }
+.nj-heat-tip { position: absolute; z-index: 5; max-width: 24rem; padding: .5rem .7rem; border-radius: 6px;
+               background: var(--md-default-bg-color); color: var(--md-default-fg-color);
+               box-shadow: 0 2px 10px rgba(0, 0, 0, .25); font-size: .68rem; line-height: 1.45; pointer-events: none; }
+.nj-heat-tip strong { display: block; margin-bottom: .2rem; }
+.nj-heat-tip[hidden] { display: none; }
 
 .nj-charts .nj-charts-grid { stroke: var(--nj-charts-grid); stroke-width: 1; }
 .nj-charts .nj-charts-zero, .nj-charts .nj-charts-axis { stroke: var(--nj-charts-base); stroke-width: 1.5; }
 .nj-charts .nj-charts-ref { stroke: currentColor; stroke-width: 1.5; }
+.nj-charts .nj-charts-head { fill: var(--nj-charts-base); }
 
 .nj-charts .nj-charts-c1 { fill: var(--nj-charts-c1); }
 .nj-charts .nj-charts-c2 { fill: var(--nj-charts-c2); }
@@ -140,3 +168,19 @@
 /* direct line labels replace the legend */
 .nj-charts .nj-charts-name-json { fill: var(--nj-charts-json-c); font-weight: 600; }
 .nj-charts .nj-charts-name-ojson { fill: var(--nj-charts-ojson-c); font-weight: 600; }
+
+/* theme badges of home/blog/how_3_13_0_got_faster.md: the number of one of the eight themes, as a digit in a blue
+   circle, in headings, text, tables and the timeline figures (nj-theme-dot); "U" and other marks are gray */
+.md-typeset .nj-theme { display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
+    min-width: 1.45em; height: 1.45em; padding: 0 .3em; border-radius: .725em; vertical-align: .08em;
+    background: var(--nj-blue); color: var(--md-default-bg-color); font-size: .78em; font-weight: 700; line-height: 1;
+    font-variant-numeric: tabular-nums; text-decoration: none; }
+.md-typeset a.nj-theme:is(:hover, :focus-visible) { background: var(--nj-blue-deep); color: var(--md-default-bg-color); }
+.md-typeset .nj-theme--other { background: var(--md-default-fg-color--light); }
+.md-typeset h2 .nj-theme { margin-right: .35em; vertical-align: .12em; }
+.md-typeset .nj-theme-list > ul { list-style: none; margin-left: 0; }
+.md-typeset .nj-theme-list > ul > li { margin-left: 0; padding-left: 2em; text-indent: -2em; }
+.md-typeset .nj-theme-list > ul > li > .nj-theme { margin-right: .55em; text-indent: 0; }
+.nj-charts .nj-theme-dot { fill: var(--nj-blue); }
+.nj-charts .nj-theme-dot--other { fill: var(--nj-charts-ink2); }
+.nj-charts .nj-theme-num { fill: var(--md-default-bg-color); font-size: 11px; font-weight: 700; }

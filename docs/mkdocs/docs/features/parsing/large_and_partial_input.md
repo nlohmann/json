@@ -156,11 +156,11 @@ record the reason in the handler (here: `id`) if you need to tell the two apart.
 
 ### Read parts of a large document with a view
 
-If the whole text is available and you only need to read some of it, a [`json_document`](../json_view.md) from
+If the whole text is available and you only need to read some of it, a [`json_document`](../json_view/index.md) from
 `<nlohmann/json_view.hpp>` (added in version 3.13.0) avoids the `basic_json` tree altogether: it keeps the text, builds a flat index of the values,
 and gives read-only [views](../../api/basic_json_view/index.md) of the parts you look at. Only what you
 [`materialize()`](../../api/basic_json_view/materialize.md) becomes a `basic_json` value. See
-[Zero-copy JSON views](../json_view.md) for details and for the lifetime rules.
+[Zero-copy JSON views](../json_view/index.md) for details and for the lifetime rules.
 
 ## See also
 
@@ -168,7 +168,7 @@ and gives read-only [views](../../api/basic_json_view/index.md) of the parts you
 - [JSON Lines](json_lines.md) - newline-delimited JSON
 - [Parser callbacks](parser_callbacks.md) - discard values while parsing
 - [SAX interface](sax_interface.md) - event-based parsing
-- [Zero-copy JSON views](../json_view.md) - read parts of a large document without building a tree
+- [Zero-copy JSON views](../json_view/index.md) - read parts of a large document without building a tree
 - [Untrusted input](untrusted_input.md) - limits for input you do not control
 - [`operator>>`](../../api/operator_gtgt.md) - deserialize from stream
 - [`parse`](../../api/basic_json/parse.md) - deserialize from a compatible input

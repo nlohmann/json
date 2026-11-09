@@ -88,7 +88,7 @@ a.erase(1);             // [1,3,4]  (erase by index)
 ## Editing a document
 
 The operations above work on a `basic_json` value. A JSON text that was parsed into a
-[document](json_view.md#editing-a-document) can also be changed in place, without building a `basic_json` tree for the
+[document](json_view/editing.md) can also be changed in place, without building a `basic_json` tree for the
 parts that are not touched: [`set`](../api/basic_json_document/set.md) replaces a value, adds or replaces an object
 member, or replaces an array element (also through a JSON pointer),
 [`push_back`](../api/basic_json_document/push_back.md) appends to an array,
@@ -105,7 +105,7 @@ editable document types, such as [`json_editable_document`](../api/json_editable
 - [`merge_patch`](../api/basic_json/merge_patch.md) - apply an RFC 7396 merge patch
 - [`erase`](../api/basic_json/erase.md) - / [`clear`](../api/basic_json/clear.md) - remove elements
 - [JSON Patch and Diff](json_patch.md) - and [JSON Merge Patch](merge_patch.md) - structured modifications
-- [Editing a document](json_view.md#editing-a-document) - change a parsed document in place
+- [Editing a document](json_view/editing.md) - change a parsed document in place
 - [`insert`](../api/basic_json/insert.md) - insert elements at an iterator position or merge a range
 - [`operator+=`](../api/basic_json/operator+=.md) - shorthand for `push_back`
 - [Element Access](element_access/index.md) - read elements

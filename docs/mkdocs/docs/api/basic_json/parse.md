@@ -124,7 +124,7 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
     [`basic_json_document::parse`](../basic_json_document/parse.md) accepts the same inputs and the same options, but
     keeps the result as a flat index of the parsed values instead of a tree of `basic_json` values. It is faster and uses
     less memory when only parts of the document are read, and it also accepts a pointer to a null-terminated wide string,
-    which `parse()` does not. See [Zero-copy JSON views](../../features/json_view.md).
+    which `parse()` does not. See [Zero-copy JSON views](../../features/json_view/index.md).
 
 !!! tip "Performance"
 
