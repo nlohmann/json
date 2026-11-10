@@ -1674,6 +1674,8 @@ TEST_CASE("BSON input that cannot be read is discarded by every overload")
     json _;
     CHECK_THROWS_AS(_ = json::from_bson(input.begin(), input.end()), json::parse_error&);
     CHECK(json::from_bson(input, true, false).is_discarded());
+    // false positive: Infer takes std::integral_constant<bool, false>::value for a pointer
+    // @infer-ignore NULLPTR_DEREFERENCE
     CHECK(json::from_bson(input.begin(), input.end(), true, false).is_discarded());
 #ifndef JSON_TEST_DEPRECATED_FUNCTIONS_DELETED
     CHECK(json::from_bson(input.data(), input.size(), true, false).is_discarded());
