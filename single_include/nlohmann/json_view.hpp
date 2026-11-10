@@ -8841,7 +8841,7 @@ struct depth_counter<false>
 
 /*!
 @brief where the double x nearest to a token w * 10^q lies, for 10^15 <= w <
-10^17 and -17 <= q <= -1 (Eisel-Lemire, then a fixed-point position)
+10^17 and -16 <= q <= -1 (Eisel-Lemire, then a fixed-point position)
 
 dump() writes the shortest decimal in the rounding interval of x (the closest
 one if there are several, see zmij::to_shortest()). Its digits are those of a
@@ -9706,13 +9706,15 @@ class view_serializer
         }
         for (; p != stop && batch.count != float_batch::capacity(); ++p)
         {
-            // a token of the source: 16 or 17 digits, at least 8 after the
-            // point, no exponent, 32 bytes to read
+            // a token of the source: 16 or 17 digits, 8 to 16 after the
+            // point, no exponent, 32 bytes to read (17 after the point, with
+            // no digit before it, only in a damaged image loaded with
+            // image_check::bounds: beyond the range of locate_token())
             const unsigned frac_digits = p->extra >> 8u;
             const unsigned int_digits = p->extra & 0xFFu;
             const unsigned count = int_digits + frac_digits;
             if (p->kind == node_kind::number_float && (p->flags & node_flags::storage) == 0
-                    && count - 16u <= 1u && frac_digits >= 8 && src_end - (src + p->off) >= 33)
+                    && count - 16u <= 1u && frac_digits - 8u <= 8u && src_end - (src + p->off) >= 33)
             {
                 const auto* const token = reinterpret_cast<const unsigned char*>(src + p->off); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
                 const unsigned sign = token[0] == '-' ? 1 : 0;

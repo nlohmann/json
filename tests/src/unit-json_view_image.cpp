@@ -1165,6 +1165,44 @@ TEST_CASE("json_view images: check")
         }
     }
 
+    SECTION("float tokens with 17 digits after the point and none before it")
+    {
+        // No JSON number has this layout. dump() batches tokens of 16 or 17
+        // digits, but only those with 8 to 16 fraction digits are in its
+        // range: 17 read past the table of powers of five (caught by a
+        // bounds-checked std::array), and on x86-64 wrote 18 digits
+        // (the assertion of write_decimal()).
+        const std::vector<std::uint8_t> img = json_document::parse("[1.2345678901234567]" + std::string(40, ' ')).save();
+        node n = node_at(img, 1);
+        REQUIRE(n.len == 18);
+        n.extra = 17u << 8u;
+        std::vector<std::uint8_t> b = img;
+        set_node(b, 1, n);
+        std::memcpy(b.data() + text_at(img) + n.off, ".99999999999999999", 18);
+        const json_document d = json_document::load(b, image_check::bounds);
+        const std::string dumped = d.root().dump();
+        CAPTURE(dumped)
+        CHECK(json::parse(dumped)[0].is_number());
+        CHECK(dumped == d.root().materialize().dump());
+
+        // (the input of OSS-Fuzz issue 583898810: the token is "     " and
+        // 15 nines, then "1{")
+        const std::vector<std::uint8_t> fuzzed =
+        {
+            0x4E, 0x4A, 0x56, 0x49, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x22, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+            0x07, 0x10, 0x00, 0x11, 0x00, 0x00, 0x00, 0x00, 0x12, 0x00, 0x00, 0x00, 0x20, 0x20, 0x20, 0x20,
+            0x20, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39, 0x39,
+            0x31, 0x7B, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+            0x20, 0x20, 0x00, 0x00
+        };
+        CHECK(load_result(fuzzed, image_check::full) == check_failed);
+        const json_document f = json_document::load(fuzzed, image_check::bounds);
+        CHECK_NOTHROW(f.root().dump());
+    }
+
     SECTION("nodes that share a range")
     {
         // [big string, then n strings made to point to the big string]: every
