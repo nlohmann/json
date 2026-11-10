@@ -316,6 +316,30 @@ JSON_HEDLEY_ALWAYS_INLINE std::size_t accumulate_digits(const char* data, std::s
     return i;
 }
 
+/// the index of the first byte at or after @a i that is not a digit: the
+/// digits of accumulate_digits() without their value
+JSON_HEDLEY_ALWAYS_INLINE std::size_t skip_digits(const char* data, std::size_t i, std::size_t avail) noexcept
+{
+    while (avail - i >= 8)
+    {
+        if (!is_eight_digits(read_eight_bytes(data + i)))
+        {
+            // a byte of the word is not a digit: no bounds checks before it
+            while (static_cast<unsigned char>(data[i] - '0') <= 9)
+            {
+                ++i;
+            }
+            return i;
+        }
+        i += 8;
+    }
+    while (i < avail && data[i] >= '0' && data[i] <= '9')
+    {
+        ++i;
+    }
+    return i;
+}
+
 /// whether [first, last) contains a digit other than '0'; a plain loop, as
 /// GCC calls std::any_of out of line even for the usual empty range
 JSON_HEDLEY_ALWAYS_INLINE bool has_nonzero_digit(const char* first, const char* last) noexcept
