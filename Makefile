@@ -1,4 +1,4 @@
-.PHONY: all amalgamate check-amalgamation check_build_options pretty install_astyle clean ChangeLog.md release update_hedley update_hedley_undef BUILD.bazel natvis macro_builder_check run_benchmarks pvs_studio serve_header reuse spdx
+.PHONY: all amalgamate check-amalgamation check_build_options pretty install_astyle clean release update_hedley update_hedley_undef BUILD.bazel natvis macro_builder_check run_benchmarks pvs_studio serve_header reuse spdx
 
 ##########################################################################
 # configuration
@@ -40,7 +40,6 @@ MACRO_SCOPE_HPP=include/nlohmann/detail/macro_scope.hpp
 all:
 	@echo "amalgamate - amalgamate files single_include/nlohmann/json{,_fwd,_literals,_view}.hpp from the include/nlohmann sources"
 	@echo "BUILD.bazel - regenerate the Bazel BUILD file from the include/nlohmann sources"
-	@echo "ChangeLog.md - generate ChangeLog file"
 	@echo "check-amalgamation - check whether sources have been amalgamated and BUILD.bazel is up to date"
 	@echo "check_build_options - check that the Meson build and the pkg-config files offer the options of the CMake target"
 	@echo "clean - remove built files"
@@ -174,22 +173,6 @@ check-amalgamation:
 # generate the Bazel BUILD file; phony, because a removed header would not trigger a rebuild
 BUILD.bazel:
 	cmake -P cmake/scripts/gen_bazel_build_file.cmake
-
-##########################################################################
-# ChangeLog
-##########################################################################
-
-# Create a ChangeLog based on the git log using the GitHub Changelog Generator
-# (<https://github.com/github-changelog-generator/github-changelog-generator>).
-
-# variable to control the diffs between the last released version and the current repository state
-NEXT_VERSION ?= "unreleased"
-
-ChangeLog.md:
-	github_changelog_generator -o ChangeLog.md --user nlohmann --project json --simple-list --release-url https://github.com/nlohmann/json/releases/tag/%s --future-release $(NEXT_VERSION)
-	$(SED) -i 's|https://github.com/nlohmann/json/releases/tag/HEAD|https://github.com/nlohmann/json/tree/HEAD|' ChangeLog.md
-	$(SED) -i '2i All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).' ChangeLog.md
-
 
 ##########################################################################
 # Release files

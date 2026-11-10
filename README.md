@@ -1,4 +1,9 @@
-[![JSON for Modern C++](docs/mkdocs/docs/images/json.gif)](https://github.com/nlohmann/json/releases)
+<a href="https://github.com/nlohmann/json/releases">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/mkdocs/docs/images/json-dark.svg">
+    <img src="docs/mkdocs/docs/images/json-light.svg" alt="JSON for Modern C++: animated feature slideshow">
+  </picture>
+</a>
 
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk/branch/develop?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
 [![Ubuntu](https://github.com/nlohmann/json/workflows/Ubuntu/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AUbuntu)
@@ -39,6 +44,7 @@
   - [Conversions to/from arbitrary types](#arbitrary-types-conversions)
   - [Specializing enum conversion](#specializing-enum-conversion)
   - [Binary formats (BSON, CBOR, MessagePack, UBJSON, BJData, and BON8)](#binary-formats-bson-cbor-messagepack-ubjson-bjdata-and-bon8)
+  - [Zero-copy views](#zero-copy-views)
 - [Customers](#customers)
 - [Ecosystem](#ecosystem)
 - [Supported compilers](#supported-compilers)
@@ -68,7 +74,7 @@ Other aspects were not so important to us:
 
 - **Memory efficiency**. Each JSON object has an overhead of one pointer (the maximal size of a union) and one enumeration element (1 byte). The default generalization uses the following C++ data types: `std::string` for strings, `int64_t`, `uint64_t` or `double` for numbers, `std::map` for objects, `std::vector` for arrays, and `bool` for Booleans. However, you can template the generalized class `basic_json` to your needs.
 
-- **Speed**. There are certainly [faster JSON libraries](https://github.com/miloyip/nativejson-benchmark#parsing-time) out there. However, if your goal is to speed up your development by adding JSON support with a single header, then this library is the way to go. If you know how to use a `std::vector` or `std::map`, you are already set.
+- **Speed**. There are certainly [faster JSON libraries](https://github.com/miloyip/nativejson-benchmark#parsing-time) out there. However, if your goal is to speed up your development by adding JSON support with a single header, then this library is the way to go. If you know how to use a `std::vector` or `std::map`, you are already set. The [performance](https://json.nlohmann.me/features/performance/) page shows how to get the most out of the library.
 
 See the [contribution guidelines](https://github.com/nlohmann/json/blob/develop/.github/CONTRIBUTING.md#please-dont) for more information.
 
@@ -1052,7 +1058,7 @@ struct less_than_32_serializer {
 Be **very** careful when reimplementing your serializer, you can stack overflow if you don't pay attention:
 
 ```cpp
-template <typename T, void>
+template <typename T, typename = void>
 struct bad_serializer
 {
     template <typename BasicJsonType>
@@ -1063,10 +1069,10 @@ struct bad_serializer
     }
 
     template <typename BasicJsonType>
-    static void to_json(const BasicJsonType& j, T& value) {
+    static void from_json(const BasicJsonType& j, T& value) {
       // this calls BasicJsonType::json_serializer<T>::from_json(j, value)
       // if BasicJsonType::json_serializer == bad_serializer ... oops!
-      value = j.get<T>(); // oops!
+      value = j.template get<T>(); // oops!
     }
 };
 ```
@@ -1769,7 +1775,7 @@ I deeply appreciate the help of the following people.
 330. [AniketDhemare](https://github.com/AniketDhemare) fixed a version in the documentation.
 331. [Philip Müller](https://github.com/philip-paul-mueller) fixed an example.
 332. [Leila Shcheglova](https://github.com/LeilaShcheglova) fixed a warning in a test.
-333. [Alex Prabhat Bara](https://github.com/alexprabhat99) fixed a function name in the documentation.
+333. [Alex Prabhat Bara](https://github.com/alexprabhat99) fixed a function name in the documentation and avoided temporary `basic_json` values for CBOR and MessagePack object keys.
 334. [laterlaugh](https://github.com/laterlaugh) fixed some typos.
 335. [Yuanhao Jia](https://github.com/MrJia1997) fixed the GDB pretty printer.
 336. [Fallen_Breath](https://github.com/Fallen-Breath) fixed an example for JSON Pointer.
@@ -1847,7 +1853,7 @@ I deeply appreciate the help of the following people.
 408. [Luke Banicevic](https://github.com/banaboi) fixed corrupt BSON output for lengths exceeding `INT32_MAX`, cleaned up the BSON writer, and improved the documentation.
 409. [Patrick Armstrong](https://github.com/Patrick10199) updated the CBOR references and the half-precision float assertions.
 410. [Yash Bavadiya](https://github.com/xevrion) added checks to all BSON reads.
-411. [hum4nBeing](https://github.com/hum4nBeing) fixed the overflow handling of high-precision numbers in UBJSON.
+411. [hum4nBeing](https://github.com/hum4nBeing) and [AJ369ninja](https://github.com/AJ369ninja) fixed the overflow handling of high-precision numbers in UBJSON.
 412. [tomatotomata](https://github.com/tomatotomata) added checks for reading CBOR tagged subtypes.
 413. [YingqiDuan](https://github.com/YingqiDuan) documented the BSON interoperability.
 414. [KBS](https://github.com/youdie006) documented the standards compliance and the strictness of `parse()` and `operator>>`.
@@ -1861,6 +1867,26 @@ I deeply appreciate the help of the following people.
 422. [Avionic Harshit](https://github.com/avionicharshit-byte) made `diff()` linear when an array shrinks.
 423. [Qatadaha Bin Matloob](https://github.com/qatcod) fixed comparisons between integers and floats and fixed unparsable BJData output.
 424. [Wu Shuwen](https://github.com/dajiaohuang) removed an unused include.
+425. [Alexander Lanin](https://github.com/AlexanderLanin) improved the error message of `get_to()` for `const` arguments.
+426. [satelliteprogrammer](https://github.com/satelliteprogrammer) added `merge_diff()` to create JSON Merge Patches (RFC 7396).
+427. [Jeremy Nimmer](https://github.com/jwnimmer-tri) removed `alwayslink` from the Bazel build.
+428. [Dadi Reddy Sai Praneeth Reddy](https://github.com/dsp0redy) made `to_msgpack()` throw when a size exceeds the MessagePack limit.
+429. [ayush-singh-0601](https://github.com/ayush-singh-0601) reduced the runtime of the test suite.
+430. [Kartikey Negi](https://github.com/ReturnKartikey) fixed the CBOR tag handling of tagged values that are not byte strings.
+431. [Michiel van Slobbe](https://github.com/mvanslobbe) sped up the parser by checking for the expected separator first.
+432. [Mohd Quamar Tyagi](https://github.com/Tyagiquamar) allowed SAX parsing of tagged CBOR.
+433. [fhgffy](https://github.com/fhgffy) rejected NUL bytes in UBJSON and BJData high-precision numbers and fixed a `-Wswitch-enum` warning.
+434. [Suyog Verma](https://github.com/commit-msuyog) used MSVC intrinsics for the 128-bit multiplication in the floating-point serialization.
+435. [Bas van Dijk](https://github.com/basdedas) fixed a TU-local exposure of `UTF8_ACCEPT` and `UTF8_REJECT` in C++20 modules.
+436. [Christoph Grüninger](https://github.com/gruenich) fixed a leak and a crash when an allocation throws during parsing.
+437. [Amelia Barnaby](https://github.com/ameliabarnabyhub) made serializing discarded values to binary formats throw instead of writing corrupt output.
+438. [Vesko Karaganev](https://github.com/veselink1) made the destructor use the provided allocator.
+439. [Michael Sam](https://github.com/michaelsam94) kept allocation failures from escaping the `noexcept` destructor.
+440. [Mihnea Magheru](https://github.com/sakuntalle) added a natvis visualizer for `detail::json_default_base`.
+441. [Joseph Demarest](https://github.com/JosephDemarest) rejected nested indefinite-length CBOR strings.
+442. [Afonso Januário](https://github.com/afonsojanu) made `std::hash<basic_json>` consistent with `operator==` for numbers.
+443. [Kartik Gupta](https://github.com/KartikeyG-world) limited the natvis namespace variants to two ABI tags.
+444. [manop55555](https://github.com/manop55555) reported a buffer over-read in `dump()` with large indentation values.
 
 Thanks a lot for helping out! Please [let me know](mailto:mail@nlohmann.me) if I forgot someone.
 
@@ -1883,7 +1909,6 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**cpplint**](https://github.com/cpplint/cpplint) for style checks
 - [**doctest**](https://github.com/doctest/doctest) for the unit tests
 - [**Flawfinder**](https://dwheeler.com/flawfinder/) for static analysis
-- [**GitHub Changelog Generator**](https://github.com/github-changelog-generator/github-changelog-generator) to generate the [ChangeLog](https://github.com/nlohmann/json/blob/develop/ChangeLog.md)
 - [**Google Benchmark**](https://github.com/google/benchmark) to implement the benchmarks
 - [**Hedley**](https://nemequ.github.io/hedley/) to avoid re-inventing several compiler-agnostic feature macros
 - [**include-what-you-use**](https://include-what-you-use.org) to check the included headers
@@ -1950,7 +1975,7 @@ For more information, see [JSON With Commas and Comments (JWCC)](https://nigelta
 
 By default, the library does not preserve the **insertion order of object elements**. This is standards-compliant, as the [JSON standard](https://tools.ietf.org/html/rfc8259.html) defines objects as "an unordered collection of zero or more name/value pairs".
 
-If you do want to preserve the insertion order, you can try the type [`nlohmann::ordered_json`](https://github.com/nlohmann/json/issues/2179). Alternatively, you can use a more sophisticated ordered map like [`tsl::ordered_map`](https://github.com/Tessil/ordered-map) ([integration](https://github.com/nlohmann/json/issues/546#issuecomment-304447518)) or [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)).
+If you do want to preserve the insertion order, you can try the type [`nlohmann::ordered_json`](https://json.nlohmann.me/api/ordered_json/). Alternatively, you can use a more sophisticated ordered map like [`tsl::ordered_map`](https://github.com/Tessil/ordered-map) ([integration](https://github.com/nlohmann/json/issues/546#issuecomment-304447518)) or [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)).
 
 See the [**documentation on object order**](https://json.nlohmann.me/features/object_order/) for more information.
 
