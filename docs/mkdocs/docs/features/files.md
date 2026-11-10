@@ -32,11 +32,11 @@ json read_json_file(const std::string& path)
   column 1 instead of saying that the file is missing. A relative path is resolved against the working directory of the
   running program, which is often not the directory of the source file (see the
   [FAQ](../home/faq.md#parsing-a-file-fails-with-unexpected-end-of-input)).
-- **Don't read the file into a string first.** Parsing from a `#!cpp std::ifstream` is only about 10 to 20 % slower
-  than reading the whole file into a string with one `read()` and parsing that, and it needs no memory for the copy (see
-  [input sources and performance](parsing/index.md#input-sources-and-performance)). The common way to read a file with
-  `#!cpp std::istreambuf_iterator<char>` is so slow that it takes about twice as long as parsing from the stream. Read
-  the file into a string only if you need the text itself, for example for an error message. This advice is for
+- **Read the file into a string only if the memory is no concern.** Parsing from a `#!cpp std::ifstream` takes about
+  1.15 to 1.45 times as long as reading the whole file into a string with one `read()` and parsing that, but it needs no
+  memory for the copy (see [input sources and performance](parsing/index.md#input-sources-and-performance)). The common
+  way to read a file with `#!cpp std::istreambuf_iterator<char>` is so slow that it takes about twice as long as parsing
+  from the stream. This advice is for
   `#!cpp json::parse`. [`json_document`](json_view/index.md) reads a stream into a buffer that it owns anyway, so there is no
   copy to save: reading the file into a `#!cpp std::string` yourself and passing that as an lvalue, which the document
   borrows, was about 6 to 12 % faster than parsing from the stream, with the same single buffer.

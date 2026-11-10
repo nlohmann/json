@@ -201,24 +201,24 @@ def digits():
 # ---------- overview: speedup per workload (Google Benchmark rows, 3.12.0 time / 3.13.0 time) ----------
 # (group, label, speedup), copied from the table "The short version"
 OVERVIEW = [
-    ("Parsing", "twitter.json", 3.14),
-    ("Parsing", "citm_catalog.json", 4.25),
-    ("Parsing", "canada.json", 3.35),
-    ("Parsing", "canada.json, indented", 6.51),
-    ("Parsing", "citm, ordered_json", 6.85),
-    ("Parsing", "twitter, std::ifstream", 2.50),
-    ("Parsing", "citm, FILE*", 4.74),
-    ("Parsing", "citm, accept()", 7.07),
-    ("Writing", "dump() twitter", 6.70),
-    ("Writing", "dump() canada", 2.98),
-    ("Writing", "dump(4) citm", 4.70),
-    ("Writing", "to_cbor() twitter", 4.59),
-    ("Reading CBOR", "twitter, memory", 3.39),
-    ("Reading CBOR", "twitter, FILE*", 6.59),
-    ("Values", "diff() canada", 10.46),
-    ("Values", "iterate canada", 2.73),
-    ("Values", "copy + destroy citm", 1.13),
-    ("Values", "== citm", 1.06),
+    ("Parsing", "twitter.json", 3.49),
+    ("Parsing", "citm_catalog.json", 5.11),
+    ("Parsing", "canada.json", 4.08),
+    ("Parsing", "canada.json, indented", 7.41),
+    ("Parsing", "citm, ordered_json", 8.18),
+    ("Parsing", "twitter, std::ifstream", 2.46),
+    ("Parsing", "citm, FILE*", 14.94),
+    ("Parsing", "citm, accept()", 13.66),
+    ("Writing", "dump() twitter", 6.60),
+    ("Writing", "dump() canada", 2.90),
+    ("Writing", "dump(4) citm", 4.62),
+    ("Writing", "to_cbor() twitter", 4.41),
+    ("Reading CBOR", "twitter, memory", 3.52),
+    ("Reading CBOR", "twitter, FILE*", 9.23),
+    ("Values", "diff() canada", 10.44),
+    ("Values", "iterate canada", 1.96),
+    ("Values", "copy + destroy citm", 1.11),
+    ("Values", "== citm", 1.01),
 ]
 
 
@@ -304,16 +304,19 @@ def distribution():
 # (column in perf_timeline.csv, panel title, [(PR, label)]): each labeled step shows the number of the theme that
 # explains it ("U" for the UTF-8 check of the binary readers that came and went); the appendix maps steps to PRs
 TIMELINE = [
-    ("parse_citm", "parse() citm_catalog.json", [(5234, "4"), (5283, "1"), (5592, "4"), (5809, "4"), (5810, "2"), (5882, "4")]),
-    ("parse_canada", "parse() canada.json", [(5234, "4"), (5283, "1"), (5617, "3"), (5738, "3"), (5851, "3"), (5882, "4")]),
-    ("accept_twitter", "accept() twitter.json", [(5234, "4"), (5283, "1"), (5592, "4"), (5809, "4"), (5810, "2"), (5853, "2")]),
+    ("parse_citm", "parse() citm_catalog.json", [(5234, "4"), (5283, "1"), (5592, "4"), (5809, "4"), (5810, "2"), (5882, "4"), (6031, "1")]),
+    ("parse_canada", "parse() canada.json", [(5234, "4"), (5283, "1"), (5617, "3"), (5738, "3"), (5851, "3"), (5882, "4"), (6031, "1")]),
+    ("accept_twitter", "accept() twitter.json", [(5234, "4"), (5283, "1"), (5592, "4"), (5809, "4"), (5810, "2"), (5853, "2"), (6031, "1")]),
     ("parse_twitter_ifstream", "parse() twitter.json, std::ifstream", [(5828, "1"), (5884, "1")]),
     ("dump_twitter", "dump() twitter.json", [(5285, "6"), (5738, "2"), (5878, "2"), (5883, "2")]),
     ("dump_canada", "dump() canada.json", [(5285, "6"), (5634, "3")]),
-    ("from_cbor_twitter", "from_cbor() twitter", [(5233, "1"), (5501, "4"), (5185, "U"), (5746, "U")]),
+    ("from_cbor_twitter", "from_cbor() twitter", [(5233, "1"), (5501, "4"), (5185, "U"), (5746, "U"), (6028, "4")]),
     ("to_cbor_twitter", "to_cbor() twitter", [(5328, "4"), (5824, "6"), (5885, "6")]),
 ]
-MONTHS = [("2025-04", "3.12.0"), ("2026-09", "Sep 2026"), ("2026-10", "Oct")]
+# pull requests that were not merged yet when the timeline was measured: their step is the last point, the candidate
+# (develop with the open pull requests merged); drop a number here once its pull request is on develop
+PENDING = {6031}
+MONTHS = [("2025-04", "3.12.0"), ("2026-09", "Sep 2026"), ("2026-10", "Oct"), ("2026-11", "Nov")]
 
 
 def timeline():
@@ -358,7 +361,10 @@ def timeline():
         # label, and a label that would overlap one already placed moves up
         groups = []
         for pr, lab in labels:
-            i = next(k for k, r in enumerate(rows) if r["pr"] == str(pr))
+            i = next((k for k, r in enumerate(rows) if r["pr"] == str(pr)), None)
+            if i is None and pr in PENDING and rows[-1]["commit"] == "candidate":
+                i = n - 1
+            assert i is not None, "no commit of #%d in the timeline" % pr
             if groups and X(i) - X(groups[-1][-1][1]) < 6:
                 groups[-1].append((pr, i, lab))
             else:
@@ -454,7 +460,8 @@ def heldout():
         for f in files:
             libs = data[plat][f]
             # the fastest other library: below 1 json_document is the fastest, and the distance shows by how much
-            best = min((l for l in libs if l != "nlohmann json_document"), key=lambda l: libs[l]["us"])
+            # json::accept() is nlohmann/json too, not another library
+            best = min((l for l in libs if l not in ("nlohmann json_document", "nlohmann json")), key=lambda l: libs[l]["us"])
             rel[plat, f] = libs["nlohmann json_document"]["us"] / libs[best]["us"]
             winner[plat, f] = UC_LIBS.get(best, best)
     files.sort(key=lambda f: (rel["x86-gcc", f], rel["mac", f]))
@@ -498,10 +505,10 @@ def heldout():
 # CPU time of the compiler in ms, median of 5 interleaved rounds, C++20, M1 Max (the post's appendix G)
 # (3.12.0, 3.13.0, 3.13.0 with a precompiled header, 3.13.0 as a module)
 PRICE = [
-    ("Apple clang 21, -O0 (debug)", [("count_numbers", 955.0, 1320.5, 688.5, 917.5), ("server_config", 1113.2, 1496.4, 862.6, 1135.5)]),
-    ("Apple clang 21, -O2", [("count_numbers", 1393.2, 2081.0, 1458.4, 1684.6), ("server_config", 1753.5, 2545.6, 1925.3, 2168.6)]),
-    ("GCC 16, -O0 (debug)", [("count_numbers", 1569.4, 2548.4, 1725.0, 1699.8), ("server_config", 2025.4, 2985.1, 2301.6, 2325.8)]),
-    ("GCC 16, -O2", [("count_numbers", 2336.0, 3701.5, 2986.8, 2913.4), ("server_config", 3121.5, 4714.2, 4006.2, 4054.9)]),
+    ("Apple clang 21, -O0 (debug)", [("count_numbers", 830.8, 1131.1, 639.0, 790.3), ("server_config", 962.8, 1312.5, 774.2, 1036.5)]),
+    ("Apple clang 21, -O2", [("count_numbers", 1328.4, 1898.4, 1311.8, 1491.2), ("server_config", 1584.1, 2251.0, 1778.7, 1925.9)]),
+    ("GCC 16, -O0 (debug)", [("count_numbers", 1416.5, 2385.4, 1592.9, 1603.7), ("server_config", 1877.6, 2819.8, 2152.1, 2180.2)]),
+    ("GCC 16, -O2", [("count_numbers", 2159.0, 3464.5, 2765.0, 2739.8), ("server_config", 2877.9, 4388.2, 3722.4, 3773.8)]),
 ]
 PRICE_SERIES = [("3.13.0", "nj-charts-c2"), ("3.13.0, precompiled header", "nj-charts-c1"), ("3.13.0, module", "nj-charts-c3")]
 
@@ -584,7 +591,8 @@ NUMBER_TEXT = ("source numbers", "raw numbers")   # variants that write each num
 
 def normalize_usecases(data):
     """Chooses each library's best variants again with the rules of the post: variants that reuse a parser or document
-    across calls are measured but not chosen. Variants that write each number by copying its text instead of formatting
+    across calls, and in-place variants whose copy of the input is made before the timer starts ("(copy untimed)"), are
+    measured but not chosen. Variants that write each number by copying its text instead of formatting
     it (json_document's number_format::source, yyjson's and RapidJSON's raw numbers in edit, minify and write) are not
     chosen as the fully validating way, but as a way that does less, marked "N" like "U" and "P". Skipping the number
     conversion while reading is allowed. Each pick has a "mark": "", or the letters of what it skips"""
@@ -594,7 +602,7 @@ def normalize_usecases(data):
         numtext = lambda k: uc in WRITING and any(w in k for w in NUMBER_TEXT)
         for cell in files.values():
             for e in cell.values():
-                vs = [(v["us"], k, v["level"]) for k, v in e["variants"].items() if "reused" not in k]
+                vs = [(v["us"], k, v["level"]) for k, v in e["variants"].items() if "reused" not in k and "copy untimed" not in k]
                 full = [v for v in vs if rank[v[2]] == 0 and not numtext(v[1])]
                 pick = lambda v: {"us": v[0], "variant": v[1], "level": "full" if rank[v[2]] == 0 else v[2],
                                   "mark": " ".join(m for m in (LEVEL_MARK.get(v[2], ""), "N" if numtext(v[1]) else "") if m)}
