@@ -1909,7 +1909,6 @@ The library itself consists of a single header file licensed under the MIT licen
 - [**cpplint**](https://github.com/cpplint/cpplint) for style checks
 - [**doctest**](https://github.com/doctest/doctest) for the unit tests
 - [**Flawfinder**](https://dwheeler.com/flawfinder/) for static analysis
-- [**GitHub Changelog Generator**](https://github.com/github-changelog-generator/github-changelog-generator) to generate the [ChangeLog](https://github.com/nlohmann/json/blob/develop/ChangeLog.md)
 - [**Google Benchmark**](https://github.com/google/benchmark) to implement the benchmarks
 - [**Hedley**](https://nemequ.github.io/hedley/) to avoid re-inventing several compiler-agnostic feature macros
 - [**include-what-you-use**](https://include-what-you-use.org) to check the included headers
