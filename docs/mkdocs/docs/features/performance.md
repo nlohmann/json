@@ -29,9 +29,9 @@ up. Nothing is read ahead, so the stream is left exactly where it would be after
 [`operator>>`](../api/operator_gtgt.md) can still read several values from one stream. A stream buffer without a get
 area is read one character at a time. A `#!cpp FILE*` is locked once per parse instead of once per character, and with
 glibc and the Apple C library, the characters in its buffer are scanned in bulk as a stream's get area is. See
-[input sources and performance](parsing/index.md#input-sources-and-performance) for the full table. According to the
-description of [#5828](https://github.com/nlohmann/json/pull/5828), parsing from a stream is within about 10 to 20 % of
-parsing an equivalent `#!cpp std::string`.
+[input sources and performance](parsing/index.md#input-sources-and-performance) for the full table. Parsing from a
+stream takes about 1.15 to 1.45 times as long as parsing an equivalent `#!cpp std::string`, which `parse()` reads with
+a parser of its own (see there).
 
 Inputs that are still read one character at a time: iterator ranges that are not contiguous (e.g.
 `#!cpp std::list<char>` or `#!cpp std::istreambuf_iterator<char>`), wide strings, and user-defined adapters. An

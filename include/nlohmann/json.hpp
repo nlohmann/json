@@ -58,6 +58,7 @@
 #include <nlohmann/detail/exceptions.hpp> // IWYU pragma: export
 #include <nlohmann/detail/hash.hpp>
 #include <nlohmann/detail/input/binary_reader.hpp>
+#include <nlohmann/detail/input/contiguous_parser.hpp>
 #include <nlohmann/detail/input/input_adapters.hpp>
 #include <nlohmann/detail/input/json_sax.hpp>
 #include <nlohmann/detail/input/lexer.hpp>
@@ -3109,6 +3110,15 @@ public:
                                  const bool ignore_trailing_commas)
     {
         basic_json result;
+        // JSON in one block of memory, with the default options, is read by
+        // the faster contiguous_parser; on an error, the default parser reads
+        // it again to report it (see contiguous_parser)
+        using contiguous = std::integral_constant<bool, detail::can_parse_contiguous<basic_json, typename std::decay<InputAdapterType>::type>::value>;
+        if (cb == nullptr && !ignore_comments && !ignore_trailing_commas
+                && detail::parse_contiguous(adapter, result, allow_exceptions, contiguous {}))
+        {
+            return result;
+        }
         parser(std::forward<InputAdapterType>(adapter), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas).parse(true, result);
         return result;
     }
@@ -3119,8 +3129,17 @@ public:
                             const bool ignore_comments,
                             const bool ignore_trailing_commas)
     {
+        // JSON in one block of memory, with the default options, is checked by
+        // the faster contiguous_parser (see parse_impl())
+        using adapter_t = typename std::decay<InputAdapterType>::type;
+        bool accepted = false;
+        if (!ignore_comments && !ignore_trailing_commas
+                && detail::accept_contiguous<basic_json>(adapter, accepted, std::integral_constant<bool, detail::can_parse_contiguous<basic_json, adapter_t>::value> {}))
+        {
+            return accepted;
+        }
         // the parser and lexer that discard the values of tokens (see lexer)
-        return ::nlohmann::detail::parser<basic_json, typename std::decay<InputAdapterType>::type, true>(std::forward<InputAdapterType>(adapter),
+        return ::nlohmann::detail::parser<basic_json, adapter_t, true>(std::forward<InputAdapterType>(adapter),
                 nullptr, false, ignore_comments, ignore_trailing_commas).accept(true);
     }
 
@@ -3135,6 +3154,15 @@ public:
     {
         if (format == input_format_t::json)
         {
+            // JSON in one block of memory, with the default options, is read by
+            // the faster contiguous_parser; on an error, the default parser
+            // reads it again to report it (see parse_impl())
+            bool result = false;
+            if (strict && !ignore_comments && !ignore_trailing_commas
+                    && detail::sax_parse_contiguous<basic_json>(ia, sax, result, std::integral_constant<bool, detail::can_parse_contiguous<basic_json, InputAdapterType>::value> {}))
+            {
+                return result;
+            }
             return parser(std::move(ia), nullptr, true, ignore_comments, ignore_trailing_commas).sax_parse(sax, strict);
         }
         return detail::binary_reader<basic_json, InputAdapterType, SAX>(std::move(ia), format).sax_parse(sax, strict, tag_handler);

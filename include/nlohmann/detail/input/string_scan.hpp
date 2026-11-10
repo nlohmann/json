@@ -520,7 +520,10 @@ JSON_HEDLEY_NEVER_INLINE inline std::size_t string_bulk_run_from(const unsigned 
 }
 #endif
 
-// string_bulk_run() for the lexer. With NEON, only the first four words are
+// string_bulk_run() for the lexer. The run must be the longest one: the lexer
+// would only lose speed with a shorter run, but contiguous_parser rejects a
+// string whose run ends at a byte other than a quote or a backslash, so a
+// shorter run would reject valid input there. With NEON, only the first four words are
 // checked inline (most keys and short values end there), and longer runs and
 // non-ASCII text continue out of line. The lexer's scan function runs once per
 // token, and the vector code inlined into it needs more registers, which every
