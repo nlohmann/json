@@ -21,7 +21,7 @@ When enabled, two new member functions [`start_pos()`](https://json.nlohmann.me/
 
 Given the above, [`end_pos()`](https://json.nlohmann.me/api/basic_json/end_pos/index.md)`-`[`start_pos()`](https://json.nlohmann.me/api/basic_json/start_pos/index.md) for a JSON value provides the length of the parsed JSON string for that value, including the opening or closing braces, brackets, or quotes.
 
-Note that enabling this macro increases the size of every JSON value by two `std::size_t` fields and adds slight runtime overhead to parsing, copying JSON value objects, and the generation of error messages for exceptions. It also causes these values to be reported in those error messages.
+Note that enabling this macro increases the size of every JSON value by two `std::size_t` fields and adds slight runtime overhead to parsing, copying JSON value objects, and the generation of error messages for exceptions. It also causes these values to be reported in those error messages. In addition, `parse()`, `accept()`, and `sax_parse()` no longer use the [faster path for input in one block of memory](https://json.nlohmann.me/features/parsing/#input-sources-and-performance), so parsing a string or a buffer is slower than without the macro.
 
 If [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) is also set, the message contains the path and the byte range, such as `(/1) (bytes 4-8)`. An exception about the root value has no path and only the range, such as `(bytes 0-4)`.
 
