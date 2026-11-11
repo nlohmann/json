@@ -105,6 +105,8 @@ Linear in the size of the JSON value `j`.
 - [Binary formats](../../features/binary_formats/index.md) - overview and comparison of the supported binary formats
 - [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
 - [`from_ubjson`](from_ubjson.md) - create a JSON value from an input in UBJSON format
+- [`JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE`](../macros/json_ubjson_valueless_elements_per_byte.md) -
+  set how many elements of arrays of `null`, `true`, or `false` a reader accepts per byte of input
 - [`to_cbor`](to_cbor.md) - create a CBOR serialization of a JSON value
 - [`to_msgpack`](to_msgpack.md) - create a MessagePack serialization of a JSON value
 - [`to_bson`](to_bson.md) - create a BSON serialization of a JSON value
@@ -119,6 +121,8 @@ Linear in the size of the JSON value `j`.
   [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled) throws `type_error.316`.
 - Writes arrays of `Z`, `T`, or `F` without the `$` type annotation (`[#n Z Z ...`) once their elements in one call
   add up to more than 1,048,576, in version 3.13.0, so that `from_ubjson` can read the output back. Such output is
-  larger: 270,000 rows of 100 `null` values take 26.8 MB instead of 1.35 MB.
+  larger: 270,000 rows of 100 `null` values take 26.8 MB instead of 1.35 MB. The limit does not depend on
+  [`JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE`](../macros/json_ubjson_valueless_elements_per_byte.md): a reader accepts at
+  least 1,048,576 elements whatever it is set to, so the writer follows that base only.
 - Throws `type_error.321` for a discarded value since version 3.13.0; previously, a discarded value nested in an
   array or object was silently skipped, producing invalid UBJSON.

@@ -93,11 +93,17 @@ For the binary formats, an announced size is never trusted outright:
   `start_array(0)` and the DOM parser reserves nothing.
 - A UBJSON array of type `Z`, `T` or `F` has no payload, so its announced count is not bounded by the input. One array
   may announce at most 1,048,576 elements, and all such arrays of one input together may contain at most 1,048,576
-  elements plus 4 for every byte read so far (checked when each array's header has been read); beyond that the input is
-  rejected as [`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408). For a DOM that bounds the memory these
-  arrays can need to about 80 bytes per byte of input plus about 33 MB for the first 1,048,576 elements; a SAX handler
-  receives at most that many events. Every other optimized array element, and every UBJSON object member (it has a
-  key), takes at least one byte of input.
+  elements plus _K_ for every byte read so far (checked when each array's header has been read), where _K_ is the
+  value of the macro
+  [`JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE`](../../api/macros/json_ubjson_valueless_elements_per_byte.md), 4 by
+  default; beyond that the input is rejected as
+  [`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408). For a DOM that bounds the memory these
+  arrays can need to about 20 _K_ bytes per byte of input (81 at the default, measured; 312 for _K_ = 16) plus about
+  33 MB for the first 1,048,576 elements; a SAX handler receives at most that many events. Every other optimized array
+  element, and every UBJSON object member (it has a key), takes at least one byte of input. Leave the macro at the
+  default for input you do not control; raise it only to read trusted files that version 3.12.0 or earlier wrote with
+  long arrays of these types, and see its page for how a value is chosen and what it costs. The limit of one array
+  does not depend on the macro.
 
 ## Strings
 

@@ -251,6 +251,16 @@ This macro overrides `#!cpp try` calls inside the library.
 
 See [full documentation of `JSON_TRY_USER`](../api/macros/json_throw_user.md).
 
+## `JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE`
+
+Sets how many elements of optimized UBJSON arrays of `Z` (null), `T` (true), and `F` (false) a reader accepts for
+every byte of input it has read, on top of a base of 1,048,576 elements. These arrays have no payload, so a few bytes
+can announce a million values. The value must be a positive integer; the default is `4`, and a value of 131,072 or
+more switches the limit of the whole input off. The limit of 1,048,576 elements for a single array always applies. The
+macro is not part of the [ABI tag](namespace.md): use the same value in every translation unit.
+
+See [full documentation of `JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE`](../api/macros/json_ubjson_valueless_elements_per_byte.md).
+
 ## `JSON_USE_IMPLICIT_CONVERSIONS`
 
 When defined to `0`, implicit conversions are switched off. By default, implicit conversions are switched on.

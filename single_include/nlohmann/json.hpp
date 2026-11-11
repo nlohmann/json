@@ -3291,6 +3291,17 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_DISABLE_TUPLE_REFERENCE_CONVERSION 0
 #endif
 
+// JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE: how many elements of optimized
+// UBJSON containers of type Z, T or F (which have no payload) a reader accepts
+// per byte of input, on top of a fixed base. The value is checked and converted
+// in binary_reader.hpp; the macro is documented in
+// docs/mkdocs/docs/api/macros/json_ubjson_valueless_elements_per_byte.md.
+// It is not part of the ABI tag: it must have the same value in every
+// translation unit of a program.
+#ifndef JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE
+    #define JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE 4
+#endif
+
 #if JSON_HAS_THREE_WAY_COMPARISON
     #include <compare> // partial_ordering
 #endif
@@ -8866,7 +8877,7 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <iterator> // back_inserter
 #include <limits> // numeric_limits
 #include <string> // char_traits, string
-#include <type_traits> // is_convertible, true_type, false_type
+#include <type_traits> // false_type, integral_constant, is_convertible, is_integral, is_same, remove_cv, remove_reference, true_type
 #include <utility> // make_pair, move
 #include <vector> // vector
 #ifdef __cpp_lib_byteswap
@@ -18503,7 +18514,7 @@ JSON_INLINE_VARIABLE constexpr std::size_t max_valueless_container_size = 1 << 2
 
 The limit @ref max_valueless_container_size applies to each container on its
 own, so on its own it lets 9 bytes announce 1048576 values, and every further
-9 bytes another 1048576. The elements of all containers of a valueless type
+8 bytes (a row of an optimized array of arrays) another 1048576. The elements of all containers of a valueless type
 in one input are therefore added up, and the sum must stay below this base
 plus @ref valueless_elements_per_byte for every byte read so far. The base is
 the per-container limit, so a container that was accepted on its own before
@@ -18511,24 +18522,110 @@ the sum was introduced is still accepted at the start of an input.
 */
 JSON_INLINE_VARIABLE constexpr std::size_t valueless_elements_base = max_valueless_container_size;
 
+/// the value of JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE as a std::size_t:
+/// saturated at the largest one, not truncated, for a value that is wider
+template<typename T>
+constexpr std::size_t valueless_elements_rate(const T value) noexcept
+{
+    return static_cast<std::uintmax_t>(value) > (std::numeric_limits<std::size_t>::max)()
+           ? (std::numeric_limits<std::size_t>::max)()
+           : static_cast<std::size_t>(value);
+}
+
 /*!
 @brief number of elements of valueless UBJSON containers accepted per byte of
        input, in addition to @ref valueless_elements_base
 
-An element of a value that has a payload costs at least one byte of input.
-Valueless elements are accepted at a rate of 4 per byte. A value takes 16
-bytes of memory in a DOM, so these arrays add about 80 bytes of memory per
-byte of input (measured: 77; one `Z` per byte needs about 32), beyond what the
-same bytes cost anyway, plus the base. This bounds the arrays of valueless
-type, not the memory of a whole document. Containers written by
-@ref binary_writer never need more than the base, because it writes an array
-in the unoptimized form once the typed arrays written so far and this one add
-up to more than that. The rate matters for input written by other encoders and
-by versions before 3.13.0 only; in the data this was measured on, no input has
-more than 0.17 elements per byte.
-*/
-JSON_INLINE_VARIABLE constexpr std::size_t valueless_elements_per_byte = 4;
+This is the value of the macro JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE (4 by
+default), see docs/mkdocs/docs/api/macros/json_ubjson_valueless_elements_per_byte.md.
 
+An element of a value that has a payload costs at least one byte of input, but
+an element of a valueless type costs none, so these are the only elements whose
+number the input does not bound. They are accepted at this rate per byte read,
+which bounds the memory they take in a DOM: a value takes 16 bytes there, so
+the arrays at the limit take about 20 times this rate bytes of memory per byte
+of input (16 for the value, the rest is allocator rounding and the arrays
+themselves; measured on macOS, DOM, with containers of 9 times the rate
+elements: 25 bytes per byte at a rate of 1, 81 at 4, 312 at 16, 1226 at 64 and
+5493 at 256), plus about 33 MB for the first elements of the base (16 bytes for
+each of the 1048576 elements, and a vector that grows by reallocation, as only
+16384 elements are reserved upfront, needs the old and the new storage at once).
+
+The bound is meant for input written by other encoders and by versions before
+3.13.0, which wrote long arrays of this type optimized without a limit: input
+written by @ref binary_writer never needs more than the base, because the
+writer falls back to the unoptimized form once the arrays written so far and
+the next one add up to more than that, whatever the rate is.
+
+Range: a positive integer. A value that is not one is a compile-time error (a
+reader with a rate of 0 would accept nothing beyond the base, and a negative or
+fractional rate has no meaning). A value that does not fit into std::size_t is
+used as the largest std::size_t: the rate is so high then that the bound is
+out of reach anyway, and a project can use one spelling (for example
+`0xFFFFFFFFFFFFFFFFu`) for 32 and 64 bit targets. The type of the value must
+be an integer type that is not wider than std::uintmax_t and not bool or a
+character type. A rate of at least 2^20 / 8 = 131072 effectively switches the
+whole-input bound off: an array of more than 32767 elements needs a count of
+type `l`, so its shortest header is `$Z#l` and four bytes (8 bytes) inside an
+optimized array of arrays (9 bytes, `[$Z#l`, at the top level), and a shorter
+header (`$Z#I` and two bytes) announces at most 32767. Every container thus has
+at most (rate * header bytes) elements, which never exceeds the limit. With a
+rate of 131071 an input that is refused exists (rows of 1048576 elements gain
+8 elements each); the per-container limit still applies.
+
+The value must be the same in every translation unit of a program (it is
+compiled into member functions of binary_reader, which are inline), and it is
+not part of the ABI tag of the namespace.
+*/
+JSON_INLINE_VARIABLE constexpr std::size_t valueless_elements_per_byte =
+    // a value that does not fit into std::size_t is the largest one (see above);
+    // the comparison is made in the widest unsigned type, so that nothing is
+    // truncated before it is made. A function template, so that the casts are
+    // not "useless" (-Wuseless-cast) where the macro already has the type
+    valueless_elements_rate((JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE));
+
+/// the type of the macro's value is char8_t (C++20)
+template<typename T>
+#if defined(__cpp_char8_t)
+struct valueless_elements_rate_is_char8 : std::is_same<T, char8_t> {};
+#else
+struct valueless_elements_rate_is_char8 : std::false_type {};
+#endif
+
+/// the type of the macro's value is a character or boolean type
+template<typename T>
+struct valueless_elements_rate_is_char_or_bool
+    : disjunction<std::is_same<T, bool>, std::is_same<T, char>, std::is_same<T, signed char>,
+      std::is_same<T, unsigned char>, std::is_same<T, wchar_t>, std::is_same<T, char16_t>,
+      std::is_same<T, char32_t>, valueless_elements_rate_is_char8<T>>
+{};
+
+// these messages are what a user sees for a wrong value of the macro. The
+// integer test comes first because a fractional value would also fail the
+// positivity test; a value wider than std::uintmax_t would be truncated by
+// the conversion above, so it is rejected
+static_assert(std::is_integral<typename std::remove_reference<decltype((JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE))>::type>::value
+              && !valueless_elements_rate_is_char_or_bool<typename std::remove_cv<typename std::remove_reference<decltype((JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE))>::type>::type>::value,
+              "JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE must be an integer (not bool or a character type)");
+static_assert(sizeof(decltype((JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE))) <= sizeof(std::uintmax_t),
+              "JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE must not be wider than std::uintmax_t");
+static_assert((JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE) > 0,
+              "JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE must be a positive integer");
+
+/*!
+@brief the number of bytes read up to which
+       @ref valueless_elements_base plus @ref valueless_elements_per_byte times
+       that number can be computed in std::size_t
+
+For more bytes than this the limit of the valueless elements is the largest
+std::size_t, which is saturation: the sum is not computed, because it would wrap
+around, which happens for a rate that is large (the largest std::size_t as the
+rate wraps already at the first byte) or an input that is large (more than
+about a billion bytes for the default rate with a 32-bit std::size_t). It is a
+constant of the build, so no division is made while reading.
+*/
+JSON_INLINE_VARIABLE constexpr std::size_t valueless_elements_saturation_chars =
+    ((std::numeric_limits<std::size_t>::max)() - valueless_elements_base) / (valueless_elements_per_byte == 0 ? 1 : valueless_elements_per_byte);
 ///////////////////
 // binary reader //
 ///////////////////
@@ -22222,13 +22319,14 @@ class binary_reader
     */
     bool charge_valueless_elements(const std::size_t count) noexcept
     {
-        // the limit saturates instead of overflowing when size_t is 32 bits
-        // wide and a very large input has been read; valueless_elements
-        // never exceeds the limit, so the difference cannot underflow
-        constexpr std::size_t max_size = (std::numeric_limits<std::size_t>::max)();
-        const std::size_t limit = chars_read <= (max_size - valueless_elements_base) / valueless_elements_per_byte
+        // limit = base + rate * chars_read, saturating at the largest size_t
+        // instead of wrapping around, which would make a huge rate or input
+        // reject everything. valueless_elements never exceeds the limit of an
+        // earlier call, and the limit does not decrease, so the difference
+        // below cannot underflow.
+        const std::size_t limit = chars_read <= valueless_elements_saturation_chars
                                   ? valueless_elements_base + (valueless_elements_per_byte * chars_read)
-                                  : max_size;
+                                  : (std::numeric_limits<std::size_t>::max)();
         if (JSON_HEDLEY_UNLIKELY(count > limit - valueless_elements))
         {
             return false;
@@ -30813,12 +30911,14 @@ class binary_writer
             // reader has nothing but the declared count to bound the allocation
             // by. It refuses one array of more than max_valueless_container_size
             // elements, and all such arrays of one input together when they add
-            // up to more than valueless_elements_base plus a number per byte
-            // read. Write the unoptimized form, at one byte per element, for
-            // an array that would exceed the base with the arrays written so
-            // far, so that the result can be read back: the limit of a reader
-            // is never below the base. Objects are not affected: every element
-            // is preceded by its key.
+            // up to more than valueless_elements_base plus
+            // JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE per byte read. Write the
+            // unoptimized form, at one byte per element, for an array that
+            // would exceed the base with the arrays written so far, so that the
+            // result can be read back: the limit of a reader is never below the
+            // base, whatever the macro is set to, so the writer does not use
+            // it (and a reader with a larger rate reads this output as well).
+            // Objects are not affected: every element is preceded by its key.
             if (same_prefix && !(use_bjdata && is_bjdata_excluded_type_marker(first_prefix)))
             {
                 const bool valueless_type = IsArray && (first_prefix == 'Z' || first_prefix == 'T' || first_prefix == 'F');
@@ -48042,6 +48142,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
     #undef JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
     #undef JSON_DISABLE_STREAM_BULK_SCAN
     #undef JSON_DISABLE_UNLOCKED_FILE_IO
+    #undef JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE
 #endif
 
 // #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>
