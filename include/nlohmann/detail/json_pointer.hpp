@@ -1092,6 +1092,32 @@ class json_pointer
     };
 
     /*!
+    @brief the number of the deepest step of the previous path that is a prefix of the new one
+
+    Comparing every one of many steps with the beginning of the path would take
+    quadratic time. Instead, the length of the common beginning of the two paths
+    is computed once: a step whose prefix is not longer is a prefix of the new
+    path, too. For few steps, which is the usual case, @ref resolve_plain
+    compares them, which is cheaper.
+    */
+    template<typename Steps>
+    JSON_HEDLEY_NEVER_INLINE static std::size_t deepest_shared_step(const string_t& path, const std::size_t length, const string_t& previous, const Steps& steps) noexcept
+    {
+        const std::size_t same = common_prefix_length(path.data(), previous.data(), (std::min)(length, previous.size()));
+        std::size_t depth = steps.size();
+        for (; depth > 1; --depth)
+        {
+            // a step ends at a token boundary of the previous path
+            const std::size_t prefix = steps[depth - 1].first;
+            if (prefix <= same && (prefix == length || path[prefix] == '/'))
+            {
+                break;
+            }
+        }
+        return depth;
+    }
+
+    /*!
     @brief resolve a plain JSON pointer without building its reference tokens
 
     @param[in] root    the value the pointer starts at
@@ -1119,13 +1145,20 @@ class json_pointer
         if (cache.path != nullptr && !steps.empty() && steps[0].second == root)
         {
             const string_t& previous = *cache.path;
-            for (depth = steps.size(); depth > 1; --depth)
+            if (JSON_HEDLEY_UNLIKELY(steps.size() > 16))
             {
-                // a step ends at a token boundary of the previous path
-                const std::size_t prefix = steps[depth - 1].first;
-                if (prefix <= length && (prefix == length || path[prefix] == '/') && std::memcmp(path.data(), previous.data(), prefix) == 0)
+                depth = deepest_shared_step(path, length, previous, steps);
+            }
+            else
+            {
+                for (depth = steps.size(); depth > 1; --depth)
                 {
-                    break;
+                    // a step ends at a token boundary of the previous path
+                    const std::size_t prefix = steps[depth - 1].first;
+                    if (prefix <= length && (prefix == length || path[prefix] == '/') && std::memcmp(path.data(), previous.data(), prefix) == 0)
+                    {
+                        break;
+                    }
                 }
             }
             steps.resize(depth);
