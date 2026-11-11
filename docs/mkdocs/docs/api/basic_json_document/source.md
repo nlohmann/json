@@ -24,6 +24,9 @@ Constant.
 For a borrowed document, `source()` points directly into the caller's buffer, so it is only valid while that buffer
 is; see [`owns_source`](owns_source.md).
 
+The text of a document that owns it must not be passed to [`read()`](read.md) of the same document: `read()` releases
+an owned text before it parses its input. Copy it first. (A borrowed text belongs to the caller and is not affected.)
+
 ## Examples
 
 ??? example

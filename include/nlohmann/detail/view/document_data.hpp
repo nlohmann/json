@@ -12,6 +12,7 @@
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint32_t
 #include <cstring> // memcmp, memcpy
+#include <functional> // less
 #include <limits> // numeric_limits
 #include <map> // map
 #include <memory> // unique_ptr
@@ -147,6 +148,23 @@ struct document_data
         }
         nodes = inline_nodes;
         node_capacity = inline_capacity;
+    }
+
+    /// whether the n bytes at p overlap memory that the next parse releases or
+    /// reuses: the owned text, the decoded strings, an owned image, and the
+    /// current buffer of strings written by edits (earlier edit buffers are not
+    /// covered, as their sizes are not kept); for the debug check in read()
+    bool holds(const char* p, std::size_t n) const noexcept
+    {
+        const auto overlaps = [p, n](const char* b, std::size_t m) noexcept
+        {
+            // (std::less: a total order also for pointers into different objects)
+            return n != 0 && m != 0 && std::less<const char*>()(p, b + m) && std::less<const char*>()(b, p + n);
+        };
+        return overlaps(owned.data(), owned.capacity())
+               || overlaps(arena.data(), arena.capacity())
+               || overlaps(reinterpret_cast<const char*>(owned_image.data()), owned_image.capacity()) // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+               || (edits && !edits->texts.empty() && overlaps(edits->texts.back().get(), edits->text_cap));
     }
 
     /// the largest node count whose size in bytes fits a std::size_t
