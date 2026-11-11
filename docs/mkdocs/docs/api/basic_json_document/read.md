@@ -46,6 +46,29 @@ Linear in the length of the input.
 Every view taken from `#!cpp *this` before the call — including the previous [`root()`](root.md) — is invalidated,
 whether or not the new parse succeeds; take fresh views from [`root()`](root.md) afterward.
 
+!!! warning "`input` must not point into the document itself"
+
+    `read()` releases the document's previous text, its decoded strings, and (for an editable document) its edits
+    *before* it parses `input`. An `input` that is, or points into, any of them violates a precondition: it may seem to
+    work, parse empty or garbled text, be reported by a sanitizer, or read freed memory (undefined behavior).
+
+    This applies to every `string_view` obtained from the document whose characters live in memory that `read()`
+    releases:
+
+    - [`source()`](source.md) of a document that owns its text;
+    - [`get_string()`](../basic_json_view/get_string.md) (also as `get<string_view_t>()` or a `string_view` member of a
+      decoded struct) of a string with escapes, of a string of a document that owns its text, and of an edited string;
+    - [`number_token()`](../basic_json_view/number_token.md) of a number of a document that owns its text, and of a
+      number written by an edit;
+    - the key of an object member (`key()`) if it has escapes, was written by an edit, or the document owns its text.
+
+    It does not apply to a text that the caller owns and the document borrows, nor to the strings, keys, and tokens that
+    are read from such a text unchanged, nor to the decoded strings of a borrowed [image](load.md), which live in the
+    caller's image: `read()` never touches them. To parse JSON that a document holds in a string of its own (for
+    example, JSON embedded in a string value), copy the string first, for example with
+    `#!cpp std::string inner(doc.root()["payload"].get_string()); doc.read(inner);`. `read()` does not check for this,
+    to keep the cost of reusing a document at a minimum.
+
 `input` is borrowed or owned by the same rules as [`parse()`](parse.md#notes); a document can borrow on one call and
 own on the next, since ownership is decided freshly each time. An input that is copied (see the table in
 [`parse()`](parse.md#notes)) is written into the document's previous owned copy, reusing its memory; a moved-in
