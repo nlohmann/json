@@ -16,6 +16,7 @@
 #include <iterator> // back_inserter
 #include <limits> // numeric_limits
 #include <string> // char_traits, string
+#include <type_traits> // is_convertible, true_type, false_type
 #include <utility> // make_pair, move
 #include <vector> // vector
 #ifdef __cpp_lib_byteswap
@@ -180,6 +181,8 @@ class binary_reader
         sax = sax_;
         container_stack.clear();
         bon8_pushback_size = 0;
+        // the position is only known to the DOM parser while this reader lives
+        const position_binding binding(bound_parser(sax, std::is_convertible<SAX*, json_sax_dom_error_state*> {}), &chars_read);
         bool result = false;
 
         switch (input_format)
@@ -237,6 +240,61 @@ class binary_reader
     }
 
   private:
+    /// the DOM parser of @a s whose reserved storage is bounded by the input
+    /// read so far; nullptr for any other SAX parser, which does not reserve,
+    /// and for one that derives from a DOM parser privately or protectedly
+    /// (or ambiguously), which the reader cannot reach
+    static json_sax_dom_error_state* bound_parser(SAX* s, std::true_type /*is a DOM parser*/) noexcept
+    {
+        return s;
+    }
+
+    static json_sax_dom_error_state* bound_parser(SAX* /*s*/, std::false_type /*is a DOM parser*/) noexcept
+    {
+        return nullptr;
+    }
+
+    /*!
+    @brief tells a DOM parser where to find the number of characters read
+           while sax_parse() runs, and puts back what it knew before when
+           sax_parse() returns or throws
+
+    The reader is a local of the caller and is gone then, so the parser must
+    not keep its position. A parser that was bound by a reader that is still
+    running (a parse inside a parse) gets that binding back; that reader is
+    still alive, as it encloses this one.
+    */
+    class position_binding
+    {
+      public:
+        position_binding(json_sax_dom_error_state* parser_, const std::size_t* position) noexcept
+            : parser(parser_), saved()
+        {
+            if (parser != nullptr)
+            {
+                saved = parser->get_reserve_state();
+                parser->set_input_position(position);
+            }
+        }
+
+        position_binding(const position_binding&) = delete;
+        position_binding(position_binding&&) = delete;
+        position_binding& operator=(const position_binding&) = delete;
+        position_binding& operator=(position_binding&&) = delete;
+
+        ~position_binding()
+        {
+            if (parser != nullptr)
+            {
+                parser->set_reserve_state(saved);
+            }
+        }
+
+      private:
+        json_sax_dom_error_state* parser;
+        json_sax_dom_error_state::reserve_state saved;
+    };
+
     ////////////////////////
     // nested containers  //
     ////////////////////////

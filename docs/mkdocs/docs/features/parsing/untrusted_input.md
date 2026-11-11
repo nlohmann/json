@@ -71,11 +71,20 @@ For the binary formats, an announced size is never trusted outright:
   actually consumed, rather than allocating the announced length up front — a truncated input runs out of bytes
   (reported as a parse error) instead of triggering an oversized allocation.
 - When an array announces its number of elements and the array container supports `reserve()` (as `#!cpp std::vector`,
-  the default, does), the library reserves storage for at most 16384 of them upfront, regardless of how large the
-  announced count is; further elements still grow the container normally as they are read. A count that no
-  input backs, as in a truncated input, reserves at most that much until the parse error is reported. A parse that
-  completes keeps storage for such a count only where the elements take no input at all, which the two
-  [UBJSON](../binary_formats/ubjson.md) cases below cover.
+  the default, does), the DOM parser reserves storage for them before the elements are read, but for at most 16384
+  elements per array, regardless of how large the announced count is; further elements still grow the container
+  normally as they are read. The arrays that are open at the same time hold their storage at the same time, and an
+  announcement is not backed by input when it is read, so the elements reserved for all arrays of one input together
+  may not exceed 65,536 plus 2 for every byte of input read so far; an array that announces more gets what is left
+  of that and grows as its elements arrive. An element takes at least one byte of input, so the elements of the
+  arrays that were read use up what was reserved for them, and only arrays that are nested deeply, with an array as
+  their first element, can announce more than is left. For a truncated or hostile input, the storage that
+  announcements can hold is therefore at most (65,536 + 2 per byte of input) values, that is about 1 MiB plus 32 bytes
+  per byte of input with 16-byte values (a value is larger with `JSON_DIAGNOSTICS` or `JSON_DIAGNOSTIC_POSITIONS`, 24 to
+  40 bytes, and so is the bound). For example, 100,000 nested CBOR array headers `99 40 00` (300,000 bytes) that
+  announce 16384 elements each peaked at 23 MiB, against 1.65 GiB if every array reserved what it announced and 12 MiB
+  with version 3.12.0, which reserved nothing.
+  A [SAX](../../api/json_sax/index.md) handler is not affected: it is told the announced number of elements.
 - An announced array or object size that exceeds what the target container could ever hold (its `max_size()`) is
   rejected immediately as [`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408), without
   attempting to allocate anything.

@@ -33,6 +33,7 @@ using nlohmann::json;
 #include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
 #include "sax_countdown.hpp"
+#include "allocation_counter.hpp"
 #include "sax_event_loggers.hpp"
 using utils::SaxCountdown;
 using utils::SaxEventLogger;
@@ -1756,6 +1757,47 @@ TEST_CASE("issue #5405 - array reserve for definite-length MessagePack arrays")
 
         SaxCountdown scp(1000000); // large enough to never trigger an abort
         CHECK(json::sax_parse(packed, &scp, json::input_format_t::msgpack));
+    }
+}
+
+TEST_CASE("MessagePack - open arrays reserve only what the input has backed")
+{
+    // an array that announces its size gets storage for (up to 16384 of) its
+    // elements when it opens; the arrays that are open at the same time must
+    // not hold more than the input read so far can back
+    SECTION("nested headers that announce 16384 elements and are never completed")
+    {
+        // 200 levels would hold 200 * 16384 * sizeof(json),
+        // if each of them reserved what it announces
+        const auto input = utils::repeated({0xDC, 0x40, 0x00}, 200);
+
+        utils::counts() = utils::allocation_counts{};
+        const auto j = utils::counted_json::from_msgpack(input, true, false);
+        CHECK(j.is_discarded());
+        CAPTURE(utils::counts().peak)
+        // the credit is 65,536 values; the base peaks at more than 3 million
+        CHECK(utils::counts().peak < sizeof(utils::counted_json) * 128 * 1024);
+    }
+
+    SECTION("a completed array is still reserved in one allocation")
+    {
+        json array = json::array();
+        for (int i = 0; i < 10000; ++i)
+        {
+            array.push_back(i % 100);
+        }
+
+        {
+            const auto packed = json::to_msgpack(array);
+
+            utils::counts() = utils::allocation_counts{};
+            const auto j = utils::counted_json::from_msgpack(packed);
+            CHECK(j.size() == 10000);
+            // the array and its storage; growing the storage as the elements
+            // arrive would take more than a dozen allocations
+            CAPTURE(utils::counts().allocations)
+            CHECK(utils::counts().allocations <= 4);
+        }
     }
 }
 

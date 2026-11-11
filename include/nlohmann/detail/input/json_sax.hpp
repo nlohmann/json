@@ -159,6 +159,40 @@ constexpr std::size_t unknown_size()
     return (std::numeric_limits<std::size_t>::max)();
 }
 
+/// the largest number of elements the DOM parsers reserve for one array upfront
+constexpr std::size_t reserve_cap()
+{
+    return 16384;
+}
+
+/*!
+@brief number of array elements a DOM parser may reserve upfront on top of
+       @ref reserved_elements_per_byte
+
+An array that announces its size is given storage for that many elements when
+it opens (at most @ref reserve_cap of them), before any input backs the
+announcement, and the arrays that are open at the same time keep their storage
+until the input is complete: 100000 nested headers of three bytes each that
+announce 16384 elements would otherwise need 1.7 GB. The elements reserved for
+all arrays of an input are therefore added up, and the sum must stay below
+this base plus @ref reserved_elements_per_byte for every byte read so far; an
+array that would go beyond reserves what is left, and grows as its elements
+arrive. The base is four arrays of the maximum size, so the first nested
+arrays of an input are not affected.
+*/
+JSON_INLINE_VARIABLE constexpr std::size_t reserved_elements_base = 4 * reserve_cap();
+
+/*!
+@brief number of array elements a DOM parser may reserve upfront per byte of
+       input, in addition to @ref reserved_elements_base
+
+An element of an array takes at least one byte of input, so an array that
+completes has used what was reserved for it. At a rate of 2 elements per
+byte, an array that announces more than the input provides keeps at most
+32 bytes of memory per byte of input, plus the base, until the parse fails.
+*/
+JSON_INLINE_VARIABLE constexpr std::size_t reserved_elements_per_byte = 2;
+
 /*!
 @brief reserve capacity for @a len elements in array @a arr
 
@@ -174,8 +208,7 @@ template<typename ArrayType>
 auto reserve_array(ArrayType& arr, std::size_t len, priority_tag<1> /*unused*/)
 -> decltype(arr.reserve(len), void())
 {
-    constexpr std::size_t reserve_cap = 16384;
-    arr.reserve((std::min)(len, reserve_cap));
+    arr.reserve((std::min)(len, reserve_cap()));
 }
 
 template<typename ArrayType>
@@ -342,6 +375,13 @@ struct diagnostic_positions
 Holds whether a parse error occurred and whether errors are thrown, and
 implements the parse_error() and is_errored() members of the SAX interface for
 json_sax_dom_parser and json_sax_dom_callback_parser.
+
+It also bounds what the parsers reserve for arrays that announce their size
+(reserve_count()): the announced size is not backed by input yet when the
+array opens, and the arrays that are open at the same time each keep what was
+reserved for them, so the binary_reader tells the parser where to find the
+number of characters it has read (set_input_position()), which the bound
+is derived from.
 */
 class json_sax_dom_error_state
 {
@@ -375,7 +415,103 @@ class json_sax_dom_error_state
         return errored;
     }
 
+    /// bind the number of characters the input has provided so far; see
+    /// @ref reserve_count
+    /// (nullptr: not known, which bounds only the size of each array)
+    void set_input_position(const std::size_t* position) noexcept
+    {
+        input_position = position;
+        credit_position = 0;
+        reserve_credit = position != nullptr ? reserved_elements_base : (std::numeric_limits<std::size_t>::max)();
+    }
+
+    /// what set_input_position() changes, so that a binding can be undone
+    struct reserve_state
+    {
+        const std::size_t* position;
+        std::size_t position_at_refill;
+        std::size_t credit;
+    };
+
+    reserve_state get_reserve_state() const noexcept
+    {
+        return {input_position, credit_position, reserve_credit};
+    }
+
+    void set_reserve_state(const reserve_state& state) noexcept
+    {
+        input_position = state.position;
+        credit_position = state.position_at_refill;
+        reserve_credit = state.credit;
+    }
+
+  protected:
+    /*!
+    @brief the number of elements to reserve for an array that announces @a len
+
+    The announced number is not backed by input when the array opens, and the
+    arrays that are open at the same time each keep what was reserved for
+    them, so what is reserved for all arrays together is bounded by the
+    input read so far: @ref reserved_elements_base plus
+    @ref reserved_elements_per_byte for every character. An array that
+    announces more than what is left of that is given what is left, and
+    grows as its elements arrive. Without the position of the input (the
+    parser is not driven by a binary_reader that is running) nothing is
+    bounded but the cap of reserve_array().
+
+    The common case, an array that announces no more than the credit left,
+    costs a comparison and a subtraction. It is charged what it announces, which
+    for an array of more than reserve_cap() elements is more than reserve_array()
+    reserves for it, which its own elements refill as they are read.
+    */
+    std::size_t reserve_count(const std::size_t len) noexcept
+    {
+        if (JSON_HEDLEY_LIKELY(len <= reserve_credit))
+        {
+            reserve_credit -= len;
+            return len;
+        }
+        return reserve_count_slowly(len);
+    }
+
   private:
+    JSON_HEDLEY_NEVER_INLINE
+    std::size_t reserve_count_slowly(const std::size_t len) noexcept
+    {
+        constexpr std::size_t max_size = (std::numeric_limits<std::size_t>::max)();
+        if (input_position == nullptr)
+        {
+            reserve_credit = max_size;
+            return len;
+        }
+
+        // refill the credit with 'reserved_elements_per_byte' for every
+        // character read since the last refill; it saturates instead of
+        // overflowing when size_t is 32 bits wide and a very large input has
+        // been read (the position goes back by up to two in BON8, which has
+        // no sizes)
+        const std::size_t position = *input_position;
+        if (position > credit_position)
+        {
+            const std::size_t bytes = position - credit_position;
+            reserve_credit = bytes <= (max_size - reserve_credit) / reserved_elements_per_byte
+                             ? reserve_credit + (reserved_elements_per_byte * bytes)
+                             : max_size;
+            credit_position = position;
+        }
+
+        std::size_t count = (std::min)(len, reserve_cap());
+        count = (std::min)(count, reserve_credit);
+        reserve_credit -= count;
+        return count;
+    }
+
+    /// the number of characters the input has provided so far, if known
+    const std::size_t* input_position = nullptr;
+    /// the number of characters the input had provided when the credit was refilled
+    std::size_t credit_position = 0;
+    /// the number of elements that may still be reserved
+    std::size_t reserve_credit = reserved_elements_base;
     /// whether a syntax error occurred
     bool errored = false;
     /// whether to throw exceptions in case of errors
@@ -1210,7 +1346,7 @@ class json_sax_dom_parser : public json_sax_dom_error_state
 
         if (len != detail::unknown_size())
         {
-            reserve_array(*ref->m_data.m_value.array, len, priority_tag<1> {});
+            reserve_array(*ref->m_data.m_value.array, reserve_count(len), priority_tag<1> {});
         }
     }
 
@@ -1558,7 +1694,7 @@ class json_sax_dom_binary_parser : public json_sax_dom_error_state
 
         if (len != detail::unknown_size())
         {
-            reserve_array(*ref_stack.back()->m_data.m_value.array, len, priority_tag<1> {});
+            reserve_array(*ref_stack.back()->m_data.m_value.array, reserve_count(len), priority_tag<1> {});
         }
 
         return true;
@@ -1850,7 +1986,7 @@ class json_sax_dom_callback_parser : public json_sax_dom_error_state
 
             if (len != detail::unknown_size())
             {
-                reserve_array(*ref_stack.back()->m_data.m_value.array, len, priority_tag<1> {});
+                reserve_array(*ref_stack.back()->m_data.m_value.array, reserve_count(len), priority_tag<1> {});
             }
         }
 
