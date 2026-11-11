@@ -125,3 +125,5 @@ When the macro is not defined, the library will define it to its default value.
 ## Version history
 
 - Added in version 3.12.0.
+- Fixed in version 3.13.0: in version 3.12.0, [`start_pos()`](../basic_json/start_pos.md) of a string that contains
+  escape sequences was too large; it is now the position of the opening `"`.
