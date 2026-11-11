@@ -106,6 +106,7 @@
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint32_t
 #include <cstring> // memcmp, memcpy
+#include <functional> // less
 #include <limits> // numeric_limits
 #include <map> // map
 #include <memory> // unique_ptr
@@ -187,6 +188,11 @@
     #undef NLOHMANN_VIEW_THROW
     #define NLOHMANN_VIEW_THROW JSON_THROW_USER
 #endif
+
+// debug checks of preconditions (assert(), off with NDEBUG): JSON_ASSERT is
+// one of the macros that json.hpp undefines at its end
+#include <cassert> // assert
+#define NLOHMANN_VIEW_ASSERT(x) assert(x)
 
 // the parser stores a node's first word at once where the layout of `node` is
 // known to be little-endian (MSVC targets are); elsewhere field by field
@@ -486,6 +492,23 @@ struct document_data
         }
         nodes = inline_nodes;
         node_capacity = inline_capacity;
+    }
+
+    /// whether the n bytes at p overlap memory that the next parse releases or
+    /// reuses: the owned text, the decoded strings, an owned image, and the
+    /// current buffer of strings written by edits (earlier edit buffers are not
+    /// covered, as their sizes are not kept); for the debug check in read()
+    bool holds(const char* p, std::size_t n) const noexcept
+    {
+        const auto overlaps = [p, n](const char* b, std::size_t m) noexcept
+        {
+            // (std::less: a total order also for pointers into different objects)
+            return n != 0 && m != 0 && std::less<const char*>()(p, b + m) && std::less<const char*>()(b, p + n);
+        };
+        return overlaps(owned.data(), owned.capacity())
+               || overlaps(arena.data(), arena.capacity())
+               || overlaps(reinterpret_cast<const char*>(owned_image.data()), owned_image.capacity()) // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+               || (edits && !edits->texts.empty() && overlaps(edits->texts.back().get(), edits->text_cap));
     }
 
     /// the largest node count whose size in bytes fits a std::size_t
@@ -11630,6 +11653,10 @@ class basic_json_document
     /// sentinel: src[size] is readable and 0 (std::string, C strings)
     void build(const char* src, std::size_t size, on_error allow_exceptions, bool comments, bool trailing_commas, bool owned, bool sentinel)
     {
+        // precondition of read(): a borrowed input is not held by this document,
+        // which releases what it holds below (checked in debug builds only, as
+        // it would cost every read() of a small message a few percent)
+        NLOHMANN_VIEW_ASSERT(owned || !m_data || !m_data->holds(src, size));
         ensure_data(src, size);
         document_data& d = *m_data;
         if (!owned)
@@ -11719,6 +11746,10 @@ class basic_json_document
     template<typename T>
     void read_kind(const T& s, on_error ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::copy_range> /*unused*/)
     {
+        // (the precondition of read() as for a borrowed input, although only an
+        // input in the owned text breaks a copy: the same call borrows, for
+        // example a std::string_view in C++17, and must not depend on that)
+        NLOHMANN_VIEW_ASSERT(!m_data || !m_data->holds(reinterpret_cast<const char*>(s.data()), static_cast<std::size_t>(s.size()))); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         build_copy(s, ae, c, tc);
     }
 
@@ -11737,7 +11768,22 @@ class basic_json_document
     template<typename T>
     void read_kind(T&& input, on_error ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::adapter> /*unused*/)
     {
+        NLOHMANN_VIEW_ASSERT(!held(input)); // (see the copy_range overload)
         build_copy(std::forward<T>(input), ae, c, tc);
+    }
+
+    /// whether an input read through the input adapter is held by this document:
+    /// string_view_t before C++17 (a string handed out by a view), for the
+    /// debug check of read(); other inputs of this kind do not point into it
+    bool held(const detail::view::string_ref& s) const noexcept
+    {
+        return m_data && m_data->holds(s.data(), s.size());
+    }
+
+    template<typename T>
+    bool held(const T& /*input*/) const noexcept
+    {
+        return false;
     }
 
     template<typename IteratorType>
@@ -11895,6 +11941,7 @@ class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert
 #undef NLOHMANN_VIEW_NOCLONE
 #undef NLOHMANN_VIEW_NODISCARD
 #undef NLOHMANN_VIEW_THROW
+#undef NLOHMANN_VIEW_ASSERT
 #undef NLOHMANN_VIEW_LITTLE_ENDIAN
 #undef NLOHMANN_VIEW_REPEAT16
 #undef NLOHMANN_VIEW_REPEAT_SECOND_8

@@ -71,6 +71,11 @@
     #define NLOHMANN_VIEW_THROW JSON_THROW_USER
 #endif
 
+// debug checks of preconditions (assert(), off with NDEBUG): JSON_ASSERT is
+// one of the macros that json.hpp undefines at its end
+#include <cassert> // assert
+#define NLOHMANN_VIEW_ASSERT(x) assert(x)
+
 // the parser stores a node's first word at once where the layout of `node` is
 // known to be little-endian (MSVC targets are); elsewhere field by field
 #if (defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) || defined(_MSC_VER)

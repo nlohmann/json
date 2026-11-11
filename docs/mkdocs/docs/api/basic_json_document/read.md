@@ -66,8 +66,13 @@ whether or not the new parse succeeds; take fresh views from [`root()`](root.md)
     are read from such a text unchanged, nor to the decoded strings of a borrowed [image](load.md), which live in the
     caller's image: `read()` never touches them. To parse JSON that a document holds in a string of its own (for
     example, JSON embedded in a string value), copy the string first, for example with
-    `#!cpp std::string inner(doc.root()["payload"].get_string()); doc.read(inner);`. `read()` does not check for this,
-    to keep the cost of reusing a document at a minimum.
+    `#!cpp std::string inner(doc.root()["payload"].get_string()); doc.read(inner);`.
+
+    A debug build (one without `NDEBUG`) checks this with `assert()`: an `input` in the document's text, decoded
+    strings, or image, or in the most recent buffer of strings written by edits, ends the program. (Strings written
+    by earlier edits are not covered.) A release build does not check, to keep the cost of reusing a document at a
+    minimum. The check uses `assert()` directly, not [`JSON_ASSERT`](../macros/json_assert.md), which `json.hpp`
+    undefines at its end.
 
 `input` is borrowed or owned by the same rules as [`parse()`](parse.md#notes); a document can borrow on one call and
 own on the next, since ownership is decided freshly each time. An input that is copied (see the table in
