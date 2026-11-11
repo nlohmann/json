@@ -8681,9 +8681,7 @@ constexpr std::size_t recursion_depth_limit() noexcept
     static_assert(JSON_RECURSION_DEPTH_LIMIT >= 0 && JSON_RECURSION_DEPTH_LIMIT <= 254,
                   "JSON_RECURSION_DEPTH_LIMIT must be between 0 and 254: the nesting depth is counted in a byte per thread "
                   "and may exceed the limit by one (see https://json.nlohmann.me/api/macros/json_recursion_depth_limit/)");
-    // (a value out of range has been reported by now; the remainder keeps it
-    // below 255 for any value, so that basic_json does not report it again)
-    return static_cast<std::size_t>(JSON_RECURSION_DEPTH_LIMIT) % 255;
+    return static_cast<std::size_t>(JSON_RECURSION_DEPTH_LIMIT);
 }
 
 }  // namespace detail
@@ -40466,9 +40464,7 @@ public:
     // nesting_depth() is a byte that never exceeds the limit (JSON_RECURSION_DEPTH_LIMIT),
     // which is at most 254: the largest value stays one below the byte's maximum, so
     // that the count cannot wrap around to 0 and let a descent go on without a bound.
-    // (recursion_depth_limit() checks the macro itself, with a message that
-    // names it; this is the check that cannot be edited away unnoticed.)
-    static_assert(detail::recursion_depth_limit() < 255, "the nesting depth count must fit in a byte: JSON_RECURSION_DEPTH_LIMIT must not exceed 254");
+    // recursion_depth_limit() checks this range with a static_assert.
 
     /*!
     @brief how many levels the operation going on in this thread has descended into

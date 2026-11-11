@@ -1259,9 +1259,7 @@ public:
     // nesting_depth() is a byte that never exceeds the limit (JSON_RECURSION_DEPTH_LIMIT),
     // which is at most 254: the largest value stays one below the byte's maximum, so
     // that the count cannot wrap around to 0 and let a descent go on without a bound.
-    // (recursion_depth_limit() checks the macro itself, with a message that
-    // names it; this is the check that cannot be edited away unnoticed.)
-    static_assert(detail::recursion_depth_limit() < 255, "the nesting depth count must fit in a byte: JSON_RECURSION_DEPTH_LIMIT must not exceed 254");
+    // recursion_depth_limit() checks this range with a static_assert.
 
     /*!
     @brief how many levels the operation going on in this thread has descended into
