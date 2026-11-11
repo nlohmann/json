@@ -759,6 +759,48 @@ TEST_CASE("json_view images: errors")
         }
     }
 
+    SECTION("float tokens: an integer token is a float node only if it does not fit 64 bits")
+    {
+        for (const char* const token :
+                {
+                    "18446744073709551616", "-9223372036854775809", "100000000000000000000", "-18446744073709551616", "123456789012345678901234567890"
+                })
+        {
+            CAPTURE(token)
+            const std::string text = std::string("[") + token + "]";
+            const json_document d = json_document::parse(text);
+            CHECK(d.root()[0].is_number_float());
+            const std::vector<std::uint8_t> image = d.save();
+            const std::size_t at = text_at(image) + 1; // the first byte of the token
+            CHECK(loaded_dump(image) == json::parse(text).dump());
+            for (std::size_t pos = token[0] == '-' ? 1 : 0; token[pos] != '\0'; ++pos) // (not the sign: that changes the digits)
+            {
+                for (char digit = '0'; digit <= '9'; ++digit)
+                {
+                    std::vector<std::uint8_t> changed = image;
+                    changed[at + pos] = static_cast<std::uint8_t>(digit);
+                    std::string t = token;
+                    t[pos] = digit;
+                    CAPTURE(pos)
+                    CAPTURE(digit)
+                    CAPTURE(t)
+                    // the parser stores an integer for the changed token if it is one (and fits)
+                    const bool float_node = json::accept(t) && json::parse(t).is_number_float();
+                    const std::string result = load_result(changed, image_check::full);
+                    if (float_node)
+                    {
+                        CHECK(result.empty());
+                        CHECK(loaded_dump(changed) == json::parse("[" + t + "]").dump());
+                    }
+                    else
+                    {
+                        CHECK(result == check_failed);
+                    }
+                }
+            }
+        }
+    }
+
     SECTION("invalid UTF-8 of a decoded string: the compact dump writes it, the others throw")
     {
         const json_document d = json_document::parse(R"({"k\n":"\u00e9x"})");
