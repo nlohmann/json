@@ -3262,6 +3262,14 @@ NLOHMANN_VIEW_ALWAYS_INLINE bool bytes_equal(const char* x, const char* y, std::
     return true;
 }
 
+/// whether a float node holds the text nan, which an edit writes for a NaN (and records without a digit layout, so
+/// that a parsed float is told apart by one comparison of what the walk has loaded anyway): equal tokens are an
+/// equal value, except for this one
+NLOHMANN_VIEW_ALWAYS_INLINE bool float_token_is_nan(const node& n, const char* s) noexcept
+{
+    return NLOHMANN_VIEW_UNLIKELY(n.extra == 0xFFFFu) && n.len == 3 && s[0] == 'n';
+}
+
 /// whether the n1 bytes at x are before the n2 bytes at y (memcmp() order, then the shorter first);
 /// the first difference is found eight bytes at a time
 NLOHMANN_VIEW_ALWAYS_INLINE bool bytes_less(const char* x, std::size_t n1, const char* y, std::size_t n2) noexcept
@@ -3871,7 +3879,7 @@ class lockstep
             case value_t::string:
                 return a->len == b->len && bytes_equal(m_a.str(*a), m_b.str(*b), a->len);
             case value_t::number_float: // (the token, and the digit layout that the value is read with: they only differ in a damaged image)
-                return a->extra == b->extra && a->len == b->len && bytes_equal(m_a.str(*a), m_b.str(*b), a->len);
+                return same_float(a, b, std::integral_constant<bool, EA> {});
             case value_t::number_integer:
             case value_t::number_unsigned:
                 return integer_bits(*a) == integer_bits(*b);
@@ -3966,6 +3974,17 @@ class lockstep
         return true;
     }
 
+    /// (a read-only document holds no NaN)
+    bool same_float(const node* a, const node* b, std::false_type /*editable*/) const noexcept
+    {
+        return a->extra == b->extra && a->len == b->len && bytes_equal(m_a.str(*a), m_b.str(*b), a->len);
+    }
+
+    bool same_float(const node* a, const node* b, std::true_type /*editable*/) const noexcept
+    {
+        return a->extra == b->extra && a->len == b->len && bytes_equal(m_a.str(*a), m_b.str(*b), a->len) && !float_token_is_nan(*a, m_a.str(*a));
+    }
+
     bool elements(const node* a, const node* b, unsigned budget, lockstep_path::entry& stop) noexcept
     {
         const node* pa = nav_a::first(m_a, a);
@@ -4022,9 +4041,9 @@ bool certainly_equal(const view_side<BasicJsonType, ViewA>& a, const view_side<B
     {
         return false;
     }
-    if (na == nb)
+    if (na == nb && (!view_side<BasicJsonType, ViewA>::nav::editable() || a.document().edits == nullptr))
     {
-        return true; // (the same node of the same document: documents have distinct nodes)
+        return true; // (the same node of the same document: documents have distinct nodes; a document with edits is walked, as an edit can have written a NaN, which is not equal to itself)
     }
     path.resume = nullptr;
     if (path.next < path.length && path.nodes[path.next].a == na && path.nodes[path.next].b == nb)
@@ -4069,7 +4088,7 @@ void resume_array(const lockstep_path& /*path*/, const A& /*a*/, const B& /*b*/,
 template<typename BasicJsonType, typename ViewA, typename ViewB>
 bool floats_equal(const view_side<BasicJsonType, ViewA>& a, const view_side<BasicJsonType, ViewB>& b)
 {
-    return (a.value_node()->extra == b.value_node()->extra && a.float_token() == b.float_token()) || std::equal_to<typename BasicJsonType::number_float_t>()(a.floating(), b.floating());
+    return (a.value_node()->extra == b.value_node()->extra && a.float_token() == b.float_token() && !(view_side<BasicJsonType, ViewA>::nav::editable() && float_token_is_nan(*a.value_node(), a.float_token().data()))) || std::equal_to<typename BasicJsonType::number_float_t>()(a.floating(), b.floating());
 }
 
 template<typename A, typename B>

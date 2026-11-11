@@ -206,6 +206,44 @@ TEST_CASE("json_view edits: views and values")
         CHECK(d.root().materialize().dump() == json::parse(R"([1.5, 100.0, 0.1, null, null, 18446744073709551615, -9223372036854775808])").dump());
     }
 
+    SECTION("a NaN written by an edit is not equal to itself")
+    {
+        // as for basic_json: NaN != NaN, so a view of it, of the array that holds it, and the same view twice agree
+        json_editable_document d = json_editable_document::parse("[0, 0, 1.5]");
+        d.set(d.root(), 0, std::numeric_limits<double>::quiet_NaN());
+        d.set(d.root(), 1, std::numeric_limits<double>::quiet_NaN());
+        json_editable_document other = json_editable_document::parse("[0, 0, 1.5]");
+        other.set(other.root(), 0, std::numeric_limits<double>::quiet_NaN());
+        other.set(other.root(), 1, std::numeric_limits<double>::quiet_NaN());
+        const json value = d.root().materialize();
+
+        CHECK_FALSE(value == value);
+        CHECK_FALSE(d.root()[0] == d.root()[0]);
+        CHECK_FALSE(d.root()[0] == d.root()[1]);
+        CHECK_FALSE(d.root() == d.root());
+        CHECK_FALSE(d.root() == other.root());
+        CHECK_FALSE(d.root()[0] == other.root()[0]);
+        CHECK(d.root() != d.root());
+        CHECK(d.root()[0] != d.root()[0]);
+        CHECK_FALSE(d.root() == value);
+        CHECK_FALSE(d.root()[0] == value[0]);
+        // the other elements are equal as before
+        CHECK(d.root()[2] == d.root()[2]);
+        CHECK(d.root()[2] == other.root()[2]);
+        // finite and infinite floats written by an edit stay equal to themselves
+        d.set(d.root(), 0, 0.1);
+        d.set(d.root(), 1, std::numeric_limits<double>::infinity());
+        other.set(other.root(), 0, 0.1);
+        other.set(other.root(), 1, std::numeric_limits<double>::infinity());
+        CHECK(d.root() == d.root());
+        CHECK(d.root() == other.root());
+        CHECK(d.root()[1] == other.root()[1]);
+        // a document that was never edited
+        const json_editable_document untouched = json_editable_document::parse("[0.5, [1, 2]]");
+        CHECK(untouched.root() == untouched.root());
+        CHECK(untouched.root()[1] == untouched.root()[1]);
+    }
+
     SECTION("numbers of other float types")
     {
         // doubles have their own path to the output; other float types are
