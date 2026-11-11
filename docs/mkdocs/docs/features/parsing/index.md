@@ -77,7 +77,7 @@ them faster than others:
 |--------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
 | strings, string views, string literals, contiguous containers, pointer or iterator ranges over contiguous memory | the whole input is scanned in bulk: runs of string characters, numbers, and indentation are recognized several bytes at a time |
 | `#!cpp std::istream` (`#!cpp std::ifstream`, `#!cpp std::istringstream`, ...)            | the characters the stream buffer holds are scanned in bulk like a string; the stream buffer is asked for more when they are used up |
-| `#!cpp FILE*`                                                                              | with glibc and the Apple C library, the characters the `FILE` holds in its buffer are scanned in bulk like a stream's; elsewhere one character at a time; the file is locked once for the whole parse |
+| `#!cpp FILE*`                                                                              | with glibc and the Apple C library, the characters the `FILE` holds in its buffer are scanned in bulk like a stream's; elsewhere one character at a time; where the C library has unlocked stdio functions, the file is locked once for the whole parse |
 | other iterator ranges (e.g., `#!cpp std::list<char>`, `#!cpp std::istreambuf_iterator<char>`), wide strings | one character at a time                                                             |
 
 Input in one block of memory is read even faster with the default options (no

@@ -130,9 +130,11 @@ outside of a string, invalid) byte; see the [FAQ entry](../../home/faq.md#nul-by
 
     Contiguous inputs (strings, string views, vectors, arrays, pointer ranges) are the fastest to parse. A
     `#!cpp std::istream` comes close: the parser scans the characters its stream buffer holds in bulk, without reading
-    ahead, so the stream is left exactly where it would be after reading one character at a time. A `#!cpp FILE*` is
-    read one character at a time, but the file is locked only once, so other threads that use the same `FILE` object
-    wait until parsing is done. See [input sources and performance](../../features/parsing/index.md#input-sources-and-performance),
+    ahead, so the stream is left exactly where it would be after reading one character at a time. With glibc
+    and the Apple C library, the characters the `#!cpp FILE` holds in its buffer are scanned in bulk like a stream's;
+    elsewhere a `#!cpp FILE*` is read one character at a time. Where the C library has unlocked stdio functions, the
+    file is locked only once, so other threads that use the same `FILE` object wait until parsing is done. See
+    [input sources and performance](../../features/parsing/index.md#input-sources-and-performance),
     [`JSON_DISABLE_STREAM_BULK_SCAN`](../macros/json_disable_stream_bulk_scan.md), and
     [`JSON_DISABLE_UNLOCKED_FILE_IO`](../macros/json_disable_unlocked_file_io.md).
 
