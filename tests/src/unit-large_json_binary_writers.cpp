@@ -50,13 +50,18 @@ json nested_object(const std::size_t depth, json leaf)
 
 TEST_CASE("issue #5392 - binary writers on deeply nested values")
 {
-    // 200 is past the point where the writers stop recursing, and still
-    // shallow enough that from_* and operator== (which still recurse) are fine.
-    const json deep_array = nested_array(200, json(0));
-    const json deep_object = nested_object(200, json("x"));
-    const json empty_array = nested_array(200, json::array());
-    const json empty_object = nested_object(200, json::object());
-    const json mixed = nested_object(80, nested_array(80, json(true)));
+    // The limit (128 by default) of the levels that the writers recurse into.
+    const std::size_t limit = nlohmann::detail::recursion_depth_limit();
+
+    // 72 levels more than the limit (200 by default) is past the point where
+    // the writers stop recursing, and still shallow enough that from_* (which
+    // does not recurse) and operator== (which does, up to the limit) are quick.
+    const json deep_array = nested_array(limit + 72, json(0));
+    const json deep_object = nested_object(limit + 72, json("x"));
+    const json empty_array = nested_array(limit + 72, json::array());
+    const json empty_object = nested_object(limit + 72, json::object());
+    // 2 * (limit / 2 + 16) levels: 160 by default, and more than the limit for every limit
+    const json mixed = nested_object((limit / 2) + 16, nested_array((limit / 2) + 16, json(true)));
 
     SECTION("roundtrip past the recursion bound")
     {
@@ -95,7 +100,7 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
 
     SECTION("the two ways of writing a value meet at the bound")
     {
-        for (std::size_t depth = 120; depth <= 140; ++depth)
+        for (std::size_t depth = limit > 8 ? limit - 8 : 0; depth <= limit + 12; ++depth)
         {
             CAPTURE(depth)
 
@@ -118,8 +123,8 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
         const json ndarray = json({{"_ArrayType_", "uint8"}, {"_ArraySize_", {2, 3}}, {"_ArrayData_", {1, 2, 3, 4, 5, 6}}});
         const json invalid = json({{"_ArrayType_", "nope"}, {"_ArraySize_", {1}}, {"_ArrayData_", {1}}});
 
-        const json deep_ndarray = nested_array(140, ndarray);
-        const json deep_invalid = nested_array(140, invalid);
+        const json deep_ndarray = nested_array(limit + 12, ndarray);
+        const json deep_invalid = nested_array(limit + 12, invalid);
 
         CHECK(json::from_bjdata(json::to_bjdata(deep_ndarray)) == deep_ndarray);
         CHECK(json::from_bjdata(json::to_bjdata(deep_invalid)) == deep_invalid);
@@ -131,10 +136,10 @@ TEST_CASE("issue #5392 - binary writers on deeply nested values")
         // nested one-element arrays around the recursion bound: the exact
         // bytes a writer produces do not depend on whether it stayed on the
         // call stack or moved to the heap one partway through
+        // (the limit can be 0, where "one level less" is no level)
         for (const std::size_t depth :
                 {
-                    nlohmann::detail::recursion_depth_limit() - 1, nlohmann::detail::recursion_depth_limit(),
-                    nlohmann::detail::recursion_depth_limit() + 1, nlohmann::detail::recursion_depth_limit() + 2
+                    limit > 0 ? limit - 1 : 0, limit, limit + 1, limit + 2
                 })
         {
             CAPTURE(depth)

@@ -115,7 +115,7 @@ TEST_CASE("issue #5650 - stack overflow converting between specializations")
         // members that the two object types enumerate in different orders.
         const auto bury = [](nlohmann::ordered_json value)
         {
-            for (std::size_t i = 0; i < 200; ++i)
+            for (std::size_t i = 0; i < nlohmann::detail::recursion_depth_limit() + 72; ++i)
             {
                 value = nlohmann::ordered_json::array({std::move(value)});
             }
@@ -124,7 +124,7 @@ TEST_CASE("issue #5650 - stack overflow converting between specializations")
         const auto dig = [](const json & value)
         {
             const json* current = &value;
-            for (std::size_t i = 0; i < 200; ++i)
+            for (std::size_t i = 0; i < nlohmann::detail::recursion_depth_limit() + 72; ++i)
             {
                 current = &current->at(0);
             }

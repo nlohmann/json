@@ -355,6 +355,20 @@ json_test_add_test_for(src/unit-comparison.cpp
     MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
 )
 
+# test the walks over deeply nested values with the extreme settings of
+# JSON_RECURSION_DEPTH_LIMIT: 0 (every walk uses its explicit stack from the
+# first level on), 1, and 254 (the largest limit that fits the byte that counts
+# the nesting of a copy)
+foreach(recursion_depth_limit 0 1 254)
+    json_test_set_test_options(test-recursion_depth_limit_${recursion_depth_limit}
+        COMPILE_DEFINITIONS JSON_RECURSION_DEPTH_LIMIT=${recursion_depth_limit}
+    )
+    json_test_add_test_for(src/unit-recursion_depth_limit.cpp
+        NAME test-recursion_depth_limit_${recursion_depth_limit}
+        MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+    )
+endforeach()
+
 # test the parser again with JSON_DIAGNOSTIC_POSITIONS enabled
 json_test_set_test_options(test-class_parser_diagnostic_positions
     COMPILE_DEFINITIONS JSON_DIAGNOSTIC_POSITIONS=1

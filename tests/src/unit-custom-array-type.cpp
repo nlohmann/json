@@ -11,6 +11,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <cstddef>
 #include <cstdint>
 #include <deque>
 #include <map>
@@ -217,16 +218,17 @@ TEST_CASE("array type with std::deque nested beyond the recursion limit")
     // recursion_depth_limit() with an explicit stack of frames; with the
     // iterators of std::deque, these frames are copied and moved through
     // their own special members
+    const std::size_t depth = nlohmann::detail::recursion_depth_limit() + 72; // 200 by default
     deque_json j = 1;
-    for (int i = 0; i < 200; ++i)
+    for (std::size_t i = 0; i < depth; ++i)
     {
         deque_json outer = deque_json::array();
         outer.push_back(std::move(j));
         j = std::move(outer);
     }
 
-    // 200 arrays of one element each (0x81) around the integer 1
-    std::vector<std::uint8_t> expected(200, 0x81);
+    // `depth` arrays of one element each (0x81) around the integer 1
+    std::vector<std::uint8_t> expected(depth, 0x81);
     expected.push_back(0x01);
     CHECK(deque_json::to_cbor(j) == expected);
 }

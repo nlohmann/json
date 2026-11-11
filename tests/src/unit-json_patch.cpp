@@ -1975,14 +1975,15 @@ TEST_CASE("JSON patch: diff of deeply nested values")
     SECTION("the diff reproduces the target at every depth")
     {
         // depths on either side of the nesting depth up to which diff()
-        // recurses (detail::recursion_depth_limit(), 128); not every depth up
+        // recurses (detail::recursion_depth_limit(), 128 by default); not every depth up
         // to 300, as the test would then time out under Valgrind
         std::vector<std::size_t> depths;
         for (std::size_t depth = 0; depth <= 16; ++depth)
         {
             depths.push_back(depth);
         }
-        for (std::size_t depth = 120; depth <= 136; ++depth)
+        const std::size_t limit = nlohmann::detail::recursion_depth_limit();
+        for (std::size_t depth = limit > 8 ? limit - 8 : 0; depth <= limit + 8; ++depth)
         {
             depths.push_back(depth);
         }
@@ -2524,7 +2525,7 @@ TEST_CASE("JSON patch - diff of leaf values below the bound of the recursive des
     // the values at the innermost level are diffed without recursion: equal
     // leaves yield nothing, leaves of different types and different leaves
     // are replaced
-    const std::size_t depth = 200;
+    const std::size_t depth = nlohmann::detail::recursion_depth_limit() + 72; // 200 by default
 
     json source = {1, "text", 3, {{"x", 1}, {"y", 2}}, true, nullptr};
     json target = {1, 2, 4, {{"x", 1}, {"y", 3}}, true, nullptr};

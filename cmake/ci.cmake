@@ -343,6 +343,27 @@ add_custom_target(ci_test_no_thread_local
 )
 
 ###############################################################################
+# Change the number of levels the walks over a value recurse into.
+###############################################################################
+
+# JSON_RECURSION_DEPTH_LIMIT is 128 by default, which is what the whole test
+# suite otherwise runs with. 0 sends every walk to its explicit stack at once,
+# so this target runs the whole suite through the walks that the default only
+# uses for values nested more deeply than 128 levels: results must not depend on
+# the limit. The largest limit, 254, is covered by a build of
+# tests/src/unit-recursion_depth_limit.cpp (see tests/CMakeLists.txt).
+add_custom_target(ci_test_recursion_depth_limit_0
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_FastTests=ON
+    -DCMAKE_CXX_FLAGS=-DJSON_RECURSION_DEPTH_LIMIT=0
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_recursion_depth_limit_0
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_recursion_depth_limit_0
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_recursion_depth_limit_0 && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with JSON_RECURSION_DEPTH_LIMIT=0"
+)
+
+###############################################################################
 # Coverage.
 ###############################################################################
 

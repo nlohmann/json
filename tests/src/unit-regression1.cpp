@@ -1554,8 +1554,10 @@ TEST_CASE("regression tests 1")
         SECTION("a missing member of an object")
         {
             my_json j = make();
-#ifdef JSON_NO_THREAD_LOCAL
-            // (set by the user, or by the library for clang with MinGW)
+#if defined(JSON_NO_THREAD_LOCAL) || JSON_RECURSION_DEPTH_LIMIT < 2
+            // (set by the user, or by the library for clang with MinGW; or fewer than two
+            // levels are copied by the object type itself, as for a recursion depth limit
+            // of 0 or 1: the objects below the outermost one are the second level)
             // the objects below the outermost one are not copied by their
             // object_t here, but member by member, which keeps their
             // timestamps correct: "c" is not mistaken for "b" and is inserted
