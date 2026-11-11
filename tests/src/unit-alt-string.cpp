@@ -531,8 +531,11 @@ TEST_CASE("alternative string type with json_view")
         CHECK(d.root().materialize() == expected);
         CHECK(alt_json::parse(d.root().dump()) == expected);
 
+        // save() and load() do not exist on big-endian targets
+#if !(defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
         const alt_editable_document loaded = alt_editable_document::load(d.save());
         CHECK(loaded.root().materialize() == expected);
+#endif
     }
 }
 
