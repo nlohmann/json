@@ -29,8 +29,11 @@ up. Nothing is read ahead, so the stream is left exactly where it would be after
 [`operator>>`](../api/operator_gtgt.md) can still read several values from one stream. A stream buffer without a get
 area is read one character at a time. Where the C library has unlocked stdio functions, a `#!cpp FILE*` is locked once
 per parse instead of once per character, and with glibc and the Apple C library, the characters in its buffer are
-scanned in bulk as a stream's get area is. See
-[input sources and performance](parsing/index.md#input-sources-and-performance) for the full table. Parsing from a
+scanned in bulk as a stream's get area is.
+[`JSON_DISABLE_STREAM_BULK_SCAN`](../api/macros/json_disable_stream_bulk_scan.md) turns off the bulk scan of streams, and
+[`JSON_DISABLE_UNLOCKED_FILE_IO`](../api/macros/json_disable_unlocked_file_io.md) both the single lock and the bulk scan
+of a `#!cpp FILE*`. See [input sources and performance](parsing/index.md#input-sources-and-performance) for the full
+table. Parsing from a
 stream takes about 1.15 to 1.45 times as long as parsing an equivalent `#!cpp std::string`, which `parse()` reads with
 a parser of its own (see there).
 
