@@ -67,3 +67,4 @@ updates:
       - dependency-name: mcp
       - dependency-name: boltons
       - dependency-name: "opentelemetry-*"
+      - dependency-name: importlib-metadata
