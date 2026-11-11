@@ -27027,139 +27027,6 @@ class json_pointer
     }
 
   private:
-    /*!
-    @brief the pointer prefixes of a flattened object that denote arrays
-
-    @ref unflatten creates arrays exactly below the prefixes that have a
-    reference token 0 among their children, and objects everywhere else.
-    Deciding this up front keeps the result independent of the order in which
-    the flattened object is iterated, which is unspecified for some object
-    types.
-
-    A prefix is identified by the text of the key it is the beginning of:
-    escaping is unambiguous, so equal prefixes of valid keys are equal texts.
-    The set refers to the keys, which must outlive it.
-    */
-    class array_prefix_set
-    {
-      public:
-        void insert(const char* data, std::size_t size)
-        {
-            // flattened objects are usually sorted, so most keys that have a
-            // 0 yield the prefix of the previous one
-            if (last_data != nullptr && last_size == size && std::memcmp(last_data, data, size) == 0)
-            {
-                return;
-            }
-            last_data = data;
-            last_size = size;
-
-            if (table.empty())
-            {
-                table.resize(16);
-            }
-            const std::size_t hash = hash_of(data, size);
-            const std::size_t mask = table.size() - 1;
-            std::size_t i = hash & mask;
-            while (table[i].data != nullptr)
-            {
-                if (table[i].hash == hash && table[i].size == size && std::memcmp(table[i].data, data, size) == 0)
-                {
-                    return;
-                }
-                i = (i + 1) & mask;
-            }
-            table[i] = slot(hash, data, size);
-
-            // keep the load factor below 1/2
-            if (++used * 2 > table.size())
-            {
-                grow();
-            }
-        }
-
-        bool empty() const noexcept
-        {
-            return used == 0;
-        }
-
-        bool contains(const char* data, std::size_t size) const noexcept
-        {
-            if (used == 0)
-            {
-                return false;
-            }
-            const std::size_t hash = hash_of(data, size);
-            const std::size_t mask = table.size() - 1;
-            for (std::size_t i = hash & mask; table[i].data != nullptr; i = (i + 1) & mask)
-            {
-                if (table[i].hash == hash && table[i].size == size && std::memcmp(table[i].data, data, size) == 0)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-      private:
-        struct slot
-        {
-            slot() noexcept = default;
-
-            slot(std::size_t h, const char* d, std::size_t s) noexcept
-                : hash(h), data(d), size(s)
-            {}
-
-            std::size_t hash = 0;
-            const char* data = nullptr; // nullptr: the slot is empty
-            std::size_t size = 0;
-        };
-
-        static std::size_t hash_of(const char* data, std::size_t size) noexcept
-        {
-            std::uint64_t h = 0x9E3779B97F4A7C15ULL ^ size;
-            std::size_t i = 0;
-            for (; i + 8 <= size; i += 8)
-            {
-                std::uint64_t w = 0;
-                std::memcpy(&w, data + i, 8);
-                h = (h ^ w) * 0x100000001B3ULL;
-                h ^= h >> 32u;
-            }
-            std::uint64_t w = 0;
-            if (i < size)
-            {
-                std::memcpy(&w, data + i, size - i);
-            }
-            h = (h ^ w) * 0x9E3779B97F4A7C15ULL;
-            return detail::conditional_static_cast<std::size_t>(h ^ (h >> 29u));
-        }
-
-        void grow()
-        {
-            std::vector<slot> old(table.size() * 2);
-            old.swap(table);
-            const std::size_t mask = table.size() - 1;
-            for (const auto& s : old)
-            {
-                if (s.data != nullptr)
-                {
-                    std::size_t i = s.hash & mask;
-                    while (table[i].data != nullptr)
-                    {
-                        i = (i + 1) & mask;
-                    }
-                    table[i] = s;
-                }
-            }
-        }
-
-        std::vector<slot> table{};
-        std::size_t used = 0;
-        const char* last_data = nullptr;
-        std::size_t last_size = 0;
-    };
-
     /// @brief the length of the longest common prefix of the first @a limit bytes of @a a and @a b
     static std::size_t common_prefix_length(const char* a, const char* b, const std::size_t limit) noexcept
     {
@@ -27181,6 +27048,354 @@ class json_pointer
         }
         return i;
     }
+
+    /*!
+    @brief the prefixes of a flattened object that are marked as arrays, for
+           prefixes that are not short
+
+    A prefix is identified by the tokens it consists of: a node of a tree
+    stands for the prefix of its parent followed by a token, and is looked up
+    by its parent and the text of the token. The node of a prefix is found by
+    walking the tokens of the key from the root, so identifying all prefixes
+    of a key together costs one pass over the key, however long the prefixes
+    are, and no prefix is ever compared byte by byte as a whole. The nodes
+    along the key that was walked last are kept, and the walk of the next key
+    starts below the beginning it has in common with that key. The tree refers
+    to the keys, which must outlive it.
+    */
+    class prefix_tree
+    {
+      public:
+        /// @brief set the seed of the hash function, before anything is added
+        void reseed(const std::uint64_t seed_value) noexcept
+        {
+            seed = seed_value;
+        }
+
+        /// @brief mark the first @a prefix_size bytes of the key of @a key_size bytes at @a data
+        void mark(const char* data, std::size_t key_size, std::size_t prefix_size)
+        {
+            nodes[walk(data, key_size, prefix_size)].marked = true;
+            any_marked = true;
+        }
+
+        bool is_marked(const char* data, std::size_t key_size, std::size_t prefix_size)
+        {
+            return any_marked && nodes[walk(data, key_size, prefix_size)].marked;
+        }
+
+        bool empty() const noexcept
+        {
+            return !any_marked;
+        }
+
+        /// @brief the hash of the first @a size bytes at @a data, for the seed @a seed_value
+        static std::size_t hash_bytes(const char* data, std::size_t size, const std::uint64_t seed_value) noexcept
+        {
+            std::uint64_t h = seed_value ^ size;
+            std::size_t i = 0;
+            for (; i + 8 <= size; i += 8)
+            {
+                std::uint64_t w = 0;
+                std::memcpy(&w, data + i, 8);
+                h = (h ^ w) * 0x100000001B3ULL;
+                h ^= h >> 32u;
+            }
+            std::uint64_t w = 0;
+            if (i < size)
+            {
+                std::memcpy(&w, data + i, size - i);
+            }
+            h = (h ^ w) * 0x9E3779B97F4A7C15ULL;
+            return detail::conditional_static_cast<std::size_t>(h ^ (h >> 29u));
+        }
+
+      private:
+        struct node
+        {
+            std::size_t parent = 0;
+            std::size_t hash = 0;
+            const char* token = nullptr;
+            std::size_t token_size = 0;
+            bool marked = false;
+        };
+
+        /// @brief a slot of the hash table; the index of a node, 0 if the slot is empty
+        struct bucket
+        {
+            std::size_t index = 0;
+        };
+
+        /// @brief the node after a token of the key that was walked last, and where the token ends
+        struct step
+        {
+            std::size_t node = 0;
+            std::size_t end = 0;
+        };
+
+        /// @brief the index of the node of the prefix that ends at the slash (or the end) at @a prefix_size
+        std::size_t walk(const char* data, std::size_t key_size, std::size_t prefix_size)
+        {
+            if (nodes.empty())
+            {
+                nodes.emplace_back();
+                table.resize(16);
+                chain.emplace_back();
+            }
+
+            if (data != last_key)
+            {
+                // keep the nodes within the beginning that this key has in common
+                // with the key they were found for; a prefix that ends inside a
+                // token of this key is not one of its prefixes
+                const std::size_t same = common_prefix_length(data, last_key, (std::min)(key_size, last_key_size));
+                std::size_t keep = chain.size();
+                while (keep > 1 && (chain[keep - 1].end > same || (chain[keep - 1].end == same && same < key_size && data[same] != '/')))
+                {
+                    --keep;
+                }
+                chain.resize(keep);
+                last_key = data;
+                last_key_size = key_size;
+            }
+
+            // walk the tokens that are not walked yet
+            while (chain.back().end < prefix_size && chain.back().end < key_size)
+            {
+                const std::size_t start = chain.back().end + 1;
+                const void* const slash = std::memchr(data + start, '/', key_size - start);
+                const std::size_t end = slash == nullptr ? key_size : static_cast<std::size_t>(static_cast<const char*>(slash) - data);
+                step next;
+                next.node = child(chain.back().node, data + start, end - start);
+                next.end = end;
+                chain.push_back(next);
+            }
+
+            if (chain.back().end == prefix_size)
+            {
+                return chain.back().node;
+            }
+            // an earlier call walked further
+            const auto it = std::lower_bound(chain.begin(), chain.end(), prefix_size, [](const step & s, std::size_t size)
+            {
+                return s.end < size;
+            });
+            return it->node;
+        }
+
+        std::size_t slot_of(std::size_t parent, std::size_t hash) const noexcept
+        {
+            std::uint64_t x = static_cast<std::uint64_t>(hash) ^ (static_cast<std::uint64_t>(parent) * 0x9E3779B97F4A7C15ULL);
+            x ^= x >> 32u;
+            x *= 0xD6E8FEB86659FD93ULL;
+            x ^= x >> 32u;
+            return static_cast<std::size_t>(x) & (table.size() - 1);
+        }
+
+        /// @brief the node of the prefix of the node @a parent followed by the token, which is added if it is not there
+        std::size_t child(std::size_t parent, const char* token, std::size_t token_size)
+        {
+            const std::size_t hash = hash_bytes(token, token_size, seed);
+            std::size_t i = slot_of(parent, hash);
+            while (table[i].index != 0)
+            {
+                const node& n = nodes[table[i].index];
+                if (n.parent == parent && n.hash == hash && n.token_size == token_size && std::memcmp(n.token, token, token_size) == 0)
+                {
+                    return table[i].index;
+                }
+                i = (i + 1) & (table.size() - 1);
+            }
+
+            node created;
+            created.parent = parent;
+            created.hash = hash;
+            created.token = token;
+            created.token_size = token_size;
+            nodes.push_back(created);
+            table[i].index = nodes.size() - 1;
+
+            // keep the load factor below 1/2
+            if (nodes.size() * 2 > table.size())
+            {
+                std::vector<bucket> old(table.size() * 2);
+                old.swap(table);
+                for (std::size_t k = 1; k < nodes.size(); ++k)
+                {
+                    std::size_t j = slot_of(nodes[k].parent, nodes[k].hash);
+                    while (table[j].index != 0)
+                    {
+                        j = (j + 1) & (table.size() - 1);
+                    }
+                    table[j].index = k;
+                }
+            }
+            return nodes.size() - 1;
+        }
+
+        std::uint64_t seed = 0;
+        /// @brief the nodes; the first is the root, the empty prefix
+        std::vector<node> nodes{};
+        /// @brief the nodes (not the root) in a hash table
+        std::vector<bucket> table{};
+        /// @brief the root, and the node after each token of the key that was walked last
+        std::vector<step> chain{};
+        const char* last_key = nullptr;
+        std::size_t last_key_size = 0;
+        bool any_marked = false;
+    };
+
+    /*!
+    @brief the pointer prefixes of a flattened object that denote arrays
+
+    @ref unflatten creates arrays exactly below the prefixes that have a
+    reference token 0 among their children, and objects everywhere else.
+    Deciding this up front keeps the result independent of the order in which
+    the flattened object is iterated, which is unspecified for some object
+    types.
+
+    A prefix is identified by the text of the key it is the beginning of:
+    escaping is unambiguous, so equal prefixes of valid keys are equal texts.
+    The set refers to the keys, which must outlive it. Short prefixes are
+    kept in a hash table and compared as texts, which costs at most the length
+    of the bound. Longer prefixes are kept in a @ref prefix_tree, because
+    hashing and comparing every one of the prefixes of a key with many tokens
+    from its beginning would take quadratic time.
+
+    The hash function depends on a seed that is derived from the address of a
+    local variable, which address space layout randomization changes between
+    processes, so keys cannot be crafted to collide in advance; the result
+    does not depend on the seed. Where the addresses are not randomized, or
+    when the seed is known, keys can collide: k short prefixes then cost
+    k^2 / 2 comparisons of fewer than 64 bytes each. The long prefixes are not
+    hashed as a whole.
+    */
+    class array_prefix_set
+    {
+      public:
+        /// @brief choose the seed of the hash function, before anything is added: it is derived from the address that is passed
+        void reseed(const void* address) noexcept
+        {
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): the address is only a source of entropy
+            std::uint64_t x = static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(address)) ^ 0x9E3779B97F4A7C15ULL;
+            x *= 0xBF58476D1CE4E5B9ULL;
+            seed = x ^ (x >> 31u);
+            tree.reseed(seed);
+        }
+
+        /// @brief add the first @a prefix_size bytes of the key of @a key_size bytes at @a data
+        void insert(const char* data, std::size_t key_size, std::size_t prefix_size)
+        {
+            if (prefix_size >= short_limit)
+            {
+                tree.mark(data, key_size, prefix_size);
+                return;
+            }
+
+            // flattened objects are usually sorted, so most keys that have a
+            // 0 yield the prefix of the previous one
+            if (last_data != nullptr && last_size == prefix_size && std::memcmp(last_data, data, prefix_size) == 0)
+            {
+                return;
+            }
+            last_data = data;
+            last_size = prefix_size;
+
+            const std::size_t hash = prefix_tree::hash_bytes(data, prefix_size, seed);
+            if (table.empty())
+            {
+                table.resize(16);
+            }
+            const std::size_t mask = table.size() - 1;
+            std::size_t i = hash & mask;
+            while (table[i].data != nullptr)
+            {
+                if (table[i].hash == hash && table[i].size == prefix_size && std::memcmp(table[i].data, data, prefix_size) == 0)
+                {
+                    return;
+                }
+                i = (i + 1) & mask;
+            }
+            table[i] = slot(hash, data, prefix_size);
+
+            // keep the load factor below 1/2
+            if (++used * 2 > table.size())
+            {
+                grow();
+            }
+        }
+
+        bool empty() const noexcept
+        {
+            return used == 0 && tree.empty();
+        }
+
+        /// @brief whether the first @a prefix_size bytes of the key of @a key_size bytes at @a data were added
+        bool contains(const char* data, std::size_t key_size, std::size_t prefix_size)
+        {
+            if (prefix_size >= short_limit)
+            {
+                return tree.is_marked(data, key_size, prefix_size);
+            }
+            if (used == 0)
+            {
+                return false;
+            }
+            const std::size_t hash = prefix_tree::hash_bytes(data, prefix_size, seed);
+            const std::size_t mask = table.size() - 1;
+            for (std::size_t i = hash & mask; table[i].data != nullptr; i = (i + 1) & mask)
+            {
+                if (table[i].hash == hash && table[i].size == prefix_size && std::memcmp(table[i].data, data, prefix_size) == 0)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+      private:
+        /// @brief prefixes of fewer bytes are kept in the hash table
+        static constexpr std::size_t short_limit = 64;
+
+        struct slot
+        {
+            slot() noexcept = default;
+
+            slot(std::size_t h, const char* d, std::size_t s) noexcept
+                : hash(h), data(d), size(s)
+            {}
+
+            std::size_t hash = 0;
+            const char* data = nullptr; // nullptr: the slot is empty
+            std::size_t size = 0;
+        };
+
+        void grow()
+        {
+            std::vector<slot> old(table.size() * 2);
+            old.swap(table);
+            const std::size_t mask = table.size() - 1;
+            for (const auto& s : old)
+            {
+                if (s.data != nullptr)
+                {
+                    std::size_t i = s.hash & mask;
+                    while (table[i].data != nullptr)
+                    {
+                        i = (i + 1) & mask;
+                    }
+                    table[i] = s;
+                }
+            }
+        }
+
+        std::uint64_t seed = 0;
+        prefix_tree tree{};
+        std::vector<slot> table{};
+        std::size_t used = 0;
+        const char* last_data = nullptr;
+        std::size_t last_size = 0;
+    };
 
     /*!
     @brief check that @a key is a valid JSON pointer, and add the prefixes of
@@ -27227,7 +27442,7 @@ class json_pointer
                 // a token 0 makes the pointer before it an array
                 if (i - begin == 1 && data[begin] == '0')
                 {
-                    arrays.insert(data, begin - 1);
+                    arrays.insert(data, size, begin - 1);
                 }
                 begin = i + 1;
             }
@@ -28237,6 +28452,7 @@ class json_pointer
         // token 0 among their children; the values below them are arrays,
         // all others are objects (see array_prefix_set)
         array_prefix_set arrays;
+        arrays.reseed(&arrays);
         const string_t* previous_key = nullptr;
         for (const auto& element : *value.m_data.m_value.object)
         {
@@ -28328,7 +28544,7 @@ class json_pointer
                     case detail::value_t::null:
                     {
                         // a first child 0 makes the value an array without a look-up
-                        if ((token_size == 1 && data[pos + 1] == '0') || arrays.contains(data, pos))
+                        if ((token_size == 1 && data[pos + 1] == '0') || arrays.contains(data, key.size(), pos))
                         {
                             // some reference token below this position is 0, so the
                             // value is an array
