@@ -13301,9 +13301,7 @@ inline std::size_t find_string_delimiter(const unsigned char* data, std::size_t 
         const std::uint64_t v = read_eight_bytes(data + i);
         const std::uint64_t q = v ^ 0x2222222222222222ull;
         const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull;
-        const std::uint64_t hit = ((q - ones) & ~q & high)
-                                  | ((b - ones) & ~b & high)
-                                  | ((v - 0x2020202020202020ull) & ~v & high);
+        const std::uint64_t hit = ((q - ones) | (b - ones) | (v - 0x2020202020202020ull)) & ~v & high;
         if (hit != 0)
         {
             // the lowest flagged byte is the first delimiter (see find_string_special())
