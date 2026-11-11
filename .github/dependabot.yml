@@ -60,11 +60,3 @@ updates:
       interval: daily
     cooldown:
       default-days: 7
-    ignore:
-      # semgrep pins these packages to exact or compatible-release versions (see its METADATA);
-      # bumping them on their own makes the Semgrep job fail with ResolutionImpossible, so
-      # they only move together with a semgrep release
-      - dependency-name: mcp
-      - dependency-name: boltons
-      - dependency-name: "opentelemetry-*"
-      - dependency-name: importlib-metadata
