@@ -93,10 +93,18 @@ basic_json(basic_json&& other) noexcept;
     The constructor tries to convert the internal `m_value` of the parameter. Each member value (object, array, string,
     etc.) is serialized via the corresponding `to_json()` overload. For objects and strings, the conversion requires
     that the *target* `basic_json` type's `object_t::key_type` (or `string_t`) be directly constructible from the
-    *source* type's corresponding member type via `is_constructible`. If this requirement is not met, the conversion
-    does not fail to compile; instead, it silently falls back to the array-conversion path, which represents objects
-    as arrays of `[key, value]` pairs and strings as arrays of character codes. This is a known limitation tracked in
-    [issue #3425](https://github.com/nlohmann/json/issues/3425).
+    *source* type's corresponding member type via `is_constructible`. If this requirement is not met, the result
+    depends on the *source* string type:
+
+    - If it is a range of characters (it has `begin()` and `end()`, as `std::string` does), the conversion falls back to
+      the array-conversion path, which represents objects as arrays of `[key, value]` pairs and strings as arrays of
+      character codes. This result has a different type than the source value, so the constructor's
+      [`JSON_ASSERT`](../macros/json_assert.md) fails; with its default definition, `assert`, the program aborts unless
+      `NDEBUG` is defined, in which case the array is returned.
+    - Otherwise, the conversion does not compile, even though `#!cpp std::is_constructible` reports `#!cpp true`; for
+      example, when converting a `basic_json` whose `string_t` is the `alt_string` of the unit tests to `json`.
+
+    This is a known limitation tracked in [issue #3425](https://github.com/nlohmann/json/issues/3425).
 
 5. Creates a JSON value of type array or object from the passed initializer list `init`. In case `type_deduction` is
    `#!cpp true` (default), the type of the JSON value to be created is deducted from the initializer list `init`
