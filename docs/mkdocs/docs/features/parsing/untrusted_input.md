@@ -72,17 +72,22 @@ For the binary formats, an announced size is never trusted outright:
   (reported as a parse error) instead of triggering an oversized allocation.
 - When an array announces its number of elements and the array container supports `reserve()` (as `#!cpp std::vector`,
   the default, does), the library reserves storage for at most 16384 of them upfront, regardless of how large the
-  announced count is; further elements still grow the container normally as they are read.
+  announced count is; further elements still grow the container normally as they are read. A count that no
+  input backs, as in a truncated input, reserves at most that much until the parse error is reported. A parse that
+  completes keeps storage for such a count only where the elements take no input at all, which the two
+  [UBJSON](../binary_formats/ubjson.md) cases below cover.
 - An announced array or object size that exceeds what the target container could ever hold (its `max_size()`) is
   rejected immediately as [`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408), without
   attempting to allocate anything.
-- A [UBJSON](../binary_formats/ubjson.md) array of type `Z`, `T` or `F` has no payload, so its announced count is not
-  bounded by the input. One array may announce at most 1,048,576 elements, and all such arrays of one input together
-  may contain at most 1,048,576 elements plus 4 for every byte read so far (checked when each array's header has been
-  read); beyond that the input is rejected as
-  [`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408). For a DOM that bounds the memory these
+- A [UBJSON](../binary_formats/ubjson.md) array of the no-op type (`[$N#<n>`) is empty whatever count it declares: a
+  SAX handler is told `start_array(0)` and the DOM parser reserves nothing.
+- A UBJSON array of type `Z`, `T` or `F` has no payload, so its announced count is not bounded by the input. One array
+  may announce at most 1,048,576 elements, and all such arrays of one input together may contain at most 1,048,576
+  elements plus 4 for every byte read so far (checked when each array's header has been read); beyond that the input is
+  rejected as [`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408). For a DOM that bounds the memory these
   arrays can need to about 80 bytes per byte of input plus about 33 MB for the first 1,048,576 elements; a SAX handler
-  receives at most that many events. A UBJSON object member always costs a key, so it needs input too.
+  receives at most that many events. Every other optimized array element, and every UBJSON object member (it has a
+  key), takes at least one byte of input.
 
 ## Strings
 
