@@ -3232,3 +3232,40 @@ TEST_CASE("object keys are delivered decoded and validated")
         CHECK(keys_of_format(std::string("\x87\xC3\x28\x91"), json::input_format_t::bon8).empty());
     }
 }
+
+namespace
+{
+// a plain function (not a lambda or std::function) used as parser callback
+bool keep_everything_callback(int /*depth*/, json::parse_event_t /*event*/, json& /*parsed*/)
+{
+    return true;
+}
+} // namespace
+
+TEST_CASE("a plain function is accepted as parser callback for containers")
+{
+    // ADL finds basic_json's friend operator!= for "container != function
+    // pointer", which must not make the iterator/sentinel overloads viable
+
+    const json expected = {1, 2};
+    const std::string text = "[1,2]";
+    const std::vector<std::uint8_t> bytes(text.begin(), text.end());
+    const std::vector<char> chars(text.begin(), text.end());
+
+    CHECK(json::parse(text, keep_everything_callback) == expected);
+    CHECK(json::parse(text, &keep_everything_callback) == expected);
+    CHECK(json::parse(std::string("[1,2]"), keep_everything_callback) == expected);
+    CHECK(json::parse(bytes, keep_everything_callback) == expected);
+    CHECK(json::parse(bytes, &keep_everything_callback) == expected);
+    CHECK(json::parse(chars, keep_everything_callback) == expected);
+    CHECK(json::parse(text.begin(), text.end(), keep_everything_callback) == expected);
+
+    // the sentinel overloads (shared constraint of parse, accept, sax_parse and
+    // the from_* functions) are not viable for a container and a function
+    // pointer, but still are for iterator pairs
+    using callback_pointer = decltype(&keep_everything_callback);
+    CHECK_FALSE((nlohmann::detail::can_compare_ne<std::string, callback_pointer>::value));
+    CHECK_FALSE((nlohmann::detail::can_compare_ne<std::vector<std::uint8_t>, callback_pointer>::value));
+    CHECK((nlohmann::detail::can_compare_ne<std::string::const_iterator, std::string::const_iterator>::value));
+    CHECK((nlohmann::detail::can_compare_ne<const char*, const char*>::value));
+}
