@@ -73,12 +73,45 @@ the input.
 
 This is a sanity bound rather than a security boundary, and it is far above
 any container met in practice. @ref binary_writer falls back to the
-unoptimized encoding for longer containers, so that a value serialized by
-this library can always be read back.
+unoptimized encoding for longer containers, and for containers that together
+with the ones before them would exceed @ref valueless_elements_base, so that a
+value serialized by this library can always be read back.
 
 @sa https://github.com/nlohmann/json/issues/2793
 */
 JSON_INLINE_VARIABLE constexpr std::size_t max_valueless_container_size = 1 << 20;
+
+/*!
+@brief number of elements of valueless UBJSON containers accepted on top of
+       @ref valueless_elements_per_byte
+
+The limit @ref max_valueless_container_size applies to each container on its
+own, so on its own it lets 9 bytes announce 1048576 values, and every further
+9 bytes another 1048576. The elements of all containers of a valueless type
+in one input are therefore added up, and the sum must stay below this base
+plus @ref valueless_elements_per_byte for every byte read so far. The base is
+the per-container limit, so a container that was accepted on its own before
+the sum was introduced is still accepted at the start of an input.
+*/
+JSON_INLINE_VARIABLE constexpr std::size_t valueless_elements_base = max_valueless_container_size;
+
+/*!
+@brief number of elements of valueless UBJSON containers accepted per byte of
+       input, in addition to @ref valueless_elements_base
+
+An element of a value that has a payload costs at least one byte of input.
+Valueless elements are accepted at a rate of 4 per byte. A value takes 16
+bytes of memory in a DOM, so these arrays add about 80 bytes of memory per
+byte of input (measured: 77; one `Z` per byte needs about 32), beyond what the
+same bytes cost anyway, plus the base. This bounds the arrays of valueless
+type, not the memory of a whole document. Containers written by
+@ref binary_writer never need more than the base, because it writes an array
+in the unoptimized form once the typed arrays written so far and this one add
+up to more than that. The rate matters for input written by other encoders and
+by versions before 3.13.0 only; in the data this was measured on, no input has
+more than 0.17 elements per byte.
+*/
+JSON_INLINE_VARIABLE constexpr std::size_t valueless_elements_per_byte = 4;
 
 ///////////////////
 // binary reader //
@@ -3701,6 +3734,37 @@ class binary_reader
     }
 
     /*!
+    @brief add the elements of a container of a valueless type to the total of
+           the input and check the total against the input read so far
+
+    A container of type 'Z', 'T' or 'F' has no payload, so its elements are the
+    only ones for which the input does not bound the count. The check is made
+    once per container, not per element.
+
+    @param[in] count  number of elements the container declares; at most
+                      @ref max_valueless_container_size
+    @return false if the total is more than @ref valueless_elements_base plus
+            @ref valueless_elements_per_byte for every byte read so far; the
+            total is not changed then
+    */
+    bool charge_valueless_elements(const std::size_t count) noexcept
+    {
+        // the limit saturates instead of overflowing when size_t is 32 bits
+        // wide and a very large input has been read; valueless_elements
+        // never exceeds the limit, so the difference cannot underflow
+        constexpr std::size_t max_size = (std::numeric_limits<std::size_t>::max)();
+        const std::size_t limit = chars_read <= (max_size - valueless_elements_base) / valueless_elements_per_byte
+                                  ? valueless_elements_base + (valueless_elements_per_byte * chars_read)
+                                  : max_size;
+        if (JSON_HEDLEY_UNLIKELY(count > limit - valueless_elements))
+        {
+            return false;
+        }
+        valueless_elements += count;
+        return true;
+    }
+
+    /*!
     @return whether array creation completed
     */
     bool get_ubjson_array()
@@ -3785,10 +3849,16 @@ class binary_reader
             // declared count alone decides how much is allocated; the check is
             // made before the start event so that no container is opened that
             // is then abandoned. See @ref max_valueless_container_size.
-            if (JSON_HEDLEY_UNLIKELY((size_and_type.second == 'Z' || size_and_type.second == 'T' || size_and_type.second == 'F')
-                                     && size_and_type.first > max_valueless_container_size))
+            if (JSON_HEDLEY_UNLIKELY(size_and_type.second == 'Z' || size_and_type.second == 'T' || size_and_type.second == 'F'))
             {
-                return out_of_range_error(exception_id::container_too_large, "excessive array size", "size");
+                if (JSON_HEDLEY_UNLIKELY(size_and_type.first > max_valueless_container_size))
+                {
+                    return out_of_range_error(exception_id::container_too_large, "excessive array size", "size");
+                }
+                if (JSON_HEDLEY_UNLIKELY(!charge_valueless_elements(size_and_type.first)))
+                {
+                    return out_of_range_error(exception_id::container_too_large, "excessive number of elements without payload", "size");
+                }
             }
 
             if (JSON_HEDLEY_UNLIKELY(!enter_array(size_and_type.first, size_and_type.second)))
@@ -5113,6 +5183,10 @@ class binary_reader
 
     /// the number of characters read
     std::size_t chars_read = 0;
+
+    /// UBJSON: the sum of the element counts of the containers of a valueless
+    /// type read so far; see @ref charge_valueless_elements
+    std::size_t valueless_elements = 0;
 
     /// whether we can assume little endianness
     const bool is_little_endian = little_endianness();

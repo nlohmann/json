@@ -76,6 +76,13 @@ For the binary formats, an announced size is never trusted outright:
 - An announced array or object size that exceeds what the target container could ever hold (its `max_size()`) is
   rejected immediately as [`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408), without
   attempting to allocate anything.
+- A [UBJSON](../binary_formats/ubjson.md) array of type `Z`, `T` or `F` has no payload, so its announced count is not
+  bounded by the input. One array may announce at most 1,048,576 elements, and all such arrays of one input together
+  may contain at most 1,048,576 elements plus 4 for every byte read so far (checked when each array's header has been
+  read); beyond that the input is rejected as
+  [`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408). For a DOM that bounds the memory these
+  arrays can need to about 80 bytes per byte of input plus about 33 MB for the first 1,048,576 elements; a SAX handler
+  receives at most that many events. A UBJSON object member always costs a key, so it needs input too.
 
 ## Strings
 

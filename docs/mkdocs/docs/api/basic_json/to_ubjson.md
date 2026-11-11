@@ -117,5 +117,8 @@ Linear in the size of the JSON value `j`.
 - Added `error_handler` parameter in version 3.13.0. Its default, `keep`, writes the bytes of a string or object key
   that is not valid UTF-8 unchanged, as before; `strict` (the default if
   [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled) throws `type_error.316`.
+- Writes arrays of `Z`, `T`, or `F` without the `$` type annotation (`[#n Z Z ...`) once their elements in one call
+  add up to more than 1,048,576, in version 3.13.0, so that `from_ubjson` can read the output back. Such output is
+  larger: 270,000 rows of 100 `null` values take 26.8 MB instead of 1.35 MB.
 - Throws `type_error.321` for a discarded value since version 3.13.0; previously, a discarded value nested in an
   array or object was silently skipped, producing invalid UBJSON.
