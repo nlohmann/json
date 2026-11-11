@@ -236,7 +236,8 @@ TEST_CASE("controlled bad_alloc")
 
                 next_construct_fails = false;
 
-                // deeper than the 128 levels the copy constructor descends into
+                // deeper than the levels the copy constructor descends into
+                // (recursion_depth_limit(): 128 by default, 254 at most)
                 const std::size_t depth = 300;
 
                 my_json j = 1;
@@ -300,8 +301,9 @@ struct nth_alloc_fails_allocator : std::allocator<T>
     };
 };
 
-// builds a value nested more than 128 levels deep - the bound the copy
-// constructor descends into before it continues without the call stack - and
+// builds a value nested more than recursion_depth_limit() (128 by default)
+// levels deep - the bound the copy constructor descends into before it
+// continues without the call stack - and
 // checks that a copy survives any single allocation of it failing: every
 // attempt either throws std::bad_alloc, without crashing or leaving the
 // source altered, or completes the copy
@@ -312,9 +314,9 @@ void check_deep_copy_survives_failing_allocation(bool nest_objects)
 
     fail_at_alloc_call = -1;
 
-    // [[[ ... [1] ... ]]], or the same nesting with objects, 130 levels deep
+    // [[[ ... [1] ... ]]], or the same nesting with objects, two levels deeper than the limit
     BasicJsonType src = 1;
-    for (std::size_t i = 0; i < 130; ++i)
+    for (std::size_t i = 0; i < nlohmann::detail::recursion_depth_limit() + 2; ++i)
     {
         if (nest_objects)
         {
@@ -440,8 +442,9 @@ TEST_CASE("deep copy uses the provided allocator")
 {
     using counting_json = nlohmann::json::with_allocator_t<scratch_counting_allocator>;
 
-    // deeper than the 128 levels the copy constructor descends into, so the
-    // innermost objects are copied by the iterative deep copy
+    // deeper than the levels the copy constructor descends into (128 by
+    // default, 254 at most), so the innermost objects are copied by the
+    // iterative deep copy
     counting_json j = 1;
     for (std::size_t i = 0; i < 300; ++i)
     {
@@ -499,11 +502,12 @@ TEST_CASE("converting a deeply nested value from another specialization fails cl
 #if !(defined(_MSC_VER) && _MSC_VER < 1910 && defined(_ITERATOR_DEBUG_LEVEL) && _ITERATOR_DEBUG_LEVEL > 0)
     using countdown_json = nlohmann::json::with_allocator_t<countdown_allocator>;
 
-    // deeper than the 128 levels the converting constructor descends into, so
-    // that failures land on both sides of the bound - or, built with
-    // JSON_NO_THREAD_LOCAL, all in the iterative conversion
+    // deeper than the levels the converting constructor descends into
+    // (recursion_depth_limit(), 128 by default), so that failures land on both
+    // sides of the bound - or, built with JSON_NO_THREAD_LOCAL, all in the
+    // iterative conversion
     json j = {1, "two", {{"three", 3}}};
-    for (std::size_t i = 0; i < 150; ++i)
+    for (std::size_t i = 0; i < nlohmann::detail::recursion_depth_limit() + 22; ++i)
     {
         j = json{{"a", json::array({j, "sibling"})}};
     }

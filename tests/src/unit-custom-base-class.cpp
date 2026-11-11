@@ -475,10 +475,10 @@ TEST_CASE("Regression test for issue #5674 - copy construction must not require 
 
     SECTION("nested deeper than the copy constructor's descent bound")
     {
-        // beyond nesting_depth_limit() (128) levels, the copy constructor
+        // beyond recursion_depth_limit() (128 by default) levels, the copy constructor
         // copies without the call stack (copy_iteratively / copy_array_level),
         // which used to assign the base class of every element it created
-        const std::size_t depth = 300;
+        const std::size_t depth = nlohmann::detail::recursion_depth_limit() + 172;
 
         const json_with_const_base j = make_nested_array(depth);
         const json_with_const_base copy = j; // NOLINT(performance-unnecessary-copy-initialization)

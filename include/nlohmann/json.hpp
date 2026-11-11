@@ -1256,8 +1256,10 @@ public:
     }
 
 #ifndef JSON_NO_THREAD_LOCAL
-    // nesting_depth() is a byte and may exceed the limit by one level
-    static_assert(detail::recursion_depth_limit() < 255, "the nesting depth count must fit in a byte");
+    // nesting_depth() is a byte that never exceeds the limit (JSON_RECURSION_DEPTH_LIMIT),
+    // which is at most 254: the largest value stays one below the byte's maximum, so
+    // that the count cannot wrap around to 0 and let a descent go on without a bound.
+    // recursion_depth_limit() checks this range with a static_assert.
 
     /*!
     @brief how many levels the operation going on in this thread has descended into
@@ -1268,8 +1270,15 @@ public:
     user code nests them anyway, sharing the count only ends a descent sooner
     than it had to, which costs a little speed and is never wrong.
 
-    A byte is enough: the count never exceeds the limit by more than the single
-    level that notices the limit has been reached.
+    A byte is enough: only the levels that are descended into are counted
+    (@ref nesting_depth_guard), so the count never exceeds the limit, and the
+    limit is at most 254.
+
+    The count is per thread and not per value or per library configuration: all
+    translation units of a program share it, even if they were compiled with
+    different values of JSON_RECURSION_DEPTH_LIMIT (which is not supported, see
+    the documentation of the macro); each of them then compares the shared count
+    with its own limit.
     */
     static std::uint8_t& nesting_depth() noexcept
     {
@@ -1327,14 +1336,25 @@ public:
 #endif
         {
 #ifndef JSON_NO_THREAD_LOCAL
-            ++nesting_depth();
+            // Only a level that is entered is counted, so that the count never
+            // exceeds the limit. A level that is not entered is finished without
+            // descending, and whatever runs while it is (a copy made by a custom
+            // base class, say) sees the same count as the level itself did and
+            // is not entered either.
+            if (m_okay)
+            {
+                ++nesting_depth();
+            }
 #endif
         }
 
         ~nesting_depth_guard()
         {
 #ifndef JSON_NO_THREAD_LOCAL
-            --nesting_depth();
+            if (m_okay)
+            {
+                --nesting_depth();
+            }
 #endif
         }
 
@@ -5246,7 +5266,10 @@ public:
     */
     void update_members(const iterator& first, const iterator& last, const bool merge_objects, const std::size_t depth)
     {
-        if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
+        // without merge_objects the loop below never descends, so there is no
+        // call stack to save (and the explicit stack always merges); the
+        // distinction matters for a limit of 0, which reaches this at depth 0
+        if (JSON_HEDLEY_UNLIKELY(merge_objects && depth >= detail::recursion_depth_limit()))
         {
             update_members_iteratively(first, last);
             return;
