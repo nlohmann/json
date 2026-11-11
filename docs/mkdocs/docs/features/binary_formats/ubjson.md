@@ -131,6 +131,10 @@ The library uses the following mapping from JSON values types to UBJSON types ac
     a `$Z` annotation. Version 3.12.0 writes such a row in 5 bytes (6 above 255 elements), so rows of 20 or fewer such
     values are never rejected. Objects and untyped counted arrays are not subject to this limit.
 
+    An optimized array of type `N` (no-op) is empty whatever its count is, because a no-op is not a value. Its count is
+    not passed on: `sax_parse` reports `start_array(0)` (versions before 3.13.0 reported the declared count), and the DOM
+    parser reserves nothing for it.
+
 !!! info "Binary values"
 
     If the JSON data contains the binary type, the value stored is a list of integers, as suggested by the UBJSON

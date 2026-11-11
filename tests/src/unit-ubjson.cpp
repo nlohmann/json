@@ -2691,6 +2691,90 @@ TEST_CASE("UBJSON the valueless elements of a whole input are bounded")
     }
 }
 
+TEST_CASE("UBJSON an optimized array of no-ops is empty whatever its count")
+{
+    // A no-op ('N') is not a value, so `[$N#<n>` is an array without elements
+    // for every n. The count used to be passed on to the SAX parser, which
+    // told it to expect n elements, and the DOM parser reserved storage for
+    // them: 16384 values (256 KB) for a count of 2^31 in 9 bytes of input.
+    SECTION("the SAX parser is told that the array is empty")
+    {
+        for (const std::vector<std::uint8_t>& input :
+                {
+                    std::vector<std::uint8_t> {'[', '$', 'N', '#', 'i', 2},
+                    std::vector<std::uint8_t> {'[', '$', 'N', '#', 'I', 0x7F, 0xFF},
+                    std::vector<std::uint8_t> {'[', '$', 'N', '#', 'l', 0x7F, 0xFF, 0xFF, 0xFF},
+                    std::vector<std::uint8_t> {'[', '$', 'N', '#', 'i', 0}
+                })
+        {
+            SaxEventLogger logger;
+            CHECK(json::sax_parse(input, &logger, json::input_format_t::ubjson));
+            CHECK(logger.events == std::vector<std::string>({"start_array(0)", "end_array()"}));
+        }
+
+        // between other values, the next value is read as usual
+        const std::vector<std::uint8_t> nested = {'[', '[', '$', 'N', '#', 'l', 0x7F, 0xFF, 0xFF, 0xFF, 'T', '[', '$', 'N', '#', 'i', 3, ']'};
+        SaxEventLogger logger;
+        CHECK(json::sax_parse(nested, &logger, json::input_format_t::ubjson));
+        CHECK(logger.events == std::vector<std::string>({"start_array()", "start_array(0)", "end_array()", "boolean(true)", "start_array(0)", "end_array()", "end_array()"}));
+    }
+
+    SECTION("the DOM parser reserves nothing")
+    {
+        // 2000 arrays of 9 bytes that announce 2^31 elements each: with a
+        // reservation of 16384 values per array this took about 500 MB
+        std::vector<std::uint8_t> input = {'['};
+        for (int i = 0; i < 2000; ++i)
+        {
+            input.insert(input.end(), {'[', '$', 'N', '#', 'l', 0x7F, 0xFF, 0xFF, 0xFF});
+        }
+        input.push_back(']');
+
+        const json j = json::from_ubjson(input);
+        REQUIRE(j.size() == 2000);
+        std::size_t capacity = 0;
+        for (const auto& element : j)
+        {
+            CHECK(element.is_array());
+            CHECK(element.empty());
+            capacity += element.get_ref<const json::array_t&>().capacity();
+        }
+        CHECK(capacity == 0);
+
+        // the 7-byte form inside an optimized array of arrays
+        std::vector<std::uint8_t> typed = {'[', '$', '[', '#', 'I', 0x07, 0xD0};
+        for (int i = 0; i < 2000; ++i)
+        {
+            typed.insert(typed.end(), {'$', 'N', '#', 'I', 0x7F, 0xFF});
+        }
+        const json k = json::from_ubjson(typed);
+        REQUIRE(k.size() == 2000);
+        capacity = 0;
+        for (const auto& element : k)
+        {
+            CHECK(element.empty());
+            capacity += element.get_ref<const json::array_t&>().capacity();
+        }
+        CHECK(capacity == 0);
+    }
+
+    SECTION("a count that no container could hold is no longer an error")
+    {
+        // the array is empty, so nothing has to fit: 0x7FFFFFFF used to be
+        // reported as out_of_range.408 where it exceeds the maximum size of
+        // an array, and is accepted now
+        const std::vector<std::uint8_t> input = {'[', '$', 'N', '#', 'l', 0x7F, 0xFF, 0xFF, 0xFF};
+        CHECK(json::from_ubjson(input) == json::array());
+
+        // a count that does not fit into std::size_t still is
+#if SIZE_MAX == 0xffffffff
+        const std::vector<std::uint8_t> too_large = {'[', '$', 'N', '#', 'L', 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00};
+        json _;
+        CHECK_THROWS_AS(_ = json::from_ubjson(too_large), json::out_of_range&);
+#endif
+    }
+}
+
 TEST_CASE("issue #5405 - array reserve for definite-length UBJSON arrays")
 {
 #if !defined(JSON_NOEXCEPTION)

@@ -3861,16 +3861,13 @@ class binary_reader
                 }
             }
 
-            if (JSON_HEDLEY_UNLIKELY(!enter_array(size_and_type.first, size_and_type.second)))
+            // a no-op is not a value, so an array of them is empty whatever
+            // count it declares: the SAX parser is told so, instead of being
+            // made to reserve storage for a count that no input backs
+            const std::size_t announced = size_and_type.second == 'N' ? 0 : size_and_type.first;
+            if (JSON_HEDLEY_UNLIKELY(!enter_array(announced, size_and_type.second)))
             {
                 return false;
-            }
-
-            if (size_and_type.second == 'N')
-            {
-                // a no-op is not a value, so a container of them holds none;
-                // the declared size has already been passed to the SAX parser
-                container_stack.back().remaining = 0;
             }
 
             return size_and_type.second == 0
