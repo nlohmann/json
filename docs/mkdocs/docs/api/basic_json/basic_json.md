@@ -67,7 +67,11 @@ basic_json(basic_json&& other) noexcept;
     - **objects**: [`object_t`](object_t.md) and all kinds of compatible associative containers such as `std::map`,
      `std::unordered_map`, `std::multimap`, and `std::unordered_multimap` with a `key_type` compatible to `string_t`
      and a `value_type` from which a `basic_json` value can be constructed.
-    - **strings**: `string_t`, string literals, and all compatible string containers can be used.
+    - **strings**: `string_t`, string literals, and all compatible string containers can be used. Since version 3.13.0,
+      this includes `#!cpp std::u8string` (C++20): its code units are stored as a JSON string and
+      [`get<std::u8string>()`](get.md) reads it back (in version 3.12.0, a `#!cpp std::u8string` was stored as an array
+      of numbers; `get<std::u8string>()` still accepts such an array). `#!cpp std::u8string_view` and `#!cpp char8_t`
+      arrays are not strings; they are stored as arrays of code units.
 
     !!! note "Rvalue containers are moved from"
 

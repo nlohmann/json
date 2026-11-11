@@ -364,6 +364,16 @@ json_test_add_test_for(src/unit-class_parser.cpp
     MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
 )
 
+# test the conversions again without std::filesystem::path support: a
+# std::u8string must be a JSON string in this configuration, too
+json_test_set_test_options(test-conversions2_no_filesystem
+    COMPILE_DEFINITIONS JSON_HAS_FILESYSTEM=0 JSON_HAS_EXPERIMENTAL_FILESYSTEM=0
+)
+json_test_add_test_for(src/unit-conversions2.cpp
+    NAME test-conversions2_no_filesystem
+    MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+)
+
 # test diagnostic positions again without regular diagnostics (JSON pointer paths)
 json_test_set_test_options(test-diagnostic-positions_only
     COMPILE_DEFINITIONS JSON_DIAGNOSTICS=0
