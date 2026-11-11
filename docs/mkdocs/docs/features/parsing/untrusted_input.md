@@ -76,7 +76,8 @@ For the binary formats, an announced size is never trusted outright:
   normally as they are read. The arrays that are open at the same time hold their storage at the same time, and an
   announcement is not backed by input when it is read, so the elements reserved for all arrays of one input together
   may not exceed 65,536 plus 2 for every byte of input read so far; an array that announces more gets what is left
-  of that and grows as its elements arrive. An element takes at least one byte of input, so the elements of the
+  of that and grows as its elements arrive. An element takes at least one byte of input (except in the
+  [UBJSON](../binary_formats/ubjson.md) arrays of type `Z`, `T` or `F` described below), so the elements of the
   arrays that were read use up what was reserved for them, and only arrays that are nested deeply, with an array as
   their first element, can announce more than is left. For a truncated or hostile input, the storage that
   announcements can hold is therefore at most (65,536 + 2 per byte of input) values, that is about 1 MiB plus 32 bytes
@@ -88,8 +89,8 @@ For the binary formats, an announced size is never trusted outright:
 - An announced array or object size that exceeds what the target container could ever hold (its `max_size()`) is
   rejected immediately as [`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408), without
   attempting to allocate anything.
-- A [UBJSON](../binary_formats/ubjson.md) array of the no-op type (`[$N#<n>`) is empty whatever count it declares: a
-  SAX handler is told `start_array(0)` and the DOM parser reserves nothing.
+- A UBJSON array of the no-op type (`[$N#<n>`) is empty whatever count it declares: a SAX handler is told
+  `start_array(0)` and the DOM parser reserves nothing.
 - A UBJSON array of type `Z`, `T` or `F` has no payload, so its announced count is not bounded by the input. One array
   may announce at most 1,048,576 elements, and all such arrays of one input together may contain at most 1,048,576
   elements plus 4 for every byte read so far (checked when each array's header has been read); beyond that the input is
