@@ -798,10 +798,10 @@ inline void from_json(const BasicJsonType& j, std::basic_string<char8_t, Tr, All
         const char* const data = str.data();
         const std::size_t size = str.size();
         std::basic_string<char8_t, Tr, Allocator> ret(s.get_allocator());
-        ret.reserve(size);
+        ret.resize(size);
         for (std::size_t i = 0; i < size; ++i)
         {
-            ret.push_back(static_cast<char8_t>(static_cast<unsigned char>(data[i])));
+            ret[i] = static_cast<char8_t>(static_cast<unsigned char>(data[i]));
         }
         s = std::move(ret);
     }
