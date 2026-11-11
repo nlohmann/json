@@ -27277,7 +27277,8 @@ class json_pointer
         void reseed(const void* address) noexcept
         {
             // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast): the address is only a source of entropy
-            std::uint64_t x = static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(address)) ^ 0x9E3779B97F4A7C15ULL;
+            std::uint64_t x = reinterpret_cast<std::uintptr_t>(address);
+            x ^= 0x9E3779B97F4A7C15ULL;
             x *= 0xBF58476D1CE4E5B9ULL;
             seed = x ^ (x >> 31u);
             tree.reseed(seed);
