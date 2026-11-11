@@ -1,6 +1,6 @@
 # Modules
 
-This library has experimental support for C++ modules, introduced in C++20. The library can be imported by writing `import nlohmann.json;` instead of `#include <nlohmann/json.hpp>`. 
+This library has experimental support for [C++ modules](https://en.wikipedia.org/wiki/Modules_(C++)), introduced in C++20. The library can be imported by writing `import nlohmann.json;` instead of `#include <nlohmann/json.hpp>`. 
 
 Please be aware that the module is experimental and a full test is outstanding, and the exported symbols are subject to change.
 

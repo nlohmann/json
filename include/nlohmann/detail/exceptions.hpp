@@ -124,7 +124,10 @@ enum class exception_id : int
     // other_error
     internal_error = 500, ///< unreachable code was reached
     patch_test_failed = 501, ///< a JSON Patch 'test' operation failed
-    size_marker_required = 502  ///< UBJSON/BJData output with type markers requires size markers
+    size_marker_required = 502, ///< UBJSON/BJData output with type markers requires size markers
+    // deserialization_error
+    deserialization_type_mismatch = 601, ///< a key cannot be converted to the member's type during deserialize()
+    unknown_enumerator = 602  ///< an enum member holds a name that matches no enumerator
 };
 
 /// @brief general exception of the @ref basic_json class
@@ -396,6 +399,29 @@ class other_error : public exception
   private:
     JSON_HEDLEY_NON_NULL(3)
     other_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
+};
+
+/// @brief exception indicating a failed reflection-based (de)serialization
+/// @sa https://json.nlohmann.me/api/basic_json/deserialization_error/
+class deserialization_error : public exception
+{
+  public:
+    template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
+    static deserialization_error create(int id_, const std::string& what_arg, BasicJsonContext context)
+    {
+        const std::string w = exception::what_impl("deserialization_error", id_, what_arg, context);
+        return {id_, w.c_str()};
+    }
+
+    template<typename BasicJsonContext, enable_if_t<is_basic_json_context<BasicJsonContext>::value, int> = 0>
+    static deserialization_error create(exception_id id_, const std::string& what_arg, BasicJsonContext context)
+    {
+        return create(static_cast<int>(id_), what_arg, context);
+    }
+
+  private:
+    JSON_HEDLEY_NON_NULL(3)
+    deserialization_error(int id_, const char* what_arg) : exception(id_, what_arg) {}
 };
 
 /*!

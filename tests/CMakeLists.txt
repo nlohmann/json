@@ -289,6 +289,13 @@ endif()
 find_package(Threads REQUIRED)
 json_test_set_test_options("test-file_input;test-file_input_unlocked_io_disabled" LINK_LIBRARIES Threads::Threads)
 
+# test-serde exercises the C++26 reflection-based serialize()/deserialize() API.
+# Restrict it to C++26 and pass GCC's -freflection flag.
+json_test_set_test_options(test-serde
+    CXX_STANDARDS 26
+    COMPILE_OPTIONS $<$<CXX_COMPILER_ID:GNU>:-freflection>
+)
+
 # *DO* use json_test_set_test_options() above this line
 
 json_test_should_build_32bit_test(json_32bit_test json_32bit_test_only "${JSON_32bitTest}")

@@ -72,6 +72,7 @@
 #include <nlohmann/detail/json_pointer.hpp>
 #include <nlohmann/detail/json_ref.hpp> // IWYU pragma: export
 #include <nlohmann/detail/macro_scope.hpp> // IWYU pragma: export
+#include <nlohmann/json_serde.hpp> // IWYU pragma: export
 #include <nlohmann/detail/meta/detected.hpp>
 #include <nlohmann/detail/string_concat.hpp>
 #include <nlohmann/detail/string_escape.hpp>
@@ -314,6 +315,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     using type_error = detail::type_error;
     using out_of_range = detail::out_of_range;
     using other_error = detail::other_error;
+    using deserialization_error = detail::deserialization_error;
 
     /// @}
 
@@ -6120,6 +6122,30 @@ public:
 #else
     {
         return parse_impl(i.get(), std::move(cb), allow_exceptions, ignore_comments, ignore_trailing_commas);
+    }
+#endif
+
+#if JSON_HAS_REFLECTION
+    /// @brief map an object to JSON using reflection
+    /// @sa https://json.nlohmann.me/api/basic_json/serialize/
+    template<detail::serde::serde_struct T>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json serialize(const T& obj)
+    {
+        basic_json result;
+        detail::serde::serialize_struct(result, obj);
+        return result;
+    }
+
+    /// @brief map this JSON value into an object using reflection
+    /// @sa https://json.nlohmann.me/api/basic_json/deserialize/
+    template<detail::serde::serde_struct T>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    T deserialize() const
+    {
+        T out{};
+        detail::serde::deserialize_struct(*this, out);
+        return out;
     }
 #endif
 

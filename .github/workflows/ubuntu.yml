@@ -352,7 +352,7 @@ jobs:
       - name: Build
         run: cmake --build build --target ci_cuda_example
 
-  ci_module_cpp20:
+  ci_modules:
     strategy:
       matrix:
         container: ['gcc:latest', 'silkeh/clang:latest']
@@ -364,7 +364,7 @@ jobs:
           persist-credentials: false
       # The module test uses `import std;`, which needs CMake's experimental
       # import-std support. Its opt-in token is CMake-version-specific, so pin
-      # CMake to the version whose token is set in tests/module_cpp20/CMakeLists.txt.
+      # CMake to the version whose token is set in tests/modules/CMakeLists.txt.
       - name: Get pinned CMake and ninja
         uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
         with:
@@ -380,7 +380,7 @@ jobs:
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
-        run: cmake --build build --target ci_module_cpp20
+        run: cmake --build build --target ci_modules
 
   ci_icpc:
     runs-on: ubuntu-26.04
