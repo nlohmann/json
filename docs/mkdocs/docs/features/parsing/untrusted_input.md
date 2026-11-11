@@ -79,15 +79,19 @@ For the binary formats, an announced size is never trusted outright:
 
 ## Strings
 
-Invalid UTF-8 is rejected while parsing, not just while serializing:
+Invalid UTF-8 is rejected while parsing JSON text, not just while serializing:
 
 - In JSON text, an ill-formed UTF-8 byte in a string is a
   [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) ("invalid string: ill-formed UTF-8 byte").
 - In UTF-16 or UTF-32 input, an ill-formed sequence is a
   [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) as well: a lone surrogate, a high surrogate
   that is not followed by its low surrogate, and a code point above `U+10FFFF` are all rejected.
-- In a binary format, a string that is not valid UTF-8 is a
-  [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113).
+
+In a binary format, a string that is not valid UTF-8 is accepted unchanged by default (none of the formats except BON8
+requires a decoder to reject it). Pass [`error_handler_t::strict`](../../api/basic_json/error_handler_t.md) to the
+`from_*` function to get a [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) instead. BON8
+always validates ([`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112) for an ill-formed
+sequence).
 
 A `#!cpp '\0'` (NUL) byte *inside* a quoted JSON string is always rejected (it must be escaped as `\u0000`). A NUL byte
 *outside* of a string is different: by default it is silently treated as the end of the input, so trailing bytes after
@@ -98,8 +102,8 @@ that happens to embed a NUL is a way to make part of it disappear without a pars
 unexpected byte instead.
 
 Parsing is not the only place invalid UTF-8 matters: a string that reached a `#!cpp json` value some other way (for
-example, constructed by application code, or, before JSON_STRICT_NUL_HANDLING existed, read from a binary format that
-does not validate strings) still has to round-trip back to JSON text. By default,
+example, constructed by application code, or read from a binary format with the default `error_handler_t::keep`)
+still has to round-trip back to JSON text. By default,
 [`dump()`](../../api/basic_json/dump.md) throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316)
 if the string is not valid UTF-8; passing
 [`error_handler_t::replace`](../../api/basic_json/error_handler_t.md) or `error_handler_t::ignore` avoids the exception
@@ -152,6 +156,8 @@ indices (or the pointer as a whole) before using them, or use [`at`](../../api/b
   format lengths.
 - Decide up front how you want a string with invalid UTF-8 — from any source, not only parsing — to be serialized
   (`strict`, `replace`, or `ignore`), rather than discovering it from an uncaught `type_error.316`.
+- For untrusted input in a binary format, pass `error_handler_t::strict` to the `from_*` function if the strings must be
+  valid UTF-8; by default they are not checked (BON8 always checks).
 - If a stray NUL byte silently truncating trailing input is a problem for your input format, define
   `JSON_STRICT_NUL_HANDLING`.
 - Decide whether duplicate object keys should be an error for your application, and add a callback if so.
