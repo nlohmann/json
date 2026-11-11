@@ -60,6 +60,7 @@
     #undef JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
     #undef JSON_DISABLE_STREAM_BULK_SCAN
     #undef JSON_DISABLE_UNLOCKED_FILE_IO
+    #undef JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE
 #endif
 
 #include <nlohmann/thirdparty/hedley/hedley_undef.hpp>

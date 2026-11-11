@@ -917,3 +917,14 @@
 #ifndef JSON_DISABLE_TUPLE_REFERENCE_CONVERSION
     #define JSON_DISABLE_TUPLE_REFERENCE_CONVERSION 0
 #endif
+
+// JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE: how many elements of optimized
+// UBJSON containers of type Z, T or F (which have no payload) a reader accepts
+// per byte of input, on top of a fixed base. The value is checked and converted
+// in binary_reader.hpp; the macro is documented in
+// docs/mkdocs/docs/api/macros/json_ubjson_valueless_elements_per_byte.md.
+// It is not part of the ABI tag: it must have the same value in every
+// translation unit of a program.
+#ifndef JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE
+    #define JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE 4
+#endif
