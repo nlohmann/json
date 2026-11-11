@@ -52,8 +52,12 @@ jobs:
       # the old action fell back to, running community rules with no token.
       # SEMGREP_APP_TOKEN is still passed through so registry auth works if a
       # token is ever added.
+      # Semgrep is deliberately not pinned by hash: its transitive dependencies
+      # are pinned to exact or compatible-release versions, which made the hashed
+      # lock file break on almost every Dependabot bump. The scan only produces
+      # SARIF findings and does not build or ship anything.
       - name: Install Semgrep
-        run: python3 -m pip install --user --require-hashes -r cmake/requirements/requirements-semgrep.txt
+        run: python3 -m pip install --user semgrep
 
       # `semgrep scan --sarif` always exits 0 even with findings; continue-on-error
       # is a safety net so the SARIF upload still runs if the scan itself errors.
