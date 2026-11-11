@@ -340,6 +340,20 @@ static_assert(nlohmann::detail::recursion_depth_limit() == static_cast<std::size
               "the library does not use JSON_RECURSION_DEPTH_LIMIT");
 static_assert(nlohmann::detail::recursion_depth_limit() <= 254, "the nesting depth must fit in a byte");
 
+// the macro must not be a character or bool: every character type is refused
+static_assert(nlohmann::detail::recursion_depth_limit_is_char_or_bool<bool>::value, "bool is refused");
+static_assert(nlohmann::detail::recursion_depth_limit_is_char_or_bool<char>::value, "char is refused");
+static_assert(nlohmann::detail::recursion_depth_limit_is_char_or_bool<signed char>::value, "signed char is refused");
+static_assert(nlohmann::detail::recursion_depth_limit_is_char_or_bool<unsigned char>::value, "unsigned char is refused");
+static_assert(nlohmann::detail::recursion_depth_limit_is_char_or_bool<wchar_t>::value, "wchar_t is refused");
+static_assert(nlohmann::detail::recursion_depth_limit_is_char_or_bool<char16_t>::value, "char16_t is refused");
+static_assert(nlohmann::detail::recursion_depth_limit_is_char_or_bool<char32_t>::value, "char32_t is refused");
+#if defined(__cpp_char8_t)
+    static_assert(nlohmann::detail::recursion_depth_limit_is_char_or_bool<char8_t>::value, "char8_t is refused");
+#endif
+static_assert(!nlohmann::detail::recursion_depth_limit_is_char_or_bool<int>::value, "int is accepted");
+static_assert(!nlohmann::detail::recursion_depth_limit_is_char_or_bool<unsigned long long>::value, "unsigned long long is accepted");
+
 TEST_CASE("JSON_RECURSION_DEPTH_LIMIT is honoured")
 {
     SECTION("copying and comparing stop descending at the limit")

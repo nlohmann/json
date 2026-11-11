@@ -8606,7 +8606,7 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 #include <cstddef> // size_t
-#include <type_traits> // is_integral, is_same
+#include <type_traits> // false_type, is_integral, remove_cv, true_type
 
 // #include <nlohmann/detail/abi_macros.hpp>
 
@@ -8671,13 +8671,27 @@ documentation of the macro.
 @sa https://json.nlohmann.me/api/macros/json_recursion_depth_limit/
 @sa https://github.com/nlohmann/json/issues/5387
 */
+/// the type of the value of JSON_RECURSION_DEPTH_LIMIT is bool or a character type
+template<typename T> struct recursion_depth_limit_is_char_or_bool : std::false_type {};
+template<> struct recursion_depth_limit_is_char_or_bool<bool> : std::true_type {};
+template<> struct recursion_depth_limit_is_char_or_bool<char> : std::true_type {};
+template<> struct recursion_depth_limit_is_char_or_bool<signed char> : std::true_type {};
+template<> struct recursion_depth_limit_is_char_or_bool<unsigned char> : std::true_type {};
+template<> struct recursion_depth_limit_is_char_or_bool<wchar_t> : std::true_type {};
+template<> struct recursion_depth_limit_is_char_or_bool<char16_t> : std::true_type {};
+template<> struct recursion_depth_limit_is_char_or_bool<char32_t> : std::true_type {};
+#if defined(__cpp_char8_t)
+template<> struct recursion_depth_limit_is_char_or_bool<char8_t> : std::true_type {};
+#endif
+
 constexpr std::size_t recursion_depth_limit() noexcept
 {
     // an integer: not a floating-point number, whose range check would pass for 1.5 or 254.0
-    // (bool is an integer type, too, but 1 and 0 spelled true and false are no way to say a limit)
+    // (bool and the character types are integer types, too, but true, false or 'a' are
+    // no way to say a limit; JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE refuses them as well)
     static_assert(std::is_integral<decltype(JSON_RECURSION_DEPTH_LIMIT)>::value
-                  && !std::is_same<decltype(JSON_RECURSION_DEPTH_LIMIT), bool>::value,
-                  "JSON_RECURSION_DEPTH_LIMIT must be an integer constant");
+                  && !recursion_depth_limit_is_char_or_bool<typename std::remove_cv<decltype(JSON_RECURSION_DEPTH_LIMIT)>::type>::value,
+                  "JSON_RECURSION_DEPTH_LIMIT must be an integer constant (not bool or a character type)");
     static_assert(JSON_RECURSION_DEPTH_LIMIT >= 0 && JSON_RECURSION_DEPTH_LIMIT <= 254,
                   "JSON_RECURSION_DEPTH_LIMIT must be between 0 and 254: the nesting depth is counted in a byte per thread "
                   "and may exceed the limit by one (see https://json.nlohmann.me/api/macros/json_recursion_depth_limit/)");

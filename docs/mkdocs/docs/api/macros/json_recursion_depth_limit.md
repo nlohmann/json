@@ -53,7 +53,8 @@ When the macro is not defined, the library defines it to its default value.
 
     The value must be an integer constant expression from `0` to `254`; any other value (a negative number, a number
     above `254`, a floating-point number such as `254.0`, or `true` or `false`) is rejected at compile time with an
-    error message that names the macro. (A character such as `'a'` is an integer, too, and is accepted as its code.)
+    error message that names the macro. A character of any character type (`'a'`, `L'a'`, `u8'a'`, ...) is rejected,
+    too, although it is an integer.
 
     - `0` is allowed, and means that every operation uses its explicit stack from the first level on and no operation
       recurses over the nesting of a value at all. That needs a constant amount of call stack (at most 16 KiB in the
@@ -217,11 +218,10 @@ The results are as follows.
 
     All translation units of a program that include the library must define the same value. Otherwise, the program
     violates the One Definition Rule: the function `nlohmann::detail::recursion_depth_limit()` and all the functions
-    that
-    use it are defined differently in different translation units. The linker keeps one definition of each function that
-    several translation units define, and every caller then recurses as far as that definition says, whatever value
-    its own translation unit defined. Each function uses the limit of whichever translation unit's copy was kept, and
-    which one that is is not specified.
+    that use it are defined differently in different translation units. Which limit a call uses then depends on which
+    functions the compiler inlined (an inlined copy uses the value of its own translation unit) and which out-of-line
+    copy of each remaining function the linker kept, which is not specified. A function compiled with one value can
+    call a function compiled with another, so a single operation can mix both limits.
 
     Mixing values cannot corrupt the byte per thread that counts the levels of copying and comparing: each limit
     is at most `254`, and all of them stop counting at their own limit, so the count never exceeds `254`, whichever
