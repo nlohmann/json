@@ -18584,12 +18584,20 @@ JSON_INLINE_VARIABLE constexpr std::size_t valueless_elements_per_byte =
     // not "useless" (-Wuseless-cast) where the macro already has the type
     valueless_elements_rate((JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE));
 
+/// the type of the macro's value is char8_t (C++20)
+template<typename T>
+#if defined(__cpp_char8_t)
+struct valueless_elements_rate_is_char8 : std::is_same<T, char8_t> {};
+#else
+struct valueless_elements_rate_is_char8 : std::false_type {};
+#endif
+
 /// the type of the macro's value is a character or boolean type
 template<typename T>
-struct valueless_elements_rate_is_char_or_bool : std::integral_constant < bool,
-    std::is_same<T, bool>::value || std::is_same<T, char>::value || std::is_same<T, signed char>::value
-    || std::is_same<T, unsigned char>::value || std::is_same<T, wchar_t>::value
-    || std::is_same<T, char16_t>::value || std::is_same<T, char32_t>::value >
+struct valueless_elements_rate_is_char_or_bool
+    : disjunction<std::is_same<T, bool>, std::is_same<T, char>, std::is_same<T, signed char>,
+      std::is_same<T, unsigned char>, std::is_same<T, wchar_t>, std::is_same<T, char16_t>,
+      std::is_same<T, char32_t>, valueless_elements_rate_is_char8<T>>
 {};
 
 // these messages are what a user sees for a wrong value of the macro. The

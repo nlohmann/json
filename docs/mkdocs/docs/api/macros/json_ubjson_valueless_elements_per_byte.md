@@ -39,9 +39,9 @@ The default value is `4`.
     error: static assertion failed: JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE must not be wider than std::uintmax_t
     ```
 
-    The first is reported for `0` and negative values, the second for values such as `4.5`, `1e3`, `true`, or `'a'`, and
-    the third for an integer type that is wider than `#!cpp std::uintmax_t` (for example `unsigned __int128`). A value
-    that is larger than the largest `#!cpp std::size_t` is treated as that largest value, so that a project can use one
+    The first is reported for `0` and negative values, the second for values such as `4.5`, `1e3`, `true`, or a
+    character of any character type (`'a'`, `L'a'`, `u8'a'`, ...), and the third for an integer type that is wider than
+    `#!cpp std::uintmax_t` (for example `unsigned __int128`). A value that is larger than the largest `#!cpp std::size_t` is treated as that largest value, so that a project can use one
     spelling, for example `0xFFFFFFFFFFFFFFFFu`, for 32-bit and 64-bit targets.
 
 !!! info "Large values: the limit is switched off"
@@ -101,8 +101,9 @@ The default value is `4`.
     encoded in the [namespace](../../features/namespace.md) of the library (there is no ABI tag for it). It must
     have the same value in every translation unit of a program (for example by defining it on the command line or in
     a common header); translation units with different values violate the One Definition Rule, which is undefined
-    behavior (no diagnostic is required; in practice the linker keeps one definition of each function, so some
-    inputs are read with one value and some with the other).
+    behavior (no diagnostic is required). In practice, which value a read uses depends on which functions the compiler
+    inlined and which out-of-line copy of each remaining function the linker kept, so a function compiled with one
+    value can call a function compiled with the other, and a single parse can mix both values.
 
 ### Reading files written by version 3.12.0 and earlier
 
@@ -123,8 +124,8 @@ elements for the `b` bytes of its header, so the limit grows by `K * b` and the 
   read)` over all arrays, rounded up. For 1,100 rows of 1,000 elements that is
   `(1,100,000 - 1,048,576) / 6,607 = 7.8`, so `K = 8`.
 
-To read such a file, define the macro to the smallest value that accepts it before the include (or with
-`-DJSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE=8`), and see the table above for what that value allows an untrusted input to
+To read such a file, define the macro, before the include (or with `-DJSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE=8`), to
+the smallest value that accepts the file, and see the table above for what that value allows an untrusted input to
 cost. A file can be converted once: read it with the larger value and write it again with `to_ubjson`, which writes no
 typed array that a reader with the default value would refuse, so that the result does not need the macro.
 
