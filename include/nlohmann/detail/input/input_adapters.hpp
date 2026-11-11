@@ -1312,15 +1312,23 @@ struct can_compare_ne_either_order : std::integral_constant < bool,
     can_compare_ne_impl<IteratorType, SentinelType>::value ||
     can_compare_ne_reversed<IteratorType, SentinelType>::value > {};
 
-// std::nullptr_t is excluded explicitly: a literal `nullptr` passed as a
-// trailing default argument (e.g. parse(s, nullptr, ...)) must never be
-// mistaken for a sentinel, and some compilers (e.g. GCC 4.8) unreliably
-// SFINAE the `operator!=` detection above for std::nullptr_t against
-// container/string types, which would otherwise make such calls ambiguous
-// with the compatible-input overload.
+// Two kinds of SentinelType are excluded explicitly:
+//
+// - std::nullptr_t: a literal `nullptr` passed as a trailing default argument
+//   (e.g. parse(s, nullptr, ...)) must never be mistaken for a sentinel, and
+//   some compilers (e.g. GCC 4.8) unreliably SFINAE the `operator!=` detection
+//   above for std::nullptr_t against container/string types, which would
+//   otherwise make such calls ambiguous with the compatible-input overload.
+// - function pointers and functions: a parser callback passed as plain function
+//   (e.g. parse(s, cb)) is never a sentinel. The callback's parameter types
+//   make basic_json an associated class, so ADL finds the friend
+//   operator!=(const_reference, ScalarType) of basic_json, which makes
+//   `s != cb` well-formed (both convert to basic_json) and would select the
+//   iterator/sentinel overload.
 template<typename IteratorType, typename SentinelType>
 struct can_compare_ne : std::integral_constant < bool,
     !std::is_same<SentinelType, std::nullptr_t>::value &&
+    !std::is_function<typename std::remove_pointer<SentinelType>::type>::value &&
     can_compare_ne_either_order<IteratorType, SentinelType>::value > {};
 
 template<typename T>
