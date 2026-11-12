@@ -426,7 +426,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | Type                                                                 | Reason                                                                                                  |
 |----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
 | `#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string` | the character type is not one byte wide                                                                 |
-| `#!cpp std::u8string`                                                | one byte wide, but `#!cpp char8_t` is not `#!cpp char`-compatible                                       |
+| `#!cpp std::u8string`                                                | one byte wide, but `#!cpp char8_t` is not `#!cpp char`-compatible (as a *value*, it converts to and from a JSON string) |
 | `absl::Cord`                                                         | no `value_type`, and the storage is not contiguous                                                      |
 | `QString`                                                            | no `append(const char*, size_type)`; its `QChar` is also two bytes wide, though that is never diagnosed |
 

@@ -6934,6 +6934,37 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
     from_json_pair_array_to_map(j, m);
 }
 
+#if defined(__cpp_lib_char8_t)
+// a std::u8string is read from a JSON string; the array of code units written by
+// versions before 3.13.0 is still accepted
+template<typename BasicJsonType, typename Tr, typename Allocator,
+         enable_if_t<std::is_same<typename json_type_of_t<BasicJsonType>::string_t::value_type, char>::value, int> = 0>
+inline void from_json(const BasicJsonType& j, std::basic_string<char8_t, Tr, Allocator>& s)
+{
+    if (j.is_string())
+    {
+        const auto& str = string_value(j);
+        const char* const data = str.data();
+        const std::size_t size = str.size();
+        std::basic_string<char8_t, Tr, Allocator> ret(s.get_allocator());
+        ret.resize(size);
+        for (std::size_t i = 0; i < size; ++i)
+        {
+            ret[i] = static_cast<char8_t>(static_cast<unsigned char>(data[i]));
+        }
+        s = std::move(ret);
+    }
+    else if (j.is_array())
+    {
+        from_json_array_impl(j, s, priority_tag<3> {});
+    }
+    else
+    {
+        throw_type_must_be("string or array", j);
+    }
+}
+#endif
+
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
 
 // Workaround for MSVC 19.51 (and possibly later): in large cpp files, the compiler may fail to resolve with generic has_from_json (issue #4996)
@@ -8335,16 +8366,20 @@ inline void to_json(BasicJsonType& j, const T& t)
     to_json_tuple_impl(j, t, make_index_sequence<std::tuple_size<T>::value> {});
 }
 
-#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
+// a std::u8string is a JSON string (it was an array of code units before 3.13.0);
+// defined outside the std::filesystem guard so that the result does not depend
+// on whether std::filesystem::path is supported
 #if defined(__cpp_lib_char8_t)
 template<typename BasicJsonType, typename Tr, typename Allocator>
 inline void to_json(BasicJsonType& j, const std::basic_string<char8_t, Tr, Allocator>& s)
 {
-    using OtherAllocator = typename std::allocator_traits<Allocator>::template rebind_alloc<char>;
-    j = std::basic_string<char, std::char_traits<char>, OtherAllocator>(s.begin(), s.end(), s.get_allocator());
+    using string_t = typename BasicJsonType::string_t;
+    // char may alias any object; the code units are copied unchanged
+    j = string_t(reinterpret_cast<const char*>(s.data()), s.size());
 }
 #endif
 
+#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
 // Workaround for MSVC 19.51 (and possibly later): in large cpp files, the compiler may fail to resolve with generic has_to_json (issue #4996)
 template<typename BasicJsonType>
 struct has_to_json<BasicJsonType, std_fs::path, void> : std::true_type {};
