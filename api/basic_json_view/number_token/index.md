@@ -28,7 +28,9 @@ Constant.
 
 `BasicJsonType` has no counterpart to this function: once a number is parsed into `number_integer_t`, `number_unsigned_t`, or `number_float_t`, its original textual form (leading zeros aside, which are already rejected by the grammar; trailing zeros in the fraction; the case and sign of the exponent; ...) is gone. `number_token()` is useful precisely where that form must survive — a price or an identifier that must be reproduced exactly, or a number too large for any of `BasicJsonType`'s number types to hold without loss.
 
-The returned [`string_view_t`](https://json.nlohmann.me/api/basic_json_view/#member-types) always points into the document's [`source()`](https://json.nlohmann.me/api/basic_json_document/source/index.md) text — numbers are never decoded into the document's separate string buffer — and is valid exactly as long as that text is, see the [validity rules](https://json.nlohmann.me/api/basic_json_view/index.md) of `basic_json_view`.
+The returned [`string_view_t`](https://json.nlohmann.me/api/basic_json_view/#member-types) points into the document's [`source()`](https://json.nlohmann.me/api/basic_json_document/source/index.md) text or, for a number written by an [edit](https://json.nlohmann.me/api/basic_json_document/#edits), into storage owned by the document (the token of an edited `NaN` is `nan`). It is valid exactly as long as that text or storage is, see the [validity rules](https://json.nlohmann.me/api/basic_json_view/index.md) of `basic_json_view`. Numbers are never decoded into the document's separate string buffer.
+
+For the same reason, the token must not be passed to [`read()`](https://json.nlohmann.me/api/basic_json_document/read/index.md) of the document it came from if that document owns its text or the number was written by an edit: `read()` releases both before it parses.
 
 ## Examples
 

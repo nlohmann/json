@@ -54,10 +54,32 @@ Once a value has been parsed, operations that walk it recursively — serializin
 [`dump`](../../api/basic_json/dump.md), hashing it, copying it, comparing two values with `#!cpp ==`, `#!cpp <`, or (in
 C++20) `#!cpp <=>`, merging with [`update`](../../api/basic_json/update.md), applying a
 [`merge_patch`](../../api/basic_json/merge_patch.md), creating a patch with [`diff`](../../api/basic_json/diff.md) or
-[`merge_diff`](../../api/basic_json/merge_diff.md), [`flatten`](../../api/basic_json/flatten.md), and the binary
-writers (`to_cbor`, `to_msgpack`, ...) — descend at most 128 levels on the call stack and continue
-below that with an explicit stack instead, so none of them can exhaust the stack either, however deeply the value is
-nested. Destroying a value (its destructor) never recurses at all, regardless of nesting depth, for the same reason.
+[`merge_diff`](../../api/basic_json/merge_diff.md), converting it to another `basic_json` type, destroying it, and the
+binary writers (`to_cbor`, `to_msgpack`, ...) — descend at most
+[`JSON_RECURSION_DEPTH_LIMIT`](../../api/macros/json_recursion_depth_limit.md) levels on the call stack, 128 by default,
+and continue below that with an explicit stack on the heap. So the call stack does not grow with the nesting depth of the
+value, however deeply it is nested. ([`flatten`](../../api/basic_json/flatten.md),
+[`unflatten`](../../api/basic_json/unflatten.md), and [`to_bson`](../../api/basic_json/to_bson.md) never use the call
+stack for the nesting.)
+
+The call stack still needs room for the levels that are recursed into, and the default limit assumes a stack of ordinary
+size. The stack that an operation needs is roughly proportional to the limit; with the default of 128 levels, the most
+demanding operation (`dump` in an unoptimized build) needed up to 288 KiB, and an optimized build needed 48 KiB or less,
+in measurements on macOS with arm64. The most demanding operation needed this much stack at the limits `0`, `32`,
+`128`, and `254`:
+
+| Stack needed, in KiB | limit 0 | limit 32 | limit 128 (default) | limit 254 |
+|---|---:|---:|---:|---:|
+| unoptimized build (`-O0`) | 16 or less | 80 | 288 | 576 |
+| optimized build (`-O2`) | 16 or less | 16 or less | 48 | 112 |
+
+A thread with a smaller stack (a task of a real-time operating system, a fiber, or a thread of the musl C library, whose
+default stack is 128 KiB) can still overflow its stack on deeply nested input, which is why the limit can be lowered:
+define `JSON_RECURSION_DEPTH_LIMIT` to a smaller value, down to `0`, before including the library. Such a limit changes
+only the stack that is needed and the speed (values nested more deeply than the limit are walked more slowly), never a
+result. See the [documentation of the macro](../../api/macros/json_recursion_depth_limit.md) for the complete tables,
+the speed, and the rules for choosing a value. Destroying a value (its destructor) recurses over the same number of
+levels and then continues without the call stack, and needs 32 KiB or less at every limit.
 
 ## Input size
 
@@ -79,15 +101,19 @@ For the binary formats, an announced size is never trusted outright:
 
 ## Strings
 
-Invalid UTF-8 is rejected while parsing, not just while serializing:
+Invalid UTF-8 is rejected while parsing JSON text, not just while serializing:
 
 - In JSON text, an ill-formed UTF-8 byte in a string is a
   [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) ("invalid string: ill-formed UTF-8 byte").
 - In UTF-16 or UTF-32 input, an ill-formed sequence is a
   [`parse_error.101`](../../home/exceptions.md#jsonexceptionparse_error101) as well: a lone surrogate, a high surrogate
   that is not followed by its low surrogate, and a code point above `U+10FFFF` are all rejected.
-- In a binary format, a string that is not valid UTF-8 is a
-  [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113).
+
+In a binary format, a string that is not valid UTF-8 is accepted unchanged by default (none of the formats except BON8
+requires a decoder to reject it). Pass [`error_handler_t::strict`](../../api/basic_json/error_handler_t.md) to the
+`from_*` function to get a [`parse_error.113`](../../home/exceptions.md#jsonexceptionparse_error113) instead. BON8
+always validates ([`parse_error.112`](../../home/exceptions.md#jsonexceptionparse_error112) for an ill-formed
+sequence).
 
 A `#!cpp '\0'` (NUL) byte *inside* a quoted JSON string is always rejected (it must be escaped as `\u0000`). A NUL byte
 *outside* of a string is different: by default it is silently treated as the end of the input, so trailing bytes after
@@ -98,8 +124,8 @@ that happens to embed a NUL is a way to make part of it disappear without a pars
 unexpected byte instead.
 
 Parsing is not the only place invalid UTF-8 matters: a string that reached a `#!cpp json` value some other way (for
-example, constructed by application code, or, before JSON_STRICT_NUL_HANDLING existed, read from a binary format that
-does not validate strings) still has to round-trip back to JSON text. By default,
+example, constructed by application code, or read from a binary format with the default `error_handler_t::keep`)
+still has to round-trip back to JSON text. By default,
 [`dump()`](../../api/basic_json/dump.md) throws [`type_error.316`](../../home/exceptions.md#jsonexceptiontype_error316)
 if the string is not valid UTF-8; passing
 [`error_handler_t::replace`](../../api/basic_json/error_handler_t.md) or `error_handler_t::ignore` avoids the exception
@@ -152,6 +178,8 @@ indices (or the pointer as a whole) before using them, or use [`at`](../../api/b
   format lengths.
 - Decide up front how you want a string with invalid UTF-8 — from any source, not only parsing — to be serialized
   (`strict`, `replace`, or `ignore`), rather than discovering it from an uncaught `type_error.316`.
+- For untrusted input in a binary format, pass `error_handler_t::strict` to the `from_*` function if the strings must be
+  valid UTF-8; by default they are not checked (BON8 always checks).
 - If a stray NUL byte silently truncating trailing input is a problem for your input format, define
   `JSON_STRICT_NUL_HANDLING`.
 - Decide whether duplicate object keys should be an error for your application, and add a callback if so.

@@ -29,7 +29,7 @@ Strong exception safety: if an exception is thrown, there are no changes to the 
 
 ## Exceptions
 
-May throw `std::bad_alloc` if allocating the output string fails. Unlike [`BasicJsonType::dump`](https://json.nlohmann.me/api/basic_json/dump/index.md), there is no `error_handler` parameter and no [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316): the view only ever holds text the parser already validated as UTF-8, so there is nothing to replace or ignore.
+May throw `std::bad_alloc` if allocating the output string fails. Unlike [`BasicJsonType::dump`](https://json.nlohmann.me/api/basic_json/dump/index.md), there is no `error_handler` parameter and no [`type_error.316`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error316): the parser validated the text the view holds as UTF-8, so there is nothing to replace or ignore. Only a document loaded with [`image_check::bounds` or `image_check::none`](https://json.nlohmann.me/api/basic_json_document/load/#image_check) can still throw it: these do not check the strings, so `dump()` writes such a string as it is, which can be invalid UTF-8 or invalid JSON, and `dump()` with `ensure_ascii` set to `true` throws `type_error.316` for invalid UTF-8.
 
 ## Complexity
 

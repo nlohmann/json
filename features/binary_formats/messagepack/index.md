@@ -57,7 +57,7 @@ The library uses the following mapping from JSON values types to MessagePack typ
 | number_integer  | 128..255                                 | uint 8           | 0xCC       |
 | number_integer  | 256..65535                               | uint 16          | 0xCD       |
 | number_integer  | 65536..4294967295                        | uint 32          | 0xCE       |
-| number_integer  | 4294967296..18446744073709551615         | uint 64          | 0xCF       |
+| number_integer  | 4294967296..9223372036854775807          | uint 64          | 0xCF       |
 | number_unsigned | 0..127                                   | positive fixint  | 0x00..0x7F |
 | number_unsigned | 128..255                                 | uint 8           | 0xCC       |
 | number_unsigned | 256..65535                               | uint 16          | 0xCD       |

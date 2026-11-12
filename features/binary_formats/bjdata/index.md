@@ -70,7 +70,6 @@ The library uses the following mapping from JSON values types to BJData types ac
 | number_integer  | 65536..2147483647                         | int32       | `l`                                                                     |
 | number_integer  | 2147483648..4294967295                    | uint32      | `m`                                                                     |
 | number_integer  | 4294967296..9223372036854775807           | int64       | `L`                                                                     |
-| number_integer  | 9223372036854775808..18446744073709551615 | uint64      | `M`                                                                     |
 | number_unsigned | 0..127                                    | int8        | `i`                                                                     |
 | number_unsigned | 128..255                                  | uint8       | `U`                                                                     |
 | number_unsigned | 256..32767                                | int16       | `I`                                                                     |

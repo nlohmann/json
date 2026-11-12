@@ -162,3 +162,4 @@ The output shows the start/end positions of all the objects and fields in the JS
 ## Version history
 
 - Added in version 3.12.0.
+- Fixed in version 3.13.0 unreleased: in version 3.12.0, the start position of a string that contains escape sequences (for example `"\n"` or `"\u00e4"`) was too large, by the number of bytes the escape sequences add to the source text. The position is now always that of the opening `"`. The "(bytes a-b)" range in the messages of [`JSON_DIAGNOSTICS`](https://json.nlohmann.me/api/macros/json_diagnostics/index.md) was wrong in the same way.

@@ -168,3 +168,7 @@ Constant.
 ## Version history
 
 - Added in version 3.12.0.
+- Fixed in version 3.13.0: in version 3.12.0, the start position of a string that contains escape sequences (for
+  example `#!cpp "\n"` or `#!cpp "\u00e4"`) was too large, by the number of bytes the escape sequences add to the
+  source text. The position is now always that of the opening `"`. The "(bytes a-b)" range in the messages of
+  [`JSON_DIAGNOSTICS`](../macros/json_diagnostics.md) was wrong in the same way.

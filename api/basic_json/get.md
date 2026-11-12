@@ -130,6 +130,12 @@ overload (3).
     `#!cpp json(true).get<double>()` throw. This is the behavior of all 3.x versions;
     [`basic_json_view::get<T>()`](../basic_json_view/get.md) behaves the same.
 
+!!! note "`std::u8string` conversions"
+
+    Since version 3.13.0, `#!cpp get<std::u8string>()` (C++20) reads a JSON string; it also accepts an array of numbers,
+    the form in which version 3.12.0 stored a `#!cpp std::u8string`. Any other JSON type throws
+    [`type_error.302`](../../home/exceptions.md#jsonexceptiontype_error302) ("type must be string or array").
+
 !!! note "`std::optional` conversions"
 
     Prior to version 3.13.0, `#!cpp get<std::optional<T>>()` (and other conversions to `std::optional<T>`) failed to

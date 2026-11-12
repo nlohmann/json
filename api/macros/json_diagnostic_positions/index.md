@@ -264,3 +264,4 @@ The output shows the exception with diagnostic path info and start/end positions
 ## Version history
 
 - Added in version 3.12.0.
+- Fixed in version 3.13.0 unreleased: in version 3.12.0, [`start_pos()`](https://json.nlohmann.me/api/basic_json/start_pos/index.md) of a string that contains escape sequences was too large; it is now the position of the opening `"`.

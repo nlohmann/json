@@ -28,15 +28,16 @@ Requirements are split into two groups:
     [`BinaryType`](#binarytype)'s `value_type`, and [`NumberUnsignedType`](#numberintegertype-and-numberunsignedtype)
     being at least as wide as [`NumberIntegerType`](#numberintegertype-and-numberunsignedtype). The rest are not
     diagnosed with dedicated error messages, and violating most of them results in a compiler error somewhere inside
-    the library. Four violations are not caught at compile time at all:
+    the library. Four violations are not (always) caught at compile time:
 
     - A [`StringType`](#stringtype) whose `data()` is not null-terminated compiles and silently misparses numbers
       stored as a `#!cpp long double` that is not IEEE 754 binary64 (e.g., the 80-bit x87 format), because the lexer
       hands the buffer to `#!cpp std::strtold`.
     - A stateful [`AllocatorType`](#allocatortype) compiles and silently ignores its state: allocation, deallocation,
       and [`get_allocator()`](../../api/basic_json/get_allocator.md) each use a different default-constructed instance.
-    - The two [cross-specialization conversions](#cross-specialization-conversions) below. These abort on an assertion
-      in a normal build, and only fail silently under `#!cpp NDEBUG`.
+    - The two [cross-specialization conversions](#cross-specialization-conversions) below, when the source string type
+      is a range of characters. They compile and fail the `#!cpp JSON_ASSERT`: with its default definition, the program
+      aborts unless `#!cpp NDEBUG` is defined, in which case the wrong result is returned silently.
 
 ## Overview
 
@@ -777,7 +778,7 @@ using array_t = ArrayType<basic_json, AllocatorType<basic_json>>;
 | Type                                                                 | Reason                                                                                                  |
 |----------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
 | `#!cpp std::wstring`, `#!cpp std::u16string`, `#!cpp std::u32string` | the character type is not one byte wide                                                                 |
-| `#!cpp std::u8string`                                                | one byte wide, but `#!cpp char8_t` is not `#!cpp char`-compatible                                       |
+| `#!cpp std::u8string`                                                | one byte wide, but `#!cpp char8_t` is not `#!cpp char`-compatible (as a *value*, it converts to and from a JSON string) |
 | `absl::Cord`                                                         | no `value_type`, and the storage is not contiguous                                                      |
 | `QString`                                                            | no `append(const char*, size_type)`; its `QChar` is also two bytes wide, though that is never diagnosed |
 
@@ -1420,14 +1421,18 @@ See [`json_base_class_t`](../../api/basic_json/json_base_class_t.md) for an exam
 ## Cross-specialization conversions
 
 Converting a value from one `basic_json` specialization into another (see the
-[converting constructor](../../api/basic_json/basic_json.md)) imposes two additional requirements that are not
-diagnosed at compile time. With assertions enabled they abort on the `#!cpp JSON_ASSERT` at the end of the converting
-constructor; under `#!cpp NDEBUG` they fail **silently** at runtime:
+[converting constructor](../../api/basic_json/basic_json.md)) imposes two additional requirements:
 
-- The target `string_t` must be directly constructible from the source `string_t`. Otherwise the string is converted to
-  an array of character codes.
-- The target `object_t::key_type` must be directly constructible from the source object's key type. Otherwise the
-  object is converted to an array of key/value pairs.
+- The target `string_t` must be directly constructible from the source `string_t`.
+- The target `object_t::key_type` must be directly constructible from the source object's key type.
+
+If a requirement is not met, the result depends on the source string type. If it is a range of characters (it has
+`begin()` and `end()`, as `std::string` does), the conversion compiles and then fails the `#!cpp JSON_ASSERT` at the
+end of the converting constructor: with its default definition, `assert`, the program aborts unless `#!cpp NDEBUG` is
+defined, in which case it **silently** returns an array (of character codes for a string, of key/value pairs for an
+object). Otherwise, the conversion does not compile, even though
+`#!cpp std::is_constructible` reports `#!cpp true`; for example, when converting a `basic_json` whose `string_t` is the
+`alt_string` of the unit tests to `json`.
 
 See [issue #3425](https://github.com/nlohmann/json/issues/3425), [`string_t`](../../api/basic_json/string_t.md), and
 [`object_t`](../../api/basic_json/object_t.md).

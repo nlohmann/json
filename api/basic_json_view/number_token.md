@@ -38,9 +38,14 @@ by the grammar; trailing zeros in the fraction; the case and sign of the exponen
 useful precisely where that form must survive — a price or an identifier that must be reproduced exactly, or a
 number too large for any of `BasicJsonType`'s number types to hold without loss.
 
-The returned [`string_view_t`](index.md#member-types) always points into the document's
-[`source()`](../basic_json_document/source.md) text — numbers are never decoded into the document's separate string
-buffer — and is valid exactly as long as that text is, see the [validity rules](index.md) of `basic_json_view`.
+The returned [`string_view_t`](index.md#member-types) points into the document's
+[`source()`](../basic_json_document/source.md) text or, for a number written by an
+[edit](../basic_json_document/index.md#edits), into storage owned by the document (the token of an edited `NaN` is
+`nan`). It is valid exactly as long as that text or storage is, see the [validity rules](index.md) of
+`basic_json_view`. Numbers are never decoded into the document's separate string buffer.
+
+For the same reason, the token must not be passed to [`read()`](../basic_json_document/read.md) of the document it came
+from if that document owns its text or the number was written by an edit: `read()` releases both before it parses.
 
 ## Examples
 

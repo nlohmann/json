@@ -40,15 +40,21 @@ Only the following symbols are exported from `nlohmann.json`:
 - `nlohmann::basic_json`
 - `nlohmann::basic_json_document`
 - `nlohmann::basic_json_view`
+- `nlohmann::is_json_view`
 - `nlohmann::json`
 - `nlohmann::json_document`
+- `nlohmann::json_editable_document`
+- `nlohmann::json_editable_view`
 - `nlohmann::json_pointer`
 - `nlohmann::json_view`
 - `nlohmann::ordered_json`
 - `nlohmann::ordered_json_document`
+- `nlohmann::ordered_json_editable_document`
+- `nlohmann::ordered_json_editable_view`
 - `nlohmann::ordered_json_view`
 - `nlohmann::ordered_map`
 - `nlohmann::to_string`
+- `nlohmann::view_mode`
 - `nlohmann::literals::json_literals::operator""_json`
 - `nlohmann::literals::json_literals::operator""_json_pointer`
 
@@ -57,6 +63,7 @@ The module always exports the two user-defined string literals, even if [`JSON_N
 Additionally, the following `nlohmann::detail` symbols are exported, solely to work around an MSVC compilation issue ([#3970](https://github.com/nlohmann/json/issues/3970)). They are implementation details, not part of the public API, and should not be used directly:
 
 - `nlohmann::detail::json_sax_dom_callback_parser`
+- `nlohmann::detail::json_sax_dom_parser`
 - `nlohmann::detail::unknown_size`
 
 ## Known issues

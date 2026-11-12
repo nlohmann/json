@@ -53,12 +53,15 @@ flowchart LR
   only as bytes are actually read, arrays reserve at most a fixed number of elements up front, and sizes that no
   container can hold are rejected.
 - **Memory is owned by values.** Each `basic_json` value owns its content, and there is no manual memory management in
-  user code. The destructor does not recurse, so destroying a deeply nested value does not exhaust the stack.
+  user code. The destructor recurses only over a bounded number of nesting levels and then continues without the call
+  stack, so destroying a deeply nested value does not exhaust the stack.
 - **Bounded recursion.** The JSON parser and the binary readers keep their state in explicit stacks instead of
   recursing per nesting level. Operations that walk a value, such as [`dump`](../api/basic_json/dump.md), copying,
   comparison, hashing, [`merge_patch`](../api/basic_json/merge_patch.md), [`diff`](../api/basic_json/diff.md),
   [`flatten`](../api/basic_json/flatten.md), and the binary writers, recurse only up to a fixed depth and continue with
-  an explicit stack below it. Applications that process untrusted input can limit its nesting depth with a
+  an explicit stack below it. The depth is 128 levels by default and can be changed with
+  [`JSON_RECURSION_DEPTH_LIMIT`](../api/macros/json_recursion_depth_limit.md), for example to run on a small stack.
+  Applications that process untrusted input can limit its nesting depth with a
   [parser callback](../features/parsing/parser_callbacks.md).
 - **Invariants are checked.** The class invariant (for instance, that the pointer for the stored type is never null) is
   checked with runtime assertions throughout the test suite.

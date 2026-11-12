@@ -73,7 +73,7 @@ int main()
 ## See also
 
 - [Binary formats](https://json.nlohmann.me/features/binary_formats/index.md) - overview of the supported binary formats
-- [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md) - also affected when parsing CBOR strings
+- [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md) - not affected by the macro; pass `error_handler` to validate CBOR strings
 - [`to_cbor`](https://json.nlohmann.me/api/basic_json/to_cbor/index.md) - create a CBOR serialization of a JSON value
 - [`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) - create a UBJSON serialization of a JSON value
 - [`to_bjdata`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md) - create a BJData serialization of a JSON value

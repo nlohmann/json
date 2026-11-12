@@ -40,6 +40,7 @@ Some aspects of the library can be configured by defining preprocessor macros **
 - [**JSON_NO_IO**](https://json.nlohmann.me/api/macros/json_no_io/index.md) - switch off functions relying on certain C++ I/O headers
 - [**JSON_NO_SIMD**](https://json.nlohmann.me/api/macros/json_no_simd/index.md) - use only portable code instead of vector instructions (SSE2, SSSE3, NEON)
 - [**JSON_NO_THREAD_LOCAL**](https://json.nlohmann.me/api/macros/json_no_thread_local/index.md) - switch off the use of `thread_local` storage
+- [**JSON_RECURSION_DEPTH_LIMIT**](https://json.nlohmann.me/api/macros/json_recursion_depth_limit/index.md) - set how many nesting levels the operations on a value recurse into on the call stack (default 128)
 - [**JSON_SKIP_UNSUPPORTED_COMPILER_CHECK**](https://json.nlohmann.me/api/macros/json_skip_unsupported_compiler_check/index.md) - do not warn about unsupported compilers
 - [**JSON_USE_GLOBAL_UDLS**](https://json.nlohmann.me/api/macros/json_use_global_udls/index.md) - place user-defined string literals (UDLs) into the global namespace
 - [**JSON_USE_SIMDUTF**](https://json.nlohmann.me/api/macros/json_use_simdutf/index.md) - use the simdutf library to accelerate UTF-8 validation

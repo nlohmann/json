@@ -45,6 +45,7 @@ Copying and comparing fall back to working without the call stack there, as they
 
 ## See also
 
+- [`JSON_RECURSION_DEPTH_LIMIT`](json_recursion_depth_limit.md) - set how many nesting levels the operations recurse into
 - [FAQ: Thread safety](../../home/faq.md#thread-safety) - thread-safety guarantees of the library
 - [Supported Macros](../../features/macros.md) - guide to all supported macros
 

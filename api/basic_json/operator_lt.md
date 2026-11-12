@@ -71,6 +71,14 @@ Linear.
       2. Comparing a `NaN` with another `NaN`.
       3. Comparing a `NaN` and any other number.
 
+    For arrays and objects, the elements are compared in order. If the comparison reaches a `NaN` and a number (or
+    another `NaN`) before any other difference, the result depends on the language standard. Before C++20, the pair
+    counts as equivalent and the following elements (or the sizes) decide: for instance, `[NaN] < [1, NaN]` and
+    `[1] <= [NaN]` are `#!cpp true`. Since C++20, the whole comparison is unordered, and `<`, `<=`, `>`, and `>=` all
+    yield `#!cpp false`. Otherwise (for example `[1, NaN] < [2, NaN]`, or objects whose keys differ), the result is the
+    same for all language standards. The same program can therefore order such values differently when it is compiled
+    with a different language standard.
+
 !!! note "Operator overload resolution"
 
     Since C++20 overload resolution will consider the _rewritten candidate_ generated from

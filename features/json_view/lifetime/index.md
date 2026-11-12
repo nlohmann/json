@@ -25,6 +25,8 @@ A view can dangle, exactly like a `std::string_view`: nothing stops you from usi
 
 The same holds for what a view hands out without copying: a string from [`get_string()`](https://json.nlohmann.me/api/basic_json_view/get_string/index.md), a token from [`number_token()`](https://json.nlohmann.me/api/basic_json_view/number_token/index.md), and [`string_view` members](https://json.nlohmann.me/features/json_view/reading/#string_view-members) of decoded structs are valid only as long as the document and, if it borrows, its source text.
 
+This includes [`read()`](https://json.nlohmann.me/api/basic_json_document/read/index.md): it releases the document's text, decoded strings, and edits before it parses its input, so the input must not be a `string_view` obtained from the document itself: its [`source()`](https://json.nlohmann.me/api/basic_json_document/source/index.md), a string from `get_string()`, a token from `number_token()`, or a key from an iterator (those of a borrowed text that the caller owns, read unchanged, are not affected). To re-parse a string that the document holds, for example JSON embedded in a string value, copy the string into a `std::string` first and pass the copy; see [`read()`](https://json.nlohmann.me/api/basic_json_document/read/#notes) for the exact list.
+
 Example: borrowed and owned documents, and when views become invalid
 
 ```

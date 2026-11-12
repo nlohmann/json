@@ -58,7 +58,7 @@ basic_json(basic_json&& other) noexcept;
 
    - **arrays**: [`array_t`](https://json.nlohmann.me/api/basic_json/array_t/index.md) and all kinds of compatible containers such as `std::vector`, `std::deque`, `std::list`, `std::forward_list`, `std::array`, `std::valarray`, `std::set`, `std::unordered_set`, `std::multiset`, and `std::unordered_multiset` with a `value_type` from which a `basic_json` value can be constructed.
    - **objects**: [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md) and all kinds of compatible associative containers such as `std::map`, `std::unordered_map`, `std::multimap`, and `std::unordered_multimap` with a `key_type` compatible to `string_t` and a `value_type` from which a `basic_json` value can be constructed.
-   - **strings**: `string_t`, string literals, and all compatible string containers can be used.
+   - **strings**: `string_t`, string literals, and all compatible string containers can be used. Since version 3.13.0 unreleased, this includes `std::u8string` (C++20): its code units are stored as a JSON string and [`get<std::u8string>()`](https://json.nlohmann.me/api/basic_json/get/index.md) reads it back (in version 3.12.0, a `std::u8string` was stored as an array of numbers; `get<std::u8string>()` still accepts such an array). `std::u8string_view` and `char8_t` arrays are not strings; they are stored as arrays of code units.
 
    Rvalue containers are moved from
 
@@ -72,7 +72,12 @@ basic_json(basic_json&& other) noexcept;
 
 1. This is a constructor for existing `basic_json` types. It does not hijack copy/move constructors, since the parameter has different template arguments than the current ones.
 
-   The constructor tries to convert the internal `m_value` of the parameter. Each member value (object, array, string, etc.) is serialized via the corresponding `to_json()` overload. For objects and strings, the conversion requires that the *target* `basic_json` type's `object_t::key_type` (or `string_t`) be directly constructible from the *source* type's corresponding member type via `is_constructible`. If this requirement is not met, the conversion does not fail to compile; instead, it silently falls back to the array-conversion path, which represents objects as arrays of `[key, value]` pairs and strings as arrays of character codes. This is a known limitation tracked in [issue #3425](https://github.com/nlohmann/json/issues/3425).
+   The constructor tries to convert the internal `m_value` of the parameter. Each member value (object, array, string, etc.) is serialized via the corresponding `to_json()` overload. For objects and strings, the conversion requires that the *target* `basic_json` type's `object_t::key_type` (or `string_t`) be directly constructible from the *source* type's corresponding member type via `is_constructible`. If this requirement is not met, the result depends on the *source* string type:
+
+   - If it is a range of characters (it has `begin()` and `end()`, as `std::string` does), the conversion falls back to the array-conversion path, which represents objects as arrays of `[key, value]` pairs and strings as arrays of character codes. This result has a different type than the source value, so the constructor's [`JSON_ASSERT`](https://json.nlohmann.me/api/macros/json_assert/index.md) fails; with its default definition, `assert`, the program aborts unless `NDEBUG` is defined, in which case the array is returned.
+   - Otherwise, the conversion does not compile, even though `std::is_constructible` reports `true`; for example, when converting a `basic_json` whose `string_t` is the `alt_string` of the unit tests to `json`.
+
+   This is a known limitation tracked in [issue #3425](https://github.com/nlohmann/json/issues/3425).
 
 1. Creates a JSON value of type array or object from the passed initializer list `init`. In case `type_deduction` is `true` (default), the type of the JSON value to be created is deducted from the initializer list `init` according to the following rules:
 

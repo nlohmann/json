@@ -32,6 +32,8 @@ Constant.
 
 The returned [`string_view_t`](https://json.nlohmann.me/api/basic_json_view/#member-types) is valid exactly as long as the view that produced it — see the [validity rules](https://json.nlohmann.me/api/basic_json_view/index.md) of `basic_json_view` — and, for a string with no escapes, for as long as the document's source text, which for a borrowed document must remain valid **and unmodified** for as long as the document exists, since floating-point values and unescaped strings are read from the source lazily.
 
+A string with escapes, a string of a document that owns its text, and an edited string must not be passed to [`read()`](https://json.nlohmann.me/api/basic_json_document/read/index.md) of the document it came from: `read()` releases them before it parses its input. Copy the string first. (A string read unchanged from a borrowed text is not affected.)
+
 ## Examples
 
 Example

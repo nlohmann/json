@@ -38,7 +38,7 @@ Linear in the size of the compared values: every number, string, array element, 
 
 ## Notes
 
-Only a single number, boolean, or `null` value is ever materialized into a `BasicJsonType`, to reuse its `operator==` — for numbers, so that values written differently in the source text but equal in value (e.g. an integer and a floating-point literal) still compare equal, following the same rules `BasicJsonType` does for special values such as `NaN`. Constructing one of these scalars never allocates. Strings are compared directly, without allocating, either from the source text on both sides or, for overload 2, against `BasicJsonType`'s own string. Arrays and objects are never materialized at all; only their elements or members are visited, one pair at a time.
+Only a single number, boolean, or `null` value is ever materialized into a `BasicJsonType`, to reuse its `operator==` — for numbers, so that values written differently in the source text but equal in value (e.g. an integer and a floating-point literal) still compare equal, following the same rules `BasicJsonType` does for special values such as `NaN`: a `NaN` that an [edit](https://json.nlohmann.me/api/basic_json_document/set/index.md) wrote is not equal to itself, so a view of it is not equal to itself either, nor is a view of an array or object that contains one, as for `BasicJsonType`. Constructing one of these scalars never allocates. Strings are compared directly, without allocating, either from the source text on both sides or, for overload 2, against `BasicJsonType`'s own string. Arrays and objects are never materialized at all; only their elements or members are visited, one pair at a time.
 
 How objects are compared
 

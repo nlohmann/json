@@ -52,7 +52,7 @@ String values are stored as pointers in a `basic_json` type. That is, for any ac
 
 ### Cross-`basic_json` conversion requirements
 
-When converting a string value from one `basic_json` specialization to another via the [converting constructor](https://json.nlohmann.me/api/basic_json/basic_json/index.md) (overload 4), the target `string_t` must be directly constructible from the source `basic_json`'s `string_t` type. If this requirement is not met, the conversion does not fail; instead, the string is silently converted as an array of character codes, which is incorrect. See [issue #3425](https://github.com/nlohmann/json/issues/3425) for details and an example.
+When converting a string value from one `basic_json` specialization to another via the [converting constructor](https://json.nlohmann.me/api/basic_json/basic_json/index.md) (overload 4), the target `string_t` must be directly constructible from the source `basic_json`'s `string_t` type. If this requirement is not met, the conversion depends on the source string type. If it is a range of characters, the string is converted as an array of character codes, which is incorrect: the converting constructor's [`JSON_ASSERT`](https://json.nlohmann.me/api/macros/json_assert/index.md) fails; with its default definition, `assert`, the program aborts unless `NDEBUG` is defined, in which case the array is returned. If the source string type is not a range of characters, the conversion does not compile at all. See [issue #3425](https://github.com/nlohmann/json/issues/3425) for details and an example.
 
 ## Examples
 

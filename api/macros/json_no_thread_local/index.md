@@ -35,6 +35,7 @@ The code below forces the library not to use `thread_local` storage.
 
 ## See also
 
+- [`JSON_RECURSION_DEPTH_LIMIT`](https://json.nlohmann.me/api/macros/json_recursion_depth_limit/index.md) - set how many nesting levels the operations recurse into
 - [FAQ: Thread safety](https://json.nlohmann.me/home/faq/#thread-safety) - thread-safety guarantees of the library
 - [Supported Macros](https://json.nlohmann.me/features/macros/index.md) - guide to all supported macros
 

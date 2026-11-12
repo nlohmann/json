@@ -13,11 +13,11 @@ Requirements are split into two groups:
 
 Requirements are not checked
 
-Three requirements are checked with a `static_assert`: the array iterator category, the width of [`BinaryType`](#binarytype)'s `value_type`, and [`NumberUnsignedType`](#numberintegertype-and-numberunsignedtype) being at least as wide as [`NumberIntegerType`](#numberintegertype-and-numberunsignedtype). The rest are not diagnosed with dedicated error messages, and violating most of them results in a compiler error somewhere inside the library. Four violations are not caught at compile time at all:
+Three requirements are checked with a `static_assert`: the array iterator category, the width of [`BinaryType`](#binarytype)'s `value_type`, and [`NumberUnsignedType`](#numberintegertype-and-numberunsignedtype) being at least as wide as [`NumberIntegerType`](#numberintegertype-and-numberunsignedtype). The rest are not diagnosed with dedicated error messages, and violating most of them results in a compiler error somewhere inside the library. Four violations are not (always) caught at compile time:
 
 - A [`StringType`](#stringtype) whose `data()` is not null-terminated compiles and silently misparses numbers stored as a `long double` that is not IEEE 754 binary64 (e.g., the 80-bit x87 format), because the lexer hands the buffer to `std::strtold`.
 - A stateful [`AllocatorType`](#allocatortype) compiles and silently ignores its state: allocation, deallocation, and [`get_allocator()`](https://json.nlohmann.me/api/basic_json/get_allocator/index.md) each use a different default-constructed instance.
-- The two [cross-specialization conversions](#cross-specialization-conversions) below. These abort on an assertion in a normal build, and only fail silently under `NDEBUG`.
+- The two [cross-specialization conversions](#cross-specialization-conversions) below, when the source string type is a range of characters. They compile and fail the `JSON_ASSERT`: with its default definition, the program aborts unless `NDEBUG` is defined, in which case the wrong result is returned silently.
 
 ## Overview
 
@@ -655,12 +655,12 @@ true
 
 ### Types that cannot be used
 
-| Type                                               | Reason                                                                                                  |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `std::wstring`, `std::u16string`, `std::u32string` | the character type is not one byte wide                                                                 |
-| `std::u8string`                                    | one byte wide, but `char8_t` is not `char`-compatible                                                   |
-| `absl::Cord`                                       | no `value_type`, and the storage is not contiguous                                                      |
-| `QString`                                          | no `append(const char*, size_type)`; its `QChar` is also two bytes wide, though that is never diagnosed |
+| Type                                               | Reason                                                                                                      |
+| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `std::wstring`, `std::u16string`, `std::u32string` | the character type is not one byte wide                                                                     |
+| `std::u8string`                                    | one byte wide, but `char8_t` is not `char`-compatible (as a *value*, it converts to and from a JSON string) |
+| `absl::Cord`                                       | no `value_type`, and the storage is not contiguous                                                          |
+| `QString`                                          | no `append(const char*, size_type)`; its `QChar` is also two bytes wide, though that is never diagnosed     |
 
 A `std::pmr::string` mostly does not use the memory resource you choose
 
@@ -1208,10 +1208,12 @@ See [`json_base_class_t`](https://json.nlohmann.me/api/basic_json/json_base_clas
 
 ## Cross-specialization conversions
 
-Converting a value from one `basic_json` specialization into another (see the [converting constructor](https://json.nlohmann.me/api/basic_json/basic_json/index.md)) imposes two additional requirements that are not diagnosed at compile time. With assertions enabled they abort on the `JSON_ASSERT` at the end of the converting constructor; under `NDEBUG` they fail **silently** at runtime:
+Converting a value from one `basic_json` specialization into another (see the [converting constructor](https://json.nlohmann.me/api/basic_json/basic_json/index.md)) imposes two additional requirements:
 
-- The target `string_t` must be directly constructible from the source `string_t`. Otherwise the string is converted to an array of character codes.
-- The target `object_t::key_type` must be directly constructible from the source object's key type. Otherwise the object is converted to an array of key/value pairs.
+- The target `string_t` must be directly constructible from the source `string_t`.
+- The target `object_t::key_type` must be directly constructible from the source object's key type.
+
+If a requirement is not met, the result depends on the source string type. If it is a range of characters (it has `begin()` and `end()`, as `std::string` does), the conversion compiles and then fails the `JSON_ASSERT` at the end of the converting constructor: with its default definition, `assert`, the program aborts unless `NDEBUG` is defined, in which case it **silently** returns an array (of character codes for a string, of key/value pairs for an object). Otherwise, the conversion does not compile, even though `std::is_constructible` reports `true`; for example, when converting a `basic_json` whose `string_t` is the `alt_string` of the unit tests to `json`.
 
 See [issue #3425](https://github.com/nlohmann/json/issues/3425), [`string_t`](https://json.nlohmann.me/api/basic_json/string_t/index.md), and [`object_t`](https://json.nlohmann.me/api/basic_json/object_t/index.md).
 

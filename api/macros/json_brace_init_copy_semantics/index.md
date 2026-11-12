@@ -25,7 +25,9 @@ json obj = {{"key", "value"}};
 json j{obj};
 ```
 
-creates a single-element **array** `[{"key":"value"}]` instead of a copy of `obj`. This behavior is compiler-dependent for older compilers (GCC wrapped, Clang did not), but starting from Clang 20, both compilers behave the same way.
+creates a single-element **array** `[{"key":"value"}]` instead of a copy of `obj`. For this constructor, the behavior was compiler-dependent for older compilers (GCC wrapped, Clang did not), but starting from Clang 20, both compilers behave the same way.
+
+The calls `arr.push_back({obj})` and `arr += {obj}` are still compiler-dependent without the macro, even with Clang 20 and later: GCC converts `{obj}` to a single-element array and appends that array, whereas Clang appends a copy of `obj`. With the macro defined to `1`, both compilers append a copy of `obj`.
 
 Enabling this macro opts into copy/move semantics for this case (see [#5074](https://github.com/nlohmann/json/issues/5074)).
 

@@ -148,6 +148,12 @@ When defined to `1`, [`operator>>`](https://json.nlohmann.me/api/operator_gtgt/i
 
 See [full documentation of `JSON_PRECISE_STREAM_POSITION`](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md).
 
+## `JSON_RECURSION_DEPTH_LIMIT`
+
+Sets the number of nesting levels that the operations walking a value (copying, comparing, serializing, hashing, merging, diffing, converting, destroying, and the binary writers) recurse into on the call stack before they continue with an explicit stack on the heap. The default is `128`; allowed are the integers from `0` to `254`. Lower it for threads with small stacks, raise it to trade stack for speed. Results are the same for every setting; the value must be the same in all translation units of a program.
+
+See [full documentation of `JSON_RECURSION_DEPTH_LIMIT`](https://json.nlohmann.me/api/macros/json_recursion_depth_limit/index.md).
+
 ## `JSON_SKIP_LIBRARY_VERSION_CHECK`
 
 When defined, the library will not create a compiler warning when a different version of the library was already included.
