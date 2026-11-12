@@ -916,14 +916,15 @@ TEST_CASE("json_view document_data::holds() (the debug check of read())")
 
     SECTION("owned text")
     {
-        d->owned = "{\"a\":\"some text that does not fit a short string\"}";
+        d->owned = R"({"a":"some text that does not fit a short string"})";
         const char* const b = d->owned.data();
         CHECK(d->holds(b, 1));
         CHECK(d->holds(b + 5, 3));
         CHECK(d->holds(b + d->owned.size() - 1, 1));
         // also after clear(), which keeps the buffer that the next parse writes
         d->owned.clear();
-        CHECK(d->holds(b, 4));
+        // (b is only compared with the buffer, never read)
+        CHECK(d->holds(b, 4)); // NOLINT(clang-analyzer-cplusplus.InnerPointer)
         CHECK(!d->holds(other.data(), other.size()));
         CHECK(!d->holds(b, 0));
     }
@@ -946,7 +947,7 @@ TEST_CASE("json_view document_data::holds() (the debug check of read())")
     {
         d->edits.reset(new document_data::edit_state()); // NOLINT(cppcoreguidelines-owning-memory)
         CHECK(!d->holds(other.data(), other.size()));
-        d->edits->texts.emplace_back(new char[16]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        d->edits->texts.emplace_back(new char[16]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-owning-memory)
         d->edits->text_cap = 16;
         CHECK(d->holds(d->edits->texts.back().get() + 3, 3));
         CHECK(!d->holds(other.data(), other.size()));
