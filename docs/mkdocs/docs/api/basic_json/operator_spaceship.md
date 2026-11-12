@@ -55,6 +55,10 @@ Linear.
         1. Comparing a `NaN` with itself.
         2. Comparing a `NaN` with another `NaN`.
         3. Comparing a `NaN` and any other number.
+    - For arrays and objects, the elements are compared in order. If the comparison reaches a `NaN` and a number (or
+      another `NaN`) before any other difference, the result is `std::partial_ordering::unordered`. (Without C++20, the
+      comparison operators `<`, `<=`, `>`, and `>=` use the comparison of the containers, which treats such a pair as
+      equivalent; see [**operator<**](operator_lt.md).)
 
 ## Examples
 

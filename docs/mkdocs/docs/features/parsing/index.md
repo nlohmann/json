@@ -77,8 +77,14 @@ them faster than others:
 |--------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------|
 | strings, string views, string literals, contiguous containers, pointer or iterator ranges over contiguous memory | the whole input is scanned in bulk: runs of string characters, numbers, and indentation are recognized several bytes at a time |
 | `#!cpp std::istream` (`#!cpp std::ifstream`, `#!cpp std::istringstream`, ...)            | the characters the stream buffer holds are scanned in bulk like a string; the stream buffer is asked for more when they are used up |
-| `#!cpp FILE*`                                                                              | with glibc and the Apple C library, the characters the `FILE` holds in its buffer are scanned in bulk like a stream's; elsewhere one character at a time; the file is locked once for the whole parse |
+| `#!cpp FILE*`                                                                              | with glibc and the Apple C library, the characters the `FILE` holds in its buffer are scanned in bulk like a stream's; elsewhere one character at a time; where the C library has unlocked stdio functions, the file is locked once for the whole parse |
 | other iterator ranges (e.g., `#!cpp std::list<char>`, `#!cpp std::istreambuf_iterator<char>`), wide strings | one character at a time                                                             |
+
+Defining [`JSON_DISABLE_STREAM_BULK_SCAN`](../../api/macros/json_disable_stream_bulk_scan.md) to `1` turns off the bulk
+scan of a stream buffer, so a `#!cpp std::istream` is read one character at a time. Defining
+[`JSON_DISABLE_UNLOCKED_FILE_IO`](../../api/macros/json_disable_unlocked_file_io.md) to `1` makes a `#!cpp FILE*` read
+every character with `std::fgetc`, without locking the file for the whole parse and without the bulk scan of its buffer
+(which `JSON_DISABLE_STREAM_BULK_SCAN` does not affect). Neither changes any result.
 
 Input in one block of memory is read even faster with the default options (no
 [parser callback](../../api/basic_json/parser_callback_t.md), no comments, no trailing commas, and for `sax_parse()`
