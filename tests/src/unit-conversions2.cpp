@@ -761,9 +761,8 @@ TEST_CASE("std::u8string")
         CHECK(json(with_nul).template get<std::u8string>() == with_nul);
 
         // the lvalue and rvalue paths, and in containers
-        std::u8string lvalue = utf8;
-        CHECK(json(lvalue).template get<std::u8string>() == utf8);
-        CHECK(json(std::move(lvalue)).template get<std::u8string>() == utf8);
+        CHECK(json(utf8).template get<std::u8string>() == utf8);
+        CHECK(json(std::u8string(utf8)).template get<std::u8string>() == utf8);
         const std::vector<std::u8string> vec = {utf8, u8"x"};
         json const j_vec = vec;
         CHECK(j_vec.is_array());
@@ -812,7 +811,7 @@ TEST_CASE("std::u8string")
         CHECK(j_view.is_array());
         CHECK(j_view.size() == 8);
 
-        const char8_t arr[] = u8"ab";
+        const char8_t arr[] = u8"ab"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
         json const j_arr = arr;
         CHECK(j_arr == json::array({0x61, 0x62, 0}));
     }
