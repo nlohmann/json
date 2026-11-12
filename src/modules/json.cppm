@@ -51,6 +51,7 @@ using NLOHMANN_JSON_NAMESPACE::flatten;
 using NLOHMANN_JSON_NAMESPACE::reflectable;
 using NLOHMANN_JSON_NAMESPACE::rename;
 using NLOHMANN_JSON_NAMESPACE::transient;
+using NLOHMANN_JSON_NAMESPACE::allow_private;
 #endif
 
 inline namespace literals

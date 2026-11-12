@@ -165,6 +165,25 @@ json j = json::serialize(Document {
 // {"author":"Alice","title":"Spec","version":3}   (no "info" key)
 ```
 
+Because a flattened struct's keys are pulled up to the parent level, they share one namespace with the parent's own
+keys and with any other flattened struct at that level. If two of them resolve to the same JSON key, the value cannot
+round-trip, so the library rejects the type at compile time. Give one of the members a distinct
+[`rename`](#rename-use-a-different-key) to resolve the clash:
+
+```cpp
+struct Metadata
+{
+    std::string title; // would collide with Document::title once flattened
+    int version = 1;
+};
+
+struct Document
+{
+    std::string title;
+    [[=nlohmann::flatten]] Metadata info; // error: two members map to the key "title"
+};
+```
+
 ## Private members
 
 By default the serializer only reaches **public** data members. A class with private or protected state opts in by
@@ -191,6 +210,22 @@ To lift this requirement for every type at once, define
 [`JSON_SERDE_ALLOW_PRIVATE`](../api/macros/json_has_reflection.md#notes) to `1` before including the library. This
 defeats the encapsulation of every serialized type, so prefer the per-type annotation unless you deliberately want the
 global behavior.
+
+### `allow_private` — opt in at the call site
+
+The `reflectable` annotation can only be attached to a type at its definition, so it is no help for a third-party type
+you cannot edit. For that case, pass the tag `nlohmann::allow_private` as the second argument to `serialize`, or to any
+`deserialize` overload, to reach the private and protected members for that one call:
+
+```cpp
+// Stranger is a third-party type: private members, a public default constructor,
+// and no annotation we are able to add.
+json j = json::serialize(stranger, nlohmann::allow_private);
+Stranger back = j.deserialize<Stranger>(nlohmann::allow_private);
+```
+
+This grants the same access as the `reflectable` annotation, but scoped to the call rather than the type, and without
+the global reach of `JSON_SERDE_ALLOW_PRIVATE`. Without the tag, an unannotated type exposes only its public members.
 
 ## Other `basic_json` types
 

@@ -35,6 +35,7 @@ namespace serde
 struct transient_t {};
 struct flatten_t {};
 struct reflectable_t {};
+struct allow_private_t {};
 }  // namespace serde
 }  // namespace detail
 
@@ -84,6 +85,28 @@ class [[=nlohmann::reflectable]] Account {
 inline constexpr detail::serde::reflectable_t reflectable;
 
 /*!
+@brief call-site tag: allow serde to reach private/protected members for one call
+
+Pass this as the second argument to @ref basic_json::serialize or to a
+`deserialize` call to grant access to the private and protected data members of
+`T` for that call only, without annotating the type. This is the way to
+(de)serialize a type you do not own, since an attribute can only be attached to
+a type at its definition.
+
+@code{.cpp}
+// Stranger is a third-party type with private members and a public default ctor
+json j = json::serialize(obj, nlohmann::allow_private);
+auto back = j.deserialize<Stranger>(nlohmann::allow_private);
+@endcode
+
+@sa @ref reflectable - the equivalent as a type annotation, when you own the type
+@sa @ref JSON_SERDE_ALLOW_PRIVATE - the equivalent for every type in a translation unit
+
+@since version 3.13.0
+*/
+inline constexpr detail::serde::allow_private_t allow_private;
+
+/*!
 @brief field annotation: use a different JSON key than the member name
 
 @code{.cpp}
@@ -128,7 +151,7 @@ template<typename Tag, std::meta::info Mem>
 JSON_HEDLEY_WARN_UNUSED_RESULT
 consteval bool has_annotation()
 {
-    template for (constexpr auto a : std::define_static_array(std::meta::annotations_of(Mem)))
+    template for (constexpr std::meta::info a : std::define_static_array(std::meta::annotations_of(Mem)))
     {
         if (annotation_type(a) == ^^Tag)
         {
@@ -143,30 +166,33 @@ template<std::meta::info Mem>
 JSON_HEDLEY_WARN_UNUSED_RESULT
 consteval std::string_view member_key()
 {
-    template for (constexpr auto a : std::define_static_array(std::meta::annotations_of(Mem)))
+    template for (constexpr std::meta::info a : std::define_static_array(std::meta::annotations_of(Mem)))
     {
         constexpr std::meta::info t = annotation_type(a);
         if constexpr (std::meta::has_template_arguments(t) && std::meta::template_of(t) == ^^rename)
         {
-            constexpr auto r = std::meta::extract<typename[:t:]>(a);
+            constexpr std::meta::info r = std::meta::extract<typename[:t:]>(a);
             return std::define_static_string(std::string_view{r.value, sizeof(r.value) - 1});
         }
     }
     return std::meta::identifier_of(Mem);
 }
 
-template<typename T>
+// Whether private/protected members of T may be reached. AllowPrivate is the
+// per-call opt-in (the nlohmann::allow_private tag); it ORs with the reflectable
+// type annotation and the global JSON_SERDE_ALLOW_PRIVATE knob.
+template<typename T, bool AllowPrivate = false>
 JSON_HEDLEY_WARN_UNUSED_RESULT
 consteval bool is_reflectable_type()
 {
-    return JSON_SERDE_ALLOW_PRIVATE != 0 || has_annotation<reflectable_t,^^ T>();
+    return AllowPrivate || JSON_SERDE_ALLOW_PRIVATE != 0 || has_annotation<reflectable_t,^^ T>();
 }
 
-template<typename T>
+template<typename T, bool AllowPrivate = false>
 JSON_HEDLEY_WARN_UNUSED_RESULT
 consteval std::meta::access_context serde_access()
 {
-    if constexpr (is_reflectable_type<T>())
+    if constexpr (is_reflectable_type<T, AllowPrivate>())
     {
         return std::meta::access_context::unchecked();
     }
@@ -268,13 +294,64 @@ struct serde_sink
     bool failed_ = false;
 };
 
+// Append to out every JSON key that T contributes to its enclosing object, checking it for duplicates
+template<typename T, bool AllowPrivate = false>
+consteval void collect_serde_keys(std::vector<std::string_view>& out)
+{
+    template for (constexpr std::meta::info member :
+                  std::define_static_array(std::meta::nonstatic_data_members_of(^^T, serde_access<T, AllowPrivate>())))
+    {
+        if constexpr (!has_annotation<transient_t, member>())
+        {
+            using member_t = typename[:std::meta::type_of(member):];
+            if constexpr (has_annotation<flatten_t, member>() && is_serde_struct<member_t>)
+            {
+                // a flattened struct is reached through its public members only;
+                // AllowPrivate governs the top-level type the user named
+                collect_serde_keys<member_t>(out);
+            }
+            else
+            {
+                out.push_back(member_key<member>());
+            }
+        }
+    }
+}
+
+// The first JSON key that appears more than once in T's flattened key set, or
+// no value if there is no collision.
+template<typename T, bool AllowPrivate = false>
+consteval std::optional<std::string_view> first_duplicate_serde_key()
+{
+    std::vector<std::string_view> keys;
+    collect_serde_keys<T, AllowPrivate>(keys);
+    for (std::size_t i = 0; i < keys.size(); ++i)
+    {
+        for (std::size_t k = i + 1; k < keys.size(); ++k)
+        {
+            if (keys[i] == keys[k])
+            {
+                return keys[i];
+            }
+        }
+    }
+    return std::nullopt;
+}
+
+// Reject a colliding key at compile time when flattening a nested struct
+template<typename T, bool AllowPrivate = false>
+inline constexpr bool has_no_serde_key_collision = !first_duplicate_serde_key<T, AllowPrivate>().has_value();
+
 // Walk a serde struct into a JSON object.
-template<typename BasicJsonType, typename T>
+template<bool AllowPrivate = false, typename BasicJsonType, typename T>
 void serialize_struct(BasicJsonType& j, const T& obj)
 {
+    static_assert(has_no_serde_key_collision<T, AllowPrivate>,
+                  "a [[=nlohmann::flatten]] member collides with another JSON key; "
+                  "rename one of them so every key in the flattened object is unique");
     j = BasicJsonType::object();
-    template for (constexpr auto member :
-                  std::define_static_array(std::meta::nonstatic_data_members_of(^^T, serde_access<T>())))
+    template for (constexpr std::meta::info member :
+                  std::define_static_array(std::meta::nonstatic_data_members_of(^^T, serde_access<T, AllowPrivate>())))
     {
         if constexpr (!has_annotation<transient_t, member>())
         {
@@ -305,7 +382,7 @@ void serialize_struct(BasicJsonType& j, const T& obj)
     }
 }
 
-template<typename T, typename BasicJsonType>
+template<bool AllowPrivate = false, typename T, typename BasicJsonType>
 void deserialize_struct(const BasicJsonType& j, T& out);
 
 // Fill a single member from node n (already located in the parent object).
@@ -328,7 +405,8 @@ void deserialize_member(const BasicJsonType& n, Mem& out, std::string_view key)
                               concat("member '", std::string(key), "' must be a JSON object"));
             return;
         }
-        deserialize_struct(n, out);
+        // a nested serde-struct member is reached through its public members
+        deserialize_struct<false>(n, out);
     }
     else
     {
@@ -336,11 +414,14 @@ void deserialize_member(const BasicJsonType& n, Mem& out, std::string_view key)
     }
 }
 
-template<typename T, typename BasicJsonType>
+template<bool AllowPrivate, typename T, typename BasicJsonType>
 void deserialize_struct(const BasicJsonType& j, T& out)
 {
-    template for (constexpr auto member :
-                  std::define_static_array(std::meta::nonstatic_data_members_of(^^T, serde_access<T>())))
+    static_assert(has_no_serde_key_collision<T, AllowPrivate>,
+                  "a [[=nlohmann::flatten]] member collides with another JSON key; "
+                  "rename one of them so every key in the flattened object is unique");
+    template for (constexpr std::meta::info member :
+                  std::define_static_array(std::meta::nonstatic_data_members_of(^^T, serde_access<T, AllowPrivate>())))
     {
         if constexpr (!has_annotation<transient_t, member>())
         {
@@ -349,7 +430,8 @@ void deserialize_struct(const BasicJsonType& j, T& out)
 
             if constexpr (has_annotation<flatten_t, member>() && is_serde_struct<member_t>)
             {
-                deserialize_struct(j, out.[:member:]);
+                // a flattened struct reads through its public members
+                deserialize_struct<false>(j, out.[:member:]);
             }
             else if (const auto it = j.find(std::string(key)); it != j.end() && !it->is_null())
             {

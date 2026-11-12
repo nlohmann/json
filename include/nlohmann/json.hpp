@@ -6105,7 +6105,18 @@ public:
     static basic_json serialize(const T& obj)
     {
         basic_json result;
-        detail::serde::serialize_struct(result, obj);
+        detail::serde::serialize_struct<false>(result, obj);
+        return result;
+    }
+
+    /// @brief map an object to JSON using reflection, reaching private members
+    /// @sa https://json.nlohmann.me/api/basic_json/serialize/
+    template<detail::serde::serde_struct T>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json serialize(const T& obj, detail::serde::allow_private_t /*unused*/)
+    {
+        basic_json result;
+        detail::serde::serialize_struct<true>(result, obj);
         return result;
     }
 
@@ -6116,7 +6127,18 @@ public:
     T deserialize() const
     {
         T out{};
-        detail::serde::deserialize_struct(*this, out);
+        detail::serde::deserialize_struct<false>(*this, out);
+        return out;
+    }
+
+    /// @brief map this JSON value into an object using reflection, reaching private members
+    /// @sa https://json.nlohmann.me/api/basic_json/deserialize/
+    template<detail::serde::serde_struct T>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    T deserialize(detail::serde::allow_private_t /*unused*/) const
+    {
+        T out{};
+        detail::serde::deserialize_struct<true>(*this, out);
         return out;
     }
 #endif

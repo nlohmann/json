@@ -10699,7 +10699,18 @@ class basic_json_view
     T deserialize() const
     {
         T out{};
-        detail::serde::deserialize_struct(*this, out);
+        detail::serde::deserialize_struct<false>(*this, out);
+        return out;
+    }
+
+    /// @brief map this view into an object using reflection, reaching private members
+    /// @sa https://json.nlohmann.me/api/basic_json/deserialize/
+    template<detail::serde::serde_struct T>
+    NLOHMANN_VIEW_NODISCARD
+    T deserialize(detail::serde::allow_private_t /*unused*/) const
+    {
+        T out{};
+        detail::serde::deserialize_struct<true>(*this, out);
         return out;
     }
 #endif
@@ -11254,6 +11265,15 @@ class basic_json_document
     T deserialize() const
     {
         return root().template deserialize<T>();
+    }
+
+    /// @brief map this document into an object using reflection, reaching private members
+    /// @sa https://json.nlohmann.me/api/basic_json/deserialize/
+    template<detail::serde::serde_struct T>
+    NLOHMANN_VIEW_NODISCARD
+    T deserialize(detail::serde::allow_private_t tag) const
+    {
+        return root().template deserialize<T>(tag);
     }
 #endif
 

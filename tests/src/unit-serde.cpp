@@ -63,6 +63,54 @@ struct Document
     [[ = nlohmann::flatten]] Metadata info;
 };
 
+// A flattened member whose key collides with a sibling key.
+struct TitledMetadata
+{
+    std::string title;
+    int version = 1;
+};
+
+struct CollidingDocument
+{
+    std::string title; // collides with the flattened "title"
+    [[ = nlohmann::flatten]] TitledMetadata info;
+};
+
+struct EmptyKeyChild
+{
+    [[ = nlohmann::rename("")]] std::string value;
+};
+
+struct EmptyKeyCollidingDocument
+{
+    [[ = nlohmann::rename("")]] std::string value; // collides with the flattened ""
+    [[ = nlohmann::flatten]] EmptyKeyChild child;
+};
+
+struct EmptyKeyUniqueDocument
+{
+    [[ = nlohmann::rename("")]] std::string value; // the only "" key, so no collision
+    int other = 0;
+};
+
+// Check at compile time with internals that colliding fields are rejected
+static_assert(nlohmann::detail::serde::has_no_serde_key_collision<Document>,
+              "Document has distinct keys and must not be flagged as colliding");
+static_assert(!nlohmann::detail::serde::has_no_serde_key_collision<CollidingDocument>,
+              "CollidingDocument flattens a duplicate 'title' and must be flagged");
+static_assert(nlohmann::detail::serde::first_duplicate_serde_key<CollidingDocument>().has_value()
+              && nlohmann::detail::serde::first_duplicate_serde_key<CollidingDocument>().value() == "title",
+              "the reported colliding key should be 'title'");
+
+// Regression: an empty colliding key must not be mistaken for "no collision".
+static_assert(!nlohmann::detail::serde::has_no_serde_key_collision<EmptyKeyCollidingDocument>,
+              "a duplicate empty key must be flagged, not treated as no collision");
+static_assert(nlohmann::detail::serde::first_duplicate_serde_key<EmptyKeyCollidingDocument>().has_value()
+              && nlohmann::detail::serde::first_duplicate_serde_key<EmptyKeyCollidingDocument>().value().empty(),
+              "the reported colliding key should be the empty string");
+static_assert(nlohmann::detail::serde::has_no_serde_key_collision<EmptyKeyUniqueDocument>,
+              "a single empty key is not a collision");
+
 class [[ = nlohmann::reflectable]] Account
 {
   private:
@@ -84,6 +132,32 @@ class [[ = nlohmann::reflectable]] Account
     long amount() const noexcept
     {
         return balance;
+    }
+};
+
+// Like Account, but deliberately NOT annotated reflectable: it stands in for a
+// third-party type whose definition we cannot touch.
+class Stranger
+{
+  private:
+    std::string codename;
+    int clearance = 0;
+
+  public:
+    Stranger() = default;
+    Stranger(std::string codename_, int clearance_):
+        codename{std::move(codename_)}, clearance{clearance_} {}
+
+    [[nodiscard]]
+    const std::string& name() const noexcept
+    {
+        return codename;
+    }
+
+    [[nodiscard]]
+    int level() const noexcept
+    {
+        return clearance;
     }
 };
 
@@ -195,6 +269,26 @@ TEST_CASE("reflection serde")
         const Account back = j.deserialize<Account>();
         CHECK(back.who() == "Sakuya Izayoi");
         CHECK(back.amount() == 100);
+    }
+
+    SECTION("allow_private reaches private members of an unannotated type")
+    {
+        const Stranger agent("Mamizou Futatsuiwa", 7);
+
+        // Without the tag, the unannotated type exposes no members: the object
+        // is empty and the private state does not round-trip.
+        const json plain = json::serialize(agent);
+        CHECK(plain.is_object());
+        CHECK(plain.empty());
+
+        // With the tag, the private members are serialized and read back.
+        const json j = json::serialize(agent, nlohmann::allow_private);
+        CHECK(j.at("codename") == "Mamizou Futatsuiwa");
+        CHECK(j.at("clearance") == 7);
+
+        const Stranger back = j.deserialize<Stranger>(nlohmann::allow_private);
+        CHECK(back.name() == "Mamizou Futatsuiwa");
+        CHECK(back.level() == 7);
     }
 
     SECTION("unknown enumerator name throws deserialization_error")

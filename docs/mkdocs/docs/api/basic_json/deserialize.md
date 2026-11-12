@@ -1,14 +1,24 @@
 # <small>nlohmann::basic_json::</small>deserialize
 
 ```cpp
+// (1)
 template<typename T>
 T deserialize() const;
+
+// (2)
+template<typename T>
+T deserialize(nlohmann::allow_private_t) const;
 ```
 
 Map this JSON value into an arbitrary C++ object using static reflection, without a hand-written `from_json` and
 without the [`NLOHMANN_DEFINE_TYPE_*`](../macros/nlohmann_define_type_intrusive.md) macros. It is the inverse of
 [`serialize`](serialize.md): each non-static data member of `T` is read from the object key that matches the member's
 name (or its [`rename`](serialize.md#notes) annotation), and members recurse through the normal conversion machinery.
+
+1. Fills the public data members of `T`. A type with private or protected members must opt in with the
+   [`reflectable`](serialize.md#notes) annotation (or [`JSON_SERDE_ALLOW_PRIVATE`](../macros/json_has_reflection.md#notes)).
+2. Same, but also fills the private and protected members of `T` for this call only, by passing the
+   [`nlohmann::allow_private`](serialize.md#notes) tag. This is the way to deserialize into a type you do not own.
 
 This function is only available when [`JSON_HAS_REFLECTION`](../macros/json_has_reflection.md) evaluates to `1`.
 
@@ -17,7 +27,8 @@ This function is only available when [`JSON_HAS_REFLECTION`](../macros/json_has_
 `T`
 :   the type to deserialize into. Must be default-constructible and satisfy the same constraints as for
     [`serialize`](serialize.md) (a class or struct that is not a `basic_json` specialization, string, container, or
-    optional). A type with private or protected members must be annotated [`reflectable`](serialize.md#notes).
+    optional). For overload (1), a type with private or protected members must be annotated
+    [`reflectable`](serialize.md#notes); overload (2) reaches them without any annotation.
 
 ## Return value
 
@@ -53,6 +64,13 @@ Linear in the number of members, times the cost of deserializing each member.
 
     As with [`serialize`](serialize.md), reflection only steps in for types that have no `from_json` found by ADL and no
     `NLOHMANN_DEFINE_TYPE_*` expansion; a type that defines either keeps its hand-written behavior.
+
+!!! warning "`flatten` key collisions"
+
+    A [`flatten`](../../features/reflection.md#flatten-inline-a-nested-struct)ed struct reads its keys from the parent
+    level. If one of those keys matches a sibling key or a key from another flattened struct at the same level, both
+    members would read the same value, so the type is rejected at compile time. Give one of the colliding members a
+    distinct [`rename`](serialize.md#notes).
 
 ## Examples
 
