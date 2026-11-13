@@ -89,8 +89,10 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [out_of_range.406](../../home/exceptions.md#jsonexceptionout_of_range406) if a high-precision number, or a
   float64 when `number_float_t` is `float`, does not fit into `number_float_t`
 - Throws [out_of_range.408](../../home/exceptions.md#jsonexceptionout_of_range408) if the count of an optimized
-  container exceeds the capacity of the container (or of `std::size_t`), or if an optimized array of `Z`, `T`, or `F` has
-  more than 1,048,576 elements
+  container exceeds the capacity of the container (or of `std::size_t`; an array of type `N` is empty, so only the
+  latter applies to it), if an optimized array of `Z`, `T`, or `F` has more than 1,048,576 elements, or if the
+  optimized arrays of `Z`, `T`, and `F` in the input together have more than 1,048,576 elements plus 4 for every byte
+  read so far
 
 ## Complexity
 
@@ -132,6 +134,9 @@ Linear in the size of the input.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
 - Added `error_handler` parameter in version 3.13.0.
+- Report `start_array(0)` to a SAX handler for an optimized array of type `N` (`[$N#n`), whatever its count, in version
+  3.13.0.
+- Limited the total number of elements of optimized arrays of `Z`, `T`, and `F` in one input in version 3.13.0.
 
 !!! warning "Deprecation"
 

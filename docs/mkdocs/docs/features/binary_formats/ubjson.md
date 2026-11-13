@@ -122,9 +122,18 @@ The library uses the following mapping from JSON values types to UBJSON types ac
     already is the value. Its declared count is therefore the only thing that decides how much memory the receiving side
     allocates, and a handful of bytes can describe billions of elements. `from_ubjson` rejects such an array with
     [`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408) when the count exceeds 1,048,576
-    (`1 << 20`), and `to_ubjson` writes longer arrays of these types in the counted but untyped form: the `$` type marker is
-    dropped, the `#` count is kept, and every element is written with its own marker (`[#l 1048577 Z Z ...`), so any value
-    it produces can be read back. Objects and untyped counted arrays are not subject to this limit.
+    (`1 << 20`), or when the counts of all such arrays in the input add up to more than 1,048,576 plus 4 for every byte
+    read so far. `to_ubjson` therefore writes an array of these types in the counted but untyped form when it is longer
+    than that, or when it would bring the total of the typed arrays written so far above 1,048,576: the `$` type marker
+    is dropped, the `#` count is kept, and every element is written with its own marker (`[#l 1048577 Z Z ...`), so
+    everything it produces can be read back. Only input from another encoder, or written by version 3.12.0 and earlier of
+    this library, can exceed the limit: for example, 1,100 rows of 1,000 `null` values or 210,000 rows of 25, each with
+    a `$Z` annotation. Version 3.12.0 writes such a row in 5 bytes (6 above 255 elements), so rows of 20 or fewer such
+    values are never rejected. Objects and untyped counted arrays are not subject to this limit.
+
+    An optimized array of type `N` (no-op) is empty whatever its count is, because a no-op is not a value. Its count is
+    not passed on: `sax_parse` reports `start_array(0)` (versions before 3.13.0 reported the declared count), and the DOM
+    parser reserves nothing for it.
 
 !!! info "Binary values"
 
@@ -180,10 +189,11 @@ The library maps UBJSON types to JSON value types as follows:
 
     Every well-formed UBJSON value can be converted to a JSON value, with these exceptions: a high-precision number
     outside the range of `number_float_t` ([`out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406)),
-    an optimized array of `Z`, `T`, or `F` with more than 1,048,576 elements, and a count that exceeds the capacity of the
-    container ([`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408)). High-precision numbers that
-    do not fit an integer type are stored as floating-point numbers and may lose precision. Ill-formed input is rejected
-    with a parse error.
+    optimized arrays of `Z`, `T`, or `F` with more elements than the limit allows (1,048,576 plus 4 per byte read),
+    and a count that exceeds the capacity of the container
+    ([`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408)). High-precision numbers that do not
+    fit an integer type are stored as floating-point numbers and may lose precision. Ill-formed input is rejected with a
+    parse error.
 
 !!! info "Duplicate object keys"
 
