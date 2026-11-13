@@ -113,11 +113,12 @@ How thoroughly `load()` validates `image` before trusting it.
 `full` (the default)
 :   Checks everything the parser itself guarantees: structure and bounds; that every string is valid UTF-8 (and, for a
     string still in the source text, that it contains no quote, backslash, or control character); and that every number
-    token is well-formed and matches the value stored for it. Strings and float tokens may share a range only if the
-    ranges are identical (as nodes that share a value do), and never overlap otherwise. Reading and serializing a
-    checked image is safe and always produces valid JSON, exactly as for a parsed document. This is the right choice for
-    an image from anything you do not fully control — a file, a cache shared with other processes, a peer on the
-    network.
+    token is well-formed and matches the value stored for it, and has the type the parser gives it (a float node only
+    for a token with a fraction or an exponent, or an integer that does not fit 64 bits). Strings and float tokens may
+    share a range only if the ranges are identical (as nodes that share a value do), and never overlap otherwise.
+    Reading and serializing a checked image is safe and always produces valid JSON, exactly as for a parsed document.
+    This is the right choice for an image from anything you do not fully control — a file, a cache shared with other
+    processes, a peer on the network.
 
 `bounds`
 :   Checks structure and bounds only: that every offset and count in the node index stays inside the image. So

@@ -1,0 +1,4 @@
+limit: 16
+copy equals original: true
+length of dump(): 10001
+same hash: true

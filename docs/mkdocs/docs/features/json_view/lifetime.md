@@ -50,6 +50,13 @@ The same holds for what a view hands out without copying: a string from
 [`number_token()`](../../api/basic_json_view/number_token.md), and [`string_view` members](reading.md#string_view-members)
 of decoded structs are valid only as long as the document and, if it borrows, its source text.
 
+This includes [`read()`](../../api/basic_json_document/read.md): it releases the document's text, decoded strings, and
+edits before it parses its input, so the input must not be a `string_view` obtained from the document itself: its
+[`source()`](../../api/basic_json_document/source.md), a string from `get_string()`, a token from `number_token()`, or a
+key from an iterator (those of a borrowed text that the caller owns, read unchanged, are not affected). To re-parse a
+string that the document holds, for example JSON embedded in a string value, copy the string into a `#!cpp std::string`
+first and pass the copy; see [`read()`](../../api/basic_json_document/read.md#notes) for the exact list.
+
 ??? example "Example: borrowed and owned documents, and when views become invalid"
 
     ```cpp

@@ -1169,6 +1169,14 @@ class binary_writer
         write_container_iterative<msgpack_walk>(root);
     }
 
+    // a function, not an inline condition: for an object the type is never
+    // valueless and MSVC would warn about a constant expression (C4127)
+    static constexpr bool valueless_array_fits(const bool valueless_type, const std::size_t size,
+            const std::size_t written) noexcept
+    {
+        return !valueless_type || size <= detail::valueless_elements_base - written;
+    }
+
     /*!
     @brief write the start of an array (@a IsArray) or object: its opening
            marker, the optimized type, and the count
@@ -1215,7 +1223,7 @@ class binary_writer
             if (same_prefix && !(use_bjdata && is_bjdata_excluded_type_marker(first_prefix)))
             {
                 const bool valueless_type = IsArray && (first_prefix == 'Z' || first_prefix == 'T' || first_prefix == 'F');
-                if (!valueless_type || size <= detail::valueless_elements_base - valueless_elements_written)
+                if (valueless_array_fits(valueless_type, size, valueless_elements_written))
                 {
                     prefix_required = false;
                     oa.write_character(to_char_type('$'));

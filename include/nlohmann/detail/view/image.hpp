@@ -416,6 +416,28 @@ inline bool float_token_finite(const unsigned char* s, std::size_t len, const nu
     return true;
 }
 
+/// whether an integer token (well-formed, no fraction or exponent) fits 64
+/// bits: the parser stores a number_integer or number_unsigned node for it,
+/// and a number_float node only for a token that does not fit
+inline bool integer_token_fits(const number_token& t)
+{
+    if (t.int_digits > 20)
+    {
+        return false;
+    }
+    if (t.int_digits == 20)
+    {
+        // (20 digits are compared with 2^64 - 1; a negative one is below -2^63)
+        // (only a leading 1 needs the comparison: the first digit of 20 is not 0)
+        return !t.negative && *t.int_start == '1' && std::memcmp(t.int_start, "18446744073709551615", 20) <= 0;
+    }
+    if (t.negative && t.int_digits == 19)
+    {
+        return *t.int_start != '9' || std::memcmp(t.int_start, "9223372036854775808", 19) <= 0;
+    }
+    return true;
+}
+
 /// whether an integer node matches its token the way the parser records it
 /// (after the bounds check; the token has at most 256 characters)
 inline bool check_integer(const node& n, const unsigned char* text)
@@ -535,7 +557,8 @@ inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned 
         if (!plain_float_token(s, r.len, r.extra))
         {
             number_token t{};
-            if (!scan_number_token(s, r.len, t) || !float_token_finite(s, r.len, t))
+            // (an integer token is a float node only if it does not fit 64 bits)
+            if (!scan_number_token(s, r.len, t) || (!t.is_float && integer_token_fits(t)) || !float_token_finite(s, r.len, t))
             {
                 return false;
             }
