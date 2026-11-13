@@ -1124,7 +1124,7 @@ TEST_CASE("update() on deeply nested values")
     SECTION("merging past the descent bound gives the same result")
     {
         // every depth on either side of where the iterative version takes
-        // over (detail::recursion_depth_limit(), 128)
+        // over (detail::recursion_depth_limit(), 128 by default)
         for (std::size_t depth = 0; depth <= 300; ++depth)
         {
             CAPTURE(depth)
@@ -1215,7 +1215,7 @@ TEST_CASE("update() with an argument that aliases *this (#5641)")
     SECTION("nested past the iterative descent bound aliases *this")
     {
         // every depth on either side of where the iterative version takes
-        // over (detail::recursion_depth_limit(), 128); merging *this into
+        // over (detail::recursion_depth_limit(), 128 by default); merging *this into
         // itself is idempotent, aliased or not
         for (const std::size_t depth :
                 {

@@ -56,9 +56,26 @@ int main()
     const nlohmann::json_document doc = nlohmann::json_document::parse(R"({"a": 1, "list": [1, 2, 3]})");
     const std::size_t doc_size = doc.root().size();
 
+    // editable documents and views, view_mode, is_json_view and the ordered variants
+    nlohmann::json_editable_document edoc = nlohmann::json_editable_document::parse(R"({"a": 1, "list": [1, 2, 3]})");
+    edoc.set(edoc.root(), "b", 2);
+    edoc.push_back(edoc.root()["list"], 4);
+    const nlohmann::json_editable_view eroot = edoc.root();
+    const std::size_t edit_size = eroot.size();
+    const std::size_t list_size = eroot["list"].size();
+    nlohmann::ordered_json_editable_document oedoc = nlohmann::ordered_json_editable_document::parse(R"({"z": 1, "y": 2})");
+    oedoc.erase(oedoc.root(), "z");
+    const nlohmann::ordered_json_editable_view oeroot = oedoc.root();
+    nlohmann::basic_json_document<nlohmann::json, nlohmann::view_mode::editable> mdoc = nlohmann::basic_json_document<nlohmann::json, nlohmann::view_mode::editable>::parse("[]");
+    mdoc.push_back(mdoc.root(), 1);
+    static_assert(nlohmann::is_json_view<nlohmann::json_view>::value, "json_view is a view");
+    static_assert(nlohmann::is_json_view<nlohmann::json_editable_view>::value, "json_editable_view is a view");
+    static_assert(!nlohmann::is_json_view<nlohmann::json>::value, "json is not a view");
+
     // use every result so the references cannot be optimized away
     return (a == 1 && last == 3 && b == 2 && lit.size() == 3
             && m.size() == 1 && !dumped.empty() && !os.str().empty()
-            && doc_size == 2)
+            && doc_size == 2
+            && edit_size == 3 && list_size == 4 && oeroot.size() == 1 && mdoc.root().size() == 1)
            ? 0 : 1;
 }

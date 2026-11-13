@@ -625,16 +625,20 @@ inline void to_json(BasicJsonType& j, const T& t)
     to_json_tuple_impl(j, t, make_index_sequence<std::tuple_size<T>::value> {});
 }
 
-#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
+// a std::u8string is a JSON string (it was an array of code units before 3.13.0);
+// defined outside the std::filesystem guard so that the result does not depend
+// on whether std::filesystem::path is supported
 #if defined(__cpp_lib_char8_t)
 template<typename BasicJsonType, typename Tr, typename Allocator>
 inline void to_json(BasicJsonType& j, const std::basic_string<char8_t, Tr, Allocator>& s)
 {
-    using OtherAllocator = typename std::allocator_traits<Allocator>::template rebind_alloc<char>;
-    j = std::basic_string<char, std::char_traits<char>, OtherAllocator>(s.begin(), s.end(), s.get_allocator());
+    using string_t = typename BasicJsonType::string_t;
+    // char may alias any object; the code units are copied unchanged
+    j = string_t(reinterpret_cast<const char*>(s.data()), s.size());
 }
 #endif
 
+#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
 // Workaround for MSVC 19.51 (and possibly later): in large cpp files, the compiler may fail to resolve with generic has_to_json (issue #4996)
 template<typename BasicJsonType>
 struct has_to_json<BasicJsonType, std_fs::path, void> : std::true_type {};

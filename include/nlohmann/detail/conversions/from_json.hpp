@@ -785,6 +785,37 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
     from_json_pair_array_to_map(j, m);
 }
 
+#if defined(__cpp_lib_char8_t)
+// a std::u8string is read from a JSON string; the array of code units written by
+// versions before 3.13.0 is still accepted
+template<typename BasicJsonType, typename Tr, typename Allocator,
+         enable_if_t<std::is_same<typename json_type_of_t<BasicJsonType>::string_t::value_type, char>::value, int> = 0>
+inline void from_json(const BasicJsonType& j, std::basic_string<char8_t, Tr, Allocator>& s)
+{
+    if (j.is_string())
+    {
+        const auto& str = string_value(j);
+        const char* const data = str.data();
+        const std::size_t size = str.size();
+        std::basic_string<char8_t, Tr, Allocator> ret(s.get_allocator());
+        ret.resize(size);
+        for (std::size_t i = 0; i < size; ++i)
+        {
+            ret[i] = static_cast<char8_t>(static_cast<unsigned char>(data[i]));
+        }
+        s = std::move(ret);
+    }
+    else if (j.is_array())
+    {
+        from_json_array_impl(j, s, priority_tag<3> {});
+    }
+    else
+    {
+        throw_type_must_be("string or array", j);
+    }
+}
+#endif
+
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
 
 // Workaround for MSVC 19.51 (and possibly later): in large cpp files, the compiler may fail to resolve with generic has_from_json (issue #4996)

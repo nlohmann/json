@@ -515,9 +515,11 @@ TEST_CASE("Regression tests for extended diagnostics")
 
         // update(j, true) around its descent bound, where the nested vectors
         // grow while the objects are merged without recursing
+        const std::size_t limit = nlohmann::detail::recursion_depth_limit();
+        // (the limit can be 0, where "one level less" is no level)
         for (const std::size_t depth :
                 {
-                    nlohmann::detail::recursion_depth_limit() - 1, nlohmann::detail::recursion_depth_limit(), nlohmann::detail::recursion_depth_limit() + 2
+                    limit > 0 ? limit - 1 : 0, limit, limit + 2
                 })
         {
             ordered_json j = {{"z", {{"x", 1}}}};

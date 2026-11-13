@@ -27,6 +27,16 @@ reference operator+=(initializer_list_t init);
     `init` is converted into an object element and added using `operator+=(const typename object_t::value_type&)`.
     Otherwise, `init` is converted to a JSON value and added using `operator+=(basic_json&&)`.
 
+    !!! note "Single braced JSON value"
+
+        For a call such as `#!cpp arr += {obj}`, where the initializer list contains a single JSON value `obj`,
+        compilers may disagree unless
+        [`JSON_BRACE_INIT_COPY_SEMANTICS`](../macros/json_brace_init_copy_semantics.md) is defined to `1`: GCC, for
+        example, selects this overload and appends a single-element array `[obj]`, whereas Clang selects the
+        `basic_json` overload and appends a copy of `obj`. With the macro, GCC and Clang both append a copy of `obj`.
+        To get a portable result without the macro, write `#!cpp arr += obj` to append a copy, or
+        `#!cpp arr += json::array({obj})` to append a single-element array.
+
 ## Iterator invalidation
 
 For all cases where an element is added to an **array**, a reallocation can happen, in which case all iterators (including

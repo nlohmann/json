@@ -14,9 +14,12 @@ using nlohmann::json;
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
+#include <algorithm>
 #include <cstddef>
+#include <ctime>
 #include <fstream>
 #include <limits>
+#include <random>
 #include <string>
 #include <utility>
 #include <vector>
@@ -1975,14 +1978,15 @@ TEST_CASE("JSON patch: diff of deeply nested values")
     SECTION("the diff reproduces the target at every depth")
     {
         // depths on either side of the nesting depth up to which diff()
-        // recurses (detail::recursion_depth_limit(), 128); not every depth up
+        // recurses (detail::recursion_depth_limit(), 128 by default); not every depth up
         // to 300, as the test would then time out under Valgrind
         std::vector<std::size_t> depths;
         for (std::size_t depth = 0; depth <= 16; ++depth)
         {
             depths.push_back(depth);
         }
-        for (std::size_t depth = 120; depth <= 136; ++depth)
+        const std::size_t limit = nlohmann::detail::recursion_depth_limit();
+        for (std::size_t depth = limit > 8 ? limit - 8 : 0; depth <= limit + 8; ++depth)
         {
             depths.push_back(depth);
         }
@@ -2524,7 +2528,7 @@ TEST_CASE("JSON patch - diff of leaf values below the bound of the recursive des
     // the values at the innermost level are diffed without recursion: equal
     // leaves yield nothing, leaves of different types and different leaves
     // are replaced
-    const std::size_t depth = 200;
+    const std::size_t depth = nlohmann::detail::recursion_depth_limit() + 72; // 200 by default
 
     json source = {1, "text", 3, {{"x", 1}, {"y", 2}}, true, nullptr};
     json target = {1, 2, 4, {{"x", 1}, {"y", 3}}, true, nullptr};
@@ -2550,4 +2554,423 @@ TEST_CASE("JSON patch - diff of leaf values below the bound of the recursive des
     const json object_patch = json::diff(object_source, object_target);
     CHECK(object_patch.size() == 2);
     CHECK(object_source.patch(object_patch) == object_target);
+}
+
+namespace
+{
+// all pointers to values below `value` (not to `value` itself)
+void collect_pointers(const json& value, const std::string& path, std::vector<std::string>& pointers)
+{
+    if (value.is_object())
+    {
+        for (const auto& element : value.items())
+        {
+            std::string child = path;
+            child += '/';
+            for (const char c : element.key())
+            {
+                if (c == '~')
+                {
+                    child += "~0";
+                }
+                else if (c == '/')
+                {
+                    child += "~1";
+                }
+                else
+                {
+                    child += c;
+                }
+            }
+            pointers.push_back(child);
+            collect_pointers(element.value(), child, pointers);
+        }
+    }
+    else if (value.is_array())
+    {
+        for (std::size_t i = 0; i < value.size(); ++i)
+        {
+            std::string child = path;
+            child += '/';
+            child += std::to_string(i);
+            pointers.push_back(child);
+            collect_pointers(value[i], child, pointers);
+        }
+    }
+}
+
+// a random document of at most `depth` levels, with the names as keys
+json random_document(std::mt19937& gen, const std::vector<std::string>& names, const int depth)
+{
+    const int kind = std::uniform_int_distribution<int>(0, 9)(gen);
+    if (depth == 0 || kind < 2)
+    {
+        return std::uniform_int_distribution<int>(0, 3)(gen);
+    }
+    const int size = std::uniform_int_distribution<int>(1, 3)(gen);
+    json result = kind < 6 ? json::array() : json::object();
+    for (int i = 0; i < size; ++i)
+    {
+        if (kind < 6)
+        {
+            result.push_back(random_document(gen, names, depth - 1));
+        }
+        else
+        {
+            result[names[std::uniform_int_distribution<std::size_t>(0, names.size() - 1)(gen)]] = random_document(gen, names, depth - 1);
+        }
+    }
+    return result;
+}
+
+// the strings, one after the other
+std::string concat(std::string first, const std::string& second, const std::string& third = std::string())
+{
+    first += second;
+    first += third;
+    return first;
+}
+
+// the best of five times in seconds that std::clock() measures to apply the patch
+double patch_cpu_time(json& doc, const json& patch)
+{
+    double best = 1e30;
+    for (int i = 0; i < 5; ++i)
+    {
+        const std::clock_t start = std::clock();
+        doc.patch_inplace(patch);
+        best = (std::min)(best, static_cast<double>(std::clock() - start) / static_cast<double>(CLOCKS_PER_SEC));
+    }
+    return best;
+}
+} // namespace
+
+TEST_CASE("JSON patch - consecutive operations with paths that share a prefix")
+{
+    SECTION("tokens that start the same way")
+    {
+        const json doc = {{"a", {{"bc", {{"x", 1}}}, {"b", {{"x", 2}}}, {"b2", 3}}}};
+
+        // the second path shares "/a/b" with the first, but not the token "bc"
+        const json patch = json::parse(R"([
+            {"op": "test", "path": "/a/bc/x", "value": 1},
+            {"op": "test", "path": "/a/b/x", "value": 2},
+            {"op": "test", "path": "/a/bc/x", "value": 1},
+            {"op": "test", "path": "/a/b2", "value": 3},
+            {"op": "test", "path": "/a/b/x", "value": 2}
+        ])");
+        CHECK(doc.patch(patch) == doc);
+
+        json inplace = doc;
+        inplace.patch_inplace(patch);
+        CHECK(inplace == doc);
+
+        // a path that is a prefix of the previous one, and the other way round
+        const json prefixes = json::parse(R"([
+            {"op": "test", "path": "/a/bc/x", "value": 1},
+            {"op": "test", "path": "/a/bc", "value": {"x": 1}},
+            {"op": "test", "path": "/a/bc/x", "value": 1},
+            {"op": "test", "path": "/a", "value": {"bc": {"x": 1}, "b": {"x": 2}, "b2": 3}},
+            {"op": "test", "path": "/a/b/x", "value": 2},
+            {"op": "test", "path": "", "value": {"a": {"bc": {"x": 1}, "b": {"x": 2}, "b2": 3}}}
+        ])");
+        CHECK(doc.patch(prefixes) == doc);
+    }
+
+    SECTION("operations above a path that was resolved before")
+    {
+        const json doc = json::parse(R"({"a": [{"b": [1, 2, 3]}, {"b": [4, 5, 6]}], "c": {"d": {"e": 7}}})");
+
+        // an element inserted before the elements of an array moves them
+        const json inserted = json::parse(R"([
+            {"op": "test", "path": "/a/0/b/2", "value": 3},
+            {"op": "add", "path": "/a/0", "value": {"b": [9]}},
+            {"op": "test", "path": "/a/1/b/2", "value": 3},
+            {"op": "test", "path": "/a/0/b/0", "value": 9},
+            {"op": "test", "path": "/a/2/b/0", "value": 4}
+        ])");
+        CHECK(doc.patch(inserted) == json::parse(R"({"a": [{"b": [9]}, {"b": [1, 2, 3]}, {"b": [4, 5, 6]}], "c": {"d": {"e": 7}}})"));
+
+        // an element removed from the front
+        const json removed_front = json::parse(R"([
+            {"op": "test", "path": "/a/1/b/2", "value": 6},
+            {"op": "remove", "path": "/a/0"},
+            {"op": "test", "path": "/a/0/b/2", "value": 6},
+            {"op": "replace", "path": "/a/0/b/2", "value": 60},
+            {"op": "test", "path": "/a/0/b/2", "value": 60}
+        ])");
+        CHECK(doc.patch(removed_front) == json::parse(R"({"a": [{"b": [4, 5, 60]}], "c": {"d": {"e": 7}}})"));
+
+        // a value replaced above the path that was resolved before
+        const json replaced_above = json::parse(R"([
+            {"op": "test", "path": "/c/d/e", "value": 7},
+            {"op": "replace", "path": "/c/d", "value": {"e": 8, "f": {"g": 9}}},
+            {"op": "test", "path": "/c/d/e", "value": 8},
+            {"op": "test", "path": "/c/d/f/g", "value": 9},
+            {"op": "remove", "path": "/c/d/f"},
+            {"op": "add", "path": "/c/d/f", "value": [1]},
+            {"op": "test", "path": "/c/d/f/0", "value": 1}
+        ])");
+        CHECK(doc.patch(replaced_above) == json::parse(R"({"a": [{"b": [1, 2, 3]}, {"b": [4, 5, 6]}], "c": {"d": {"e": 8, "f": [1]}}})"));
+
+#if !defined(JSON_NOEXCEPTION)
+        // a value removed above the path that was resolved before is gone
+        const json removed = json::parse(R"([
+            {"op": "test", "path": "/c/d/e", "value": 7},
+            {"op": "remove", "path": "/c/d"},
+            {"op": "test", "path": "/c/d/e", "value": 7}
+        ])");
+        CHECK_THROWS_AS(doc.patch(removed), json::other_error&);
+        json inplace = doc;
+        CHECK_THROWS_AS(inplace.patch_inplace(removed), json::other_error&);
+
+        const json emptied = json::parse(R"([
+            {"op": "test", "path": "/a/1/b/2", "value": 6},
+            {"op": "remove", "path": "/a/1"},
+            {"op": "test", "path": "/a/1/b/2", "value": 6}
+        ])");
+        CHECK_THROWS_AS(doc.patch(emptied), json::other_error&);
+#endif
+    }
+
+    SECTION("paths with more than 16 tokens")
+    {
+        // 40 levels, with an array at the bottom and a second branch at level 20
+        std::string prefix20;
+        std::string prefix40;
+        json doc = {{"leaf", {1, 2, 3}}};
+        for (int i = 40; i > 0; --i)
+        {
+            if (i == 20)
+            {
+                doc["other"] = {{"x", 5}};
+            }
+            doc = {{"n", doc}};
+        }
+        for (int i = 1; i <= 40; ++i)
+        {
+            prefix40 += "/n";
+            if (i == 20)
+            {
+                prefix20 = prefix40;
+            }
+        }
+
+        const auto op = [](const char* name, const std::string & path, const json & value)
+        {
+            return json({{"op", name}, {"path", path}, {"value", value}});
+        };
+        const json patch =
+        {
+            op("test", concat(prefix40, "/leaf/2"), 3),
+            op("test", concat(prefix20, "/other/x"), 5),
+            op("test", concat(prefix40, "/leaf/0"), 1),
+            op("add", concat(prefix40, "/leaf/0"), 0),
+            op("test", concat(prefix40, "/leaf/3"), 3),
+            op("replace", concat(prefix20, "/other"), {{"x", 6}}),
+            op("test", concat(prefix20, "/other/x"), 6),
+            op("test", concat(prefix40, "/leaf/1"), 1),
+            {{"op", "remove"}, {"path", concat(prefix20, "/other")}},
+            op("test", concat(prefix40, "/leaf/1"), 1)
+        };
+        json expected = doc;
+        for (const auto& operation : patch)
+        {
+            expected = expected.patch(json::array({operation}));
+        }
+        CHECK(doc.patch(patch) == expected);
+        json inplace = doc;
+        inplace.patch_inplace(patch);
+        CHECK(inplace == expected);
+        CHECK(expected[json::json_pointer(concat(prefix40, "/leaf"))] == json({0, 1, 2, 3}));
+        CHECK(!expected[json::json_pointer(prefix20)].contains("other"));
+
+#if !defined(JSON_NOEXCEPTION)
+        // the value that was resolved before is gone with the member that held it
+        const json gone =
+        {
+            op("test", concat(prefix40, "/leaf/2"), 3),
+            {{"op", "remove"}, {"path", prefix20}},
+            op("test", concat(prefix40, "/leaf/2"), 3)
+        };
+        CHECK_THROWS_AS(doc.patch(gone), json::other_error&);
+#endif
+    }
+
+    SECTION("random sequences of operations give the same result as one operation at a time")
+    {
+        std::mt19937 gen(20261110); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
+        const std::vector<std::string> names = {"a", "b", "ab", "abc", "a/b", "a~b", "1", "10", "token_longer_than_eight_bytes"};
+        const auto pick = [&gen](const std::size_t n)
+        {
+            return std::uniform_int_distribution<std::size_t>(0, n - 1)(gen);
+        };
+
+        for (int round = 0; round < 300; ++round)
+        {
+            const json start = random_document(gen, names, 7);
+            json current = start;
+            json patch = json::array();
+            std::string previous;
+
+            for (int step = 0; step < 25; ++step)
+            {
+                std::vector<std::string> pointers;
+                collect_pointers(current, "", pointers);
+                if (pointers.empty())
+                {
+                    break;
+                }
+
+                // most of the time, stay below a part of the previous path
+                std::vector<std::string> candidates;
+                if (!previous.empty() && pick(10) < 8)
+                {
+                    std::string prefix = previous;
+                    const std::size_t cut = prefix.find('/', 1 + pick(prefix.size()));
+                    prefix = prefix.substr(0, cut == std::string::npos ? prefix.size() : cut);
+                    for (const auto& p : pointers)
+                    {
+                        if (p.compare(0, prefix.size(), prefix) == 0)
+                        {
+                            candidates.push_back(p);
+                        }
+                    }
+                }
+                if (candidates.empty())
+                {
+                    candidates = pointers;
+                }
+                const std::string path = candidates[pick(candidates.size())];
+                const json::json_pointer pointer(path);
+
+                json operation;
+                switch (pick(5))
+                {
+                    case 0:
+                        operation = {{"op", "test"}, {"path", path}, {"value", current[pointer]}};
+                        break;
+                    case 1:
+                        operation = {{"op", "replace"}, {"path", path}, {"value", static_cast<int>(pick(100))}};
+                        break;
+                    case 2:
+                        operation = {{"op", "remove"}, {"path", path}};
+                        break;
+                    default:
+                    {
+                        // add below an array or object, which may be the root
+                        const json::json_pointer parent_pointer = pick(4) == 0 ? json::json_pointer() : pointer;
+                        const std::string parent_path = parent_pointer.to_string();
+                        const json& parent = current[parent_pointer];
+                        std::string token = "-";
+                        if (parent.is_array())
+                        {
+                            token = pick(3) == 0 ? "-" : std::to_string(pick(parent.size() + 1));
+                        }
+                        else if (parent.is_object())
+                        {
+                            token = pick(2) == 0 ? "new" : "ab";
+                        }
+                        else
+                        {
+                            // a primitive parent: replace it instead
+                            operation = {{"op", "replace"}, {"path", parent_path}, {"value", json::array({1, 2})}};
+                            break;
+                        }
+                        operation = {{"op", "add"}, {"path", concat(parent_path, "/", token)}, {"value", json::object({{"k", {1, 2}}})}};
+                        break;
+                    }
+                }
+                if (operation["path"].get<std::string>().empty())
+                {
+                    continue;
+                }
+
+                // one operation at a time: the cache is empty at the start of each
+                current = current.patch(json::array({operation}));
+                patch.push_back(operation);
+                previous = operation["path"].get<std::string>();
+            }
+
+            CHECK(start.patch(patch) == current);
+            json inplace = start;
+            inplace.patch_inplace(patch);
+            CHECK(inplace == current);
+
+            // the same for a type that keeps the order of the members, which makes
+            // objects that were built in a different order unequal: leave out the
+            // tests of structured values
+            json without_tests = json::array();
+            for (const auto& operation : patch)
+            {
+                if (operation["op"] != "test" || !operation["value"].is_structured())
+                {
+                    without_tests.push_back(operation);
+                }
+            }
+            const nlohmann::ordered_json ordered_patch = without_tests;
+            nlohmann::ordered_json ordered_inplace = start;
+            ordered_inplace.patch_inplace(ordered_patch);
+            CHECK(json(ordered_inplace) == current);
+        }
+    }
+}
+
+TEST_CASE("JSON patch - time is linear for long paths that share a prefix")
+{
+    // The time of the patch is compared with the time of a patch that is
+    // linear for sure, because a bound in seconds would depend on the machine:
+    // both test the same two values at the end of paths with 2n tokens. The
+    // second path of the first patch shares n tokens with the first one and
+    // continues for n tokens: the ratio is 1 to 2, and about 60 when every
+    // step is compared with the start of the path. The time that std::clock()
+    // measures is mostly the time of the processor, which a busy machine does
+    // not inflate (on MSVC, it is the time that has passed).
+    constexpr std::size_t n = 25000;
+
+    const auto nest = [](const std::size_t depth, const std::string & inner)
+    {
+        std::string text;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            text += "{\"a\":";
+        }
+        text += inner;
+        text.append(depth, '}');
+        return text;
+    };
+    std::string as;
+    for (std::size_t i = 0; i < n; ++i)
+    {
+        as += "/a";
+    }
+    const std::string deep = nest(n, "1");
+    std::string members = "{\"x\":";
+    members += deep;
+    members += ",\"y\":";
+    members += deep;
+    members += "}";
+    json doc = json::parse(nest(n, members));
+
+    const auto test_op = [](const std::string & path)
+    {
+        return json({{"op", "test"}, {"path", path}, {"value", 1}});
+    };
+    const json shared = json::array({test_op(concat(as, "/x", as)), test_op(concat(as, "/y", as))});
+    const json same = json::array({test_op(concat(as, "/x", as)), test_op(concat(as, "/x", as))});
+
+    // the operations do not change the document, which is too deep to copy;
+    // a busy machine may spoil one comparison, hardly two
+    bool linear = false;
+    double t_shared = 0;
+    double t_same = 0;
+    for (int attempt = 0; attempt < 2 && !linear; ++attempt)
+    {
+        t_shared = patch_cpu_time(doc, shared);
+        t_same = (std::max)(patch_cpu_time(doc, same), 1e-3);
+        linear = t_shared < 10 * t_same;
+    }
+    CAPTURE(t_shared)
+    CAPTURE(t_same)
+    CHECK(linear);
 }
