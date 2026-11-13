@@ -608,14 +608,26 @@ TEST_CASE("BON8")
             CHECK_THROWS_WITH_AS(_ = json::from_bon8(vec), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BON8 value: expected end of input; last byte: 0x90", json::parse_error&);
             CHECK(json::from_bon8(vec, true, false).is_discarded());
 
-            // the byte after a string that ends a container
+            // the byte after a string that ends a container: without strict, the
+            // missing 0xFF is reported, as the byte has been taken from the input
             const bytes vec2 = {0x81, 'a', 0x90};
-            CHECK(json::from_bon8(vec2, false) == json({"a"}));
+            CHECK_THROWS_WITH_AS(_ = json::from_bon8(vec2, false), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BON8 value: string at the end of the value is not terminated by 0xFF; last byte: 0x90", json::parse_error&);
+            CHECK(json::from_bon8(vec2, false, false).is_discarded());
             CHECK_THROWS_WITH_AS(_ = json::from_bon8(vec2), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BON8 value: expected end of input; last byte: 0x90", json::parse_error&);
 
             const bytes vec3 = {0x81, 'a', 0xC2, 0x00};
-            CHECK(json::from_bon8(vec3, false) == json({"a"}));
+            CHECK_THROWS_WITH_AS(_ = json::from_bon8(vec3, false), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BON8 value: string at the end of the value is not terminated by 0xFF; last byte: 0xC2", json::parse_error&);
             CHECK_THROWS_WITH_AS(_ = json::from_bon8(vec3), "[json.exception.parse_error.110] parse error at byte 3: syntax error while parsing BON8 value: expected end of input; last byte: 0xC2", json::parse_error&);
+
+            // with a terminated string, strict = false leaves the next value in the stream
+            std::istringstream terminated(std::string("\x61\xFF\x90", 3));
+            CHECK(json::from_bon8(terminated, false) == "a");
+            CHECK(terminated.tellg() == 2);
+            CHECK(json::from_bon8(terminated, false) == 0);
+
+            // without the terminator, the next value would be lost
+            std::istringstream unterminated(std::string("\x61\x90", 2));
+            CHECK_THROWS_WITH_AS(_ = json::from_bon8(unterminated, false), "[json.exception.parse_error.110] parse error at byte 2: syntax error while parsing BON8 value: string at the end of the value is not terminated by 0xFF; last byte: 0x90", json::parse_error&);
         }
     }
 

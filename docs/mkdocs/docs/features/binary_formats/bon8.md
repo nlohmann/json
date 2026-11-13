@@ -181,7 +181,10 @@ of the message are reported as [parse_error.110](../../home/exceptions.md#jsonex
     arrays and objects with up to four elements that are terminated by 0xFE, unsorted object keys, or a 0xFF after a
     string that would also end without it, are accepted. A second 0xFF is not a terminator but an empty string.
 
-    Strings must be valid UTF-8, and a string at the very end of a message must be terminated by 0xFF.
+    Strings must be valid UTF-8, and a string at the very end of a message must be terminated by 0xFF. This also
+    holds when `strict` is false and more data follows the value: the byte that would end the string belongs to the
+    next value, and reading it would remove it from the input, so the missing 0xFF is reported as
+    [parse_error.110](../../home/exceptions.md#jsonexceptionparse_error110).
 
     Duplicate object keys are accepted; the last value wins (`ordered_json` keeps the position of the first occurrence).
     The specification does not say how to treat them; the HikoGUI reference decoder keeps the first value.
