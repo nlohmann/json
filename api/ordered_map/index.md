@@ -84,16 +84,16 @@ This differs from `std::map`, where the same operations are O(log n).
 
 Quadratic cost of building large objects
 
-Because every insertion scans all elements inserted so far, building an object of `n` distinct keys costs **O(n²)** in total. This applies to filling an [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md) object key by key as well as to parsing one, since the parser inserts each key as it is read.
+Because every insertion scans all elements inserted so far, building an object of `n` distinct keys costs **O(n²)** in total. This applies to filling an [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md) object key by key (with `operator[]`, `emplace`, or `insert`) and, for now, to reading one with a binary reader such as [`from_cbor`](https://json.nlohmann.me/api/basic_json/from_cbor/index.md) ([#6104](https://github.com/nlohmann/json/issues/6104)). Parsing JSON text is not affected: the parser finds the keys of an object with many members in a hash table and takes linear time.
 
-The cost is negligible for the object sizes typically found in configuration files or API payloads, but it grows steeply for machine-generated objects with many thousands of keys. Measured with `-O2 -DNDEBUG` for parsing a flat object of `n` keys, relative to `nlohmann::json` (which uses `std::map`):
+The cost is negligible for the object sizes typically found in configuration files or API payloads, but it grows steeply for machine-generated objects with many thousands of keys. Measured with Apple clang 21, `-O2 -DNDEBUG`, arm64, for a flat object of `n` keys (best of seven runs):
 
-| `n`    | `json` | `ordered_json` | factor |
-| ------ | ------ | -------------- | ------ |
-| 2000   | 0.7 ms | 3.6 ms         | 5×     |
-| 4000   | 0.8 ms | 14.0 ms        | 19×    |
-| 8000   | 1.6 ms | 67.8 ms        | 43×    |
-| 16 000 | 3.3 ms | 181.6 ms       | 54×    |
+| `n`    | `json::parse` | `ordered_json::parse` | `ordered_json`, key by key | `ordered_json::from_cbor` |
+| ------ | ------------- | --------------------- | -------------------------- | ------------------------- |
+| 2000   | 0.3 ms        | 0.1 ms                | 4.5 ms                     | 4.4 ms                    |
+| 4000   | 0.5 ms        | 0.2 ms                | 17.1 ms                    | 16.8 ms                   |
+| 8000   | 0.9 ms        | 0.3 ms                | 67.0 ms                    | 66.8 ms                   |
+| 16 000 | 2.0 ms        | 0.7 ms                | 282.4 ms                   | 282.4 ms                  |
 
 If key order matters for objects of that size, consider a container with a lookup index, such as [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)), as the object type — see [object order](https://json.nlohmann.me/features/object_order/index.md).
 

@@ -8,7 +8,7 @@ This macro sets how many nesting levels the operations that walk a value recurse
 
 The operations are copying a value, comparing two values, serializing with [`dump`](https://json.nlohmann.me/api/basic_json/dump/index.md) or [`operator<<`](https://json.nlohmann.me/api/operator_ltlt/index.md), hashing with `std::hash`, [`merge_patch`](https://json.nlohmann.me/api/basic_json/merge_patch/index.md), [`update`](https://json.nlohmann.me/api/basic_json/update/index.md) with `merge_objects`, [`diff`](https://json.nlohmann.me/api/basic_json/diff/index.md), [`merge_diff`](https://json.nlohmann.me/api/basic_json/merge_diff/index.md), converting a value to another specialization of `basic_json`, destroying a value, and the binary writers [`to_cbor`](https://json.nlohmann.me/api/basic_json/to_cbor/index.md), [`to_msgpack`](https://json.nlohmann.me/api/basic_json/to_msgpack/index.md), [`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md), [`to_bjdata`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md), and [`to_bon8`](https://json.nlohmann.me/api/basic_json/to_bon8/index.md). They share this one limit; none has a limit of its own. Recursing is the fastest way to walk a value, but a value nested deeply enough would exhaust the call stack, so the library recurses only as far as the limit and finishes the levels below with an explicit stack. This is what makes all of them safe for untrusted input (see [Nesting depth](https://json.nlohmann.me/features/parsing/untrusted_input/#nesting-depth)). Parsing, the binary readers, [`flatten`](https://json.nlohmann.me/api/basic_json/flatten/index.md), [`unflatten`](https://json.nlohmann.me/api/basic_json/unflatten/index.md), and [`to_bson`](https://json.nlohmann.me/api/basic_json/to_bson/index.md) always use an explicit stack and do not depend on the macro. The lockstep comparison of two [`json_view`](https://json.nlohmann.me/api/basic_json_view/index.md) documents has a fixed bound of its own, 48 levels, and does not depend on it either.
 
-The call stack that these operations need grows with the limit: roughly *a few kilobytes plus a cost per level times the limit*, where the cost per level is up to about 2.3 KiB in an unoptimized and up to about 0.5 KiB in an optimized build (see [Stack needed](#stack-needed)). The default of `128` levels is tuned for threads with ordinary stacks of a few hundred kilobytes or more. Set a lower limit if your threads have small stacks (RTOS tasks, fibers, threads of the musl C library, which has a default stack of 128 KiB), or a higher limit to trade stack for speed on deeply nested values.
+The call stack that these operations need grows with the limit: roughly *a few kilobytes plus a cost per level times the limit*, where the cost per level is up to about 1.8 KiB in an unoptimized and up to about 0.5 KiB in an optimized build (see [Stack needed](#stack-needed)). The default of `128` levels is tuned for threads with ordinary stacks of a few hundred kilobytes or more. Set a lower limit if your threads have small stacks (RTOS tasks, fibers, threads of the musl C library, which has a default stack of 128 KiB), or a higher limit to trade stack for speed on deeply nested values.
 
 The macro changes only how much stack is used and how fast the operations are. It never changes a result: every operation returns the same value for every setting of the limit, for values nested less deeply than the limit as well as for values nested more deeply.
 
@@ -29,7 +29,7 @@ Allowed values
 The value must be an integer constant expression from `0` to `254`; any other value (a negative number, a number above `254`, a floating-point number such as `254.0`, or `true` or `false`) is rejected at compile time with an error message that names the macro. A character of any character type (`'a'`, `L'a'`, `u8'a'`, ...) is rejected, too, although it is an integer.
 
 - `0` is allowed, and means that every operation uses its explicit stack from the first level on and no operation recurses over the nesting of a value at all. That needs a constant amount of call stack (at most 16 KiB in the measurements below, for a value nested 20,000 levels deep) and is the setting for tiny stacks, at the price of speed (see [Speed](#speed)).
-- `254` is the largest allowed value. Copying a value and comparing two values (with `<=>`, or with the operators on objects and arrays of a custom type) cannot pass the depth down as an argument, because the signatures of the copy constructor and the operators are fixed. They count the levels they have descended into in a variable of type `std::uint8_t` that exists once per thread (see [`JSON_NO_THREAD_LOCAL`](https://json.nlohmann.me/api/macros/json_no_thread_local/index.md)). Only the levels that are descended into are counted, so the count never exceeds the limit, not even when user code (a copy constructor of a custom base class, say) copies a value while a copy is going on. A byte holds `255` at most, and the limit stays below that, so that the count cannot wrap around. (More levels would hardly be useful: `254` levels need up to 576 KiB of stack in an unoptimized build already, twice as much as the default.)
+- `254` is the largest allowed value. Copying a value and comparing two values (with `<=>`, or with the operators on objects and arrays of a custom type) cannot pass the depth down as an argument, because the signatures of the copy constructor and the operators are fixed. They count the levels they have descended into in a variable of type `std::uint8_t` that exists once per thread (see [`JSON_NO_THREAD_LOCAL`](https://json.nlohmann.me/api/macros/json_no_thread_local/index.md)). Only the levels that are descended into are counted, so the count never exceeds the limit, not even when user code (a copy constructor of a custom base class, say) copies a value while a copy is going on. A byte holds `255` at most, and the limit stays below that, so that the count cannot wrap around. (More levels would hardly be useful: `254` levels need up to 448 KiB of stack in an unoptimized build already, twice as much as the default.)
 
 ### Stack needed
 
@@ -37,21 +37,21 @@ The tables show the smallest stack that an operation needs, in KiB, at several l
 
 Unoptimized (`-O0`):
 
-| Operation                                 | limit 16 | limit 32 | limit 64  | limit 128 | limit 254 |
-| ----------------------------------------- | -------- | -------- | --------- | --------- | --------- |
-| `dump()` and `dump(indent)`, `operator<<` | 48 / 32  | 80 / 64  | 144 / 128 | 288 / 256 | 576 / 512 |
-| copy construction and assignment          | 32 / 16  | 48 / 32  | 112 / 80  | 224 / 144 | 432 / 304 |
-| `==`                                      | 16 / 16  | 16 / 16  | 16 / 16   | 48 / 32   | 96 / 48   |
-| `<=>` (C++20)                             | 16 / 16  | 16 / 16  | 32 / 32   | 64 / 64   | 144 / 128 |
-| `std::hash`                               | 16 / 16  | 16 / 16  | 32 / 32   | 80 / 64   | 160 / 128 |
-| `merge_patch`, `update(j, true)`, `patch` | 32 / 16  | 48 / 32  | 112 / 80  | 224 / 144 | 432 / 304 |
-| `diff`                                    | 16 / 16  | 16 / 16  | 32 / 32   | 64 / 48   | 144 / 96  |
-| `merge_diff`                              | 16 / 16  | 48 / 32  | 80 / 48   | 176 / 112 | 352 / 224 |
-| `to_cbor`, `to_msgpack`                   | 16 / 16  | 32 / 16  | 64 / 32   | 112 / 80  | 224 / 160 |
-| `to_ubjson`, `to_bjdata`                  | 16 / 16  | 16 / 16  | 48 / 32   | 96 / 64   | 176 / 112 |
-| `to_bon8`                                 | 16 / 16  | 16 / 16  | 16 / 16   | 32 / 16   | 64 / 48   |
-| conversion to another `basic_json` type   | 32 / 16  | 64 / 32  | 112 / 80  | 224 / 144 | 448 / 304 |
-| destruction                               | 16 / 16  | 16 / 16  | 16 / 16   | 16 / 16   | 32 / 32   |
+| Operation                                 | limit 16 | limit 32 | limit 64 | limit 128 | limit 254 |
+| ----------------------------------------- | -------- | -------- | -------- | --------- | --------- |
+| `dump()` and `dump(indent)`, `operator<<` | 16 / 16  | 16 / 16  | 32 / 32  | 48 / 48   | 96 / 96   |
+| copy construction and assignment          | 32 / 16  | 48 / 32  | 112 / 80 | 224 / 144 | 432 / 304 |
+| `==`                                      | 16 / 16  | 16 / 16  | 16 / 16  | 48 / 32   | 96 / 48   |
+| `<=>` (C++20)                             | 16 / 16  | 16 / 16  | 32 / 32  | 64 / 64   | 144 / 128 |
+| `std::hash`                               | 16 / 16  | 16 / 16  | 32 / 32  | 80 / 64   | 160 / 128 |
+| `merge_patch`, `update(j, true)`, `patch` | 32 / 16  | 48 / 32  | 112 / 80 | 224 / 144 | 432 / 304 |
+| `diff`                                    | 16 / 16  | 16 / 16  | 32 / 32  | 64 / 48   | 144 / 96  |
+| `merge_diff`                              | 16 / 16  | 48 / 32  | 80 / 48  | 176 / 112 | 352 / 224 |
+| `to_cbor`, `to_msgpack`                   | 16 / 16  | 32 / 16  | 64 / 32  | 112 / 80  | 224 / 160 |
+| `to_ubjson`, `to_bjdata`                  | 16 / 16  | 16 / 16  | 48 / 32  | 96 / 64   | 176 / 112 |
+| `to_bon8`                                 | 16 / 16  | 16 / 16  | 16 / 16  | 32 / 16   | 64 / 48   |
+| conversion to another `basic_json` type   | 32 / 16  | 64 / 32  | 112 / 80 | 224 / 144 | 448 / 304 |
+| destruction                               | 16 / 16  | 16 / 16  | 16 / 16  | 16 / 16   | 32 / 32   |
 
 Optimized (`-O2`):
 
@@ -77,17 +77,17 @@ The rule of thumb is
 
 > stack needed ≈ a few KiB + cost per level × limit
 
-with a cost per level of up to 2.3 KiB (`dump` at `-O0` with Clang; 2.1 KiB with GCC), 1.7 KiB for copying and merging (1.3 KiB with GCC), and 0.1 to 0.5 KiB for most other operations at `-O0`; and 0.5 KiB or less at `-O2`. The numbers come from the difference between the limits `128` and `254` in the tables, so they are rough: other compilers, other targets (the frames of x86-64 code are about as large), other standard libraries, `JSON_DIAGNOSTICS`, and sanitizers change them. Measure with your own tool chain (see the example below) rather than relying on the tables. The stack that your own code and the operating system need comes on top of these numbers.
+with a cost per level of up to 1.8 KiB (conversion to another `basic_json` type at `-O0` with Clang; 1.3 KiB with GCC), 1.7 KiB for copying and merging (1.3 KiB with GCC), 0.4 KiB for `dump`, and 0.1 to 0.5 KiB for most other operations at `-O0`; and 0.5 KiB or less at `-O2`. The numbers come from the difference between the limits `128` and `254` in the tables, so they are rough: other compilers, other targets (the frames of x86-64 code are about as large), other standard libraries, `JSON_DIAGNOSTICS`, and sanitizers change them. Measure with your own tool chain (see the example below) rather than relying on the tables. The stack that your own code and the operating system need comes on top of these numbers.
 
 Which limit to choose, for the stack that you can spare for the library (the largest limit of those measured for which the slowest operation needs at most that much):
 
 | Stack for the library                          | optimized (`-O2`) | unoptimized (`-O0`) |
 | ---------------------------------------------- | ----------------- | ------------------- |
-| 32 KiB                                         | 64                | 0                   |
-| 64 KiB                                         | 128               | 16                  |
-| 128 KiB (the default stack of threads on musl) | 254               | 32                  |
-| 256 KiB                                        | 254               | 64                  |
-| 512 KiB                                        | 254               | 128                 |
+| 32 KiB                                         | 64                | 16                  |
+| 64 KiB                                         | 128               | 32                  |
+| 128 KiB (the default stack of threads on musl) | 254               | 64                  |
+| 256 KiB                                        | 254               | 128                 |
+| 512 KiB                                        | 254               | 254                 |
 | 1 MiB or more                                  | 254               | 254                 |
 
 ### Speed

@@ -27,7 +27,7 @@ comparison of two [`json_view`](../basic_json_view/index.md) documents has a fix
 and does not depend on it either.
 
 The call stack that these operations need grows with the limit: roughly *a few kilobytes plus a cost per level times the
-limit*, where the cost per level is up to about 2.3 KiB in an unoptimized and up to about 0.5 KiB in an optimized build
+limit*, where the cost per level is up to about 1.8 KiB in an unoptimized and up to about 0.5 KiB in an optimized build
 (see [Stack needed](#stack-needed)). The default of `128` levels is tuned for threads with ordinary stacks of a few
 hundred kilobytes or more. Set a lower limit if your threads have small stacks (RTOS tasks, fibers, threads of the musl
 C
@@ -67,7 +67,7 @@ When the macro is not defined, the library defines it to its default value.
       the levels that are descended into are counted, so the count never exceeds the limit, not even when user code (a
       copy constructor of a custom base class, say) copies a value while a copy is going on. A byte holds `255` at
       most, and the limit stays below that, so that the count cannot wrap around. (More levels would hardly be
-      useful: `254` levels need up to 576 KiB of stack in an unoptimized build already, twice as much as the
+      useful: `254` levels need up to 448 KiB of stack in an unoptimized build already, twice as much as the
       default.)
 
 ### Stack needed
@@ -83,7 +83,7 @@ Unoptimized (`-O0`):
 
 | Operation | limit 16 | limit 32 | limit 64 | limit 128 | limit 254 |
 |---|---:|---:|---:|---:|---:|
-| `dump()` and `dump(indent)`, `operator<<` | 48 / 32 | 80 / 64 | 144 / 128 | 288 / 256 | 576 / 512 |
+| `dump()` and `dump(indent)`, `operator<<` | 16 / 16 | 16 / 16 | 32 / 32 | 48 / 48 | 96 / 96 |
 | copy construction and assignment | 32 / 16 | 48 / 32 | 112 / 80 | 224 / 144 | 432 / 304 |
 | `==` | 16 / 16 | 16 / 16 | 16 / 16 | 48 / 32 | 96 / 48 |
 | `<=>` (C++20) | 16 / 16 | 16 / 16 | 32 / 32 | 64 / 64 | 144 / 128 |
@@ -123,23 +123,24 @@ The rule of thumb is
 
 > stack needed ≈ a few KiB + cost per level × limit
 
-with a cost per level of up to 2.3 KiB (`dump` at `-O0` with Clang; 2.1 KiB with GCC), 1.7 KiB for copying and merging
-(1.3 KiB with GCC), and 0.1 to 0.5 KiB for most other operations at `-O0`; and 0.5 KiB or less at `-O2`. The numbers
-come from the difference between the limits `128` and `254` in the tables, so they are rough: other compilers,
-other targets (the frames of x86-64 code are about as large), other standard libraries, `JSON_DIAGNOSTICS`, and
-sanitizers change them. Measure with your own tool chain (see the example below) rather than relying on the tables.
-The stack that your own code and the operating system need comes on top of these numbers.
+with a cost per level of up to 1.8 KiB (conversion to another `basic_json` type at `-O0` with Clang; 1.3 KiB with
+GCC), 1.7 KiB for copying and merging (1.3 KiB with GCC), 0.4 KiB for `dump`, and 0.1 to 0.5 KiB for most other
+operations at `-O0`; and 0.5 KiB or less at `-O2`. The numbers come from the difference between the limits `128` and
+`254` in the tables, so they are rough: other compilers, other targets (the frames of x86-64 code are about as large),
+other standard libraries, `JSON_DIAGNOSTICS`, and sanitizers change them. Measure with your own tool chain (see the
+example below) rather than relying on the tables. The stack that your own code and the operating system need comes on
+top of these numbers.
 
 Which limit to choose, for the stack that you can spare for the library (the largest limit of those measured
 for which the slowest operation needs at most that much):
 
 | Stack for the library | optimized (`-O2`) | unoptimized (`-O0`) |
 |---|---:|---:|
-| 32 KiB | 64 | 0 |
-| 64 KiB | 128 | 16 |
-| 128 KiB (the default stack of threads on musl) | 254 | 32 |
-| 256 KiB | 254 | 64 |
-| 512 KiB | 254 | 128 |
+| 32 KiB | 64 | 16 |
+| 64 KiB | 128 | 32 |
+| 128 KiB (the default stack of threads on musl) | 254 | 64 |
+| 256 KiB | 254 | 128 |
+| 512 KiB | 254 | 254 |
 | 1 MiB or more | 254 | 254 |
 
 ### Speed

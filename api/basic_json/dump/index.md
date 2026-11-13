@@ -39,7 +39,7 @@ See the [FAQ](https://json.nlohmann.me/home/faq/#serializing-untrusted-or-invali
 
 ## Complexity
 
-Linear.
+Linear in the size of the result. With an `indent`, every line starts with up to `indent` characters per nesting level, so the result can be larger than the value by a factor of its nesting depth (see [Parsing untrusted input](https://json.nlohmann.me/features/parsing/untrusted_input/#nesting-depth)).
 
 ## Notes
 

@@ -64,7 +64,7 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 ## Exceptions
 
-- Throws [parse_error.110](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error110) if the given input ends prematurely or the end of the file was not reached when `strict` was set to true
+- Throws [parse_error.110](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error110) if the given input ends prematurely, if the end of the file was not reached when `strict` was set to true, or if a string at the end of the value is not terminated by 0xFF although a byte follows it (also when `strict` is false: the byte that ends the string is taken from the input, so the next value would be lost)
 - Throws [parse_error.112](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error112) if a parse error occurs, for instance an invalid byte, a string that is not valid UTF-8, or an object key that is not a string
 
 The UTF-8 validity of strings is always checked, independent of [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md), because the end of a BON8 string is determined from its encoding. Duplicate object keys are accepted; the last value wins (see [BON8](https://json.nlohmann.me/features/binary_formats/bon8/index.md)).
