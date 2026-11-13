@@ -158,7 +158,8 @@ struct document_data
     {
         const auto overlaps = [p, n](const char* b, std::size_t m) noexcept
         {
-            // (std::less: a total order also for pointers into different objects)
+            // (std::less: a total order also for pointers into different objects; std::less<> needs C++14)
+            // NOLINTNEXTLINE(modernize-use-transparent-functors)
             return n != 0 && m != 0 && std::less<const char*>()(p, b + m) && std::less<const char*>()(b, p + n);
         };
         return overlaps(owned.data(), owned.capacity())

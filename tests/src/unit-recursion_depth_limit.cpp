@@ -494,7 +494,7 @@ TEST_CASE("walks over values nested around the recursion depth limit")
         for_each_value([](const std::string & kinds)
         {
             const json a = build(kinds, 1);
-            const std::hash<json> hash;
+            const std::hash<json> hash{};
             CHECK(hash(a) == hash(json(a)));
             CHECK(hash(a) == hash(json::parse(expected_compact(kinds, "1"))));
             CHECK(hash(a) != hash(build(kinds, 2)));
