@@ -269,6 +269,9 @@ target_link_libraries(myproject PRIVATE nlohmann_json_modules)
 target_compile_definitions(myproject PRIVATE NLOHMANN_JSON_BUILD_MODULES)
 ```
 
+If `main.cpp` also uses `import std;`, the project needs CMake 4.5 or newer and a Ninja generator; see
+[Modules](../features/modules.md#requirements) for the supported toolchains.
+
 ## See also
 
 - [Macros](../api/macros/index.md) - reference of all macros
