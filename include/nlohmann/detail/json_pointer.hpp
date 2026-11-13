@@ -2455,6 +2455,19 @@ class json_pointer
                 pos = end;
             }
 
+            if (JSON_HEDLEY_UNLIKELY(!current->is_null()))
+            {
+                // the key is a prefix of an earlier key (only possible if the
+                // object type does not sort its keys), so the value is the
+                // array or object built for that key: a null leaves it as it
+                // is (as when the shorter key comes first), any other value
+                // conflicts with it
+                if (element.second.is_null())
+                {
+                    continue;
+                }
+                JSON_THROW(detail::type_error::create(detail::exception_id::unflatten_invalid_value, "invalid value to unflatten", &result));
+            }
             *current = element.second;
         }
 

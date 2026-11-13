@@ -1241,6 +1241,34 @@ TEST_CASE("flatten of structured values")
     }
 
 #if !defined(JSON_NOEXCEPTION)
+    SECTION("unflatten with a key that is a prefix of an earlier key")
+    {
+        // json visits the shorter key first; ordered_json may see it last
+        CHECK_THROWS_WITH_AS(nlohmann::ordered_json::parse(R"({"/a/b":2,"/a":1})").unflatten(),
+                             "[json.exception.type_error.313] invalid value to unflatten", nlohmann::ordered_json::type_error&);
+        CHECK_THROWS_WITH_AS(nlohmann::ordered_json::parse(R"({"/a/0/b":1,"/a/0":2})").unflatten(),
+                             "[json.exception.type_error.313] invalid value to unflatten", nlohmann::ordered_json::type_error&);
+        CHECK_THROWS_WITH_AS(nlohmann::ordered_json::parse(R"({"/x":1,"":2})").unflatten(),
+                             "[json.exception.type_error.313] invalid value to unflatten", nlohmann::ordered_json::type_error&);
+
+        // the same members in the other order
+        CHECK_THROWS_WITH_AS(nlohmann::ordered_json::parse(R"({"/a":1,"/a/b":2})").unflatten(),
+                             "[json.exception.type_error.313] invalid value to unflatten", nlohmann::ordered_json::type_error&);
+        CHECK_THROWS_WITH_AS(json::parse(R"({"/a/b":2,"/a":1})").unflatten(),
+                             "[json.exception.type_error.313] invalid value to unflatten", json::type_error&);
+    }
+#endif
+
+    SECTION("unflatten with a null at a key that is a prefix of another key")
+    {
+        // the null keeps the container, whichever key comes first
+        CHECK(nlohmann::ordered_json::parse(R"({"/a/b":2,"/a":null})").unflatten() == nlohmann::ordered_json::parse(R"({"a":{"b":2}})"));
+        CHECK(nlohmann::ordered_json::parse(R"({"/a":null,"/a/b":2})").unflatten() == nlohmann::ordered_json::parse(R"({"a":{"b":2}})"));
+        CHECK(nlohmann::ordered_json::parse(R"({"/a/0":1,"/a":null})").unflatten() == nlohmann::ordered_json::parse(R"({"a":[1]})"));
+        CHECK(json::parse(R"({"/a/b":2,"/a":null})").unflatten() == json::parse(R"({"a":{"b":2}})"));
+    }
+
+#if !defined(JSON_NOEXCEPTION)
     SECTION("an object with the key \"0\" next to a non-index key does not round-trip")
     {
         // the third documented case in which j != j.flatten().unflatten()
