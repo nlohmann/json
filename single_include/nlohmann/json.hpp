@@ -9323,87 +9323,164 @@ inline const char* empty_input_message() noexcept
     return "attempting to parse an empty input; check that your input string or stream contains the expected JSON";
 }
 
-////////////////////
-// input adapters //
-////////////////////
-
-#ifndef JSON_NO_IO
 /*!
+@brief the characters of the last read token, kept for error messages
+
 A growable array of characters for the part of a token that an input adapter
-copied out of its window: unlike std::vector<char>::push_back(), appending a
-character takes no reference to a local, and is a few instructions when there
-is room.
+copied out of its window, or that the lexer copies while it scans input it
+cannot read again: unlike std::vector::push_back(), appending a character
+takes no reference to a local, and is a few instructions when there is room.
+
+The token is only needed for error messages, which show its first head()
+characters and its last head() characters (see lexer::get_token_string). The
+buffer therefore keeps the first head() and at least the last tail()
+characters: when it is full and holds more than limit() characters, it drops
+the characters in between instead of growing. That happens where it would
+otherwise reallocate, so appending stays as cheap as before, and a long string
+or a long run of whitespace read from a stream is not kept a second time.
 */
-class token_carry_buffer
+template<typename CharType>
+class token_text_buffer
 {
   public:
-    token_carry_buffer() = default;
-    token_carry_buffer(const token_carry_buffer&) = delete;
-    token_carry_buffer& operator=(const token_carry_buffer&) = delete;
-    token_carry_buffer(token_carry_buffer&& rhs) noexcept
+    static constexpr std::size_t head() noexcept
+    {
+        return 4096;
+    }
+    /// a little more than head(), as the last character may be handed back
+    static constexpr std::size_t tail() noexcept
+    {
+        return head() + 16;
+    }
+    static constexpr std::size_t limit() noexcept
+    {
+        return head() + (2 * tail());
+    }
+
+    token_text_buffer() = default;
+    token_text_buffer(const token_text_buffer&) = delete;
+    token_text_buffer& operator=(const token_text_buffer&) = delete;
+    token_text_buffer(token_text_buffer&& rhs) noexcept
         : m_data(std::move(rhs.m_data)), m_end(rhs.m_end), m_capacity_end(rhs.m_capacity_end)
     {
         rhs.m_end = rhs.m_capacity_end = nullptr;
     }
-    token_carry_buffer& operator=(token_carry_buffer&&) = delete;
-    ~token_carry_buffer() = default;
+    token_text_buffer& operator=(token_text_buffer&& rhs) noexcept
+    {
+        m_data = std::move(rhs.m_data);
+        m_end = rhs.m_end;
+        m_capacity_end = rhs.m_capacity_end;
+        rhs.m_end = rhs.m_capacity_end = nullptr;
+        return *this;
+    }
+    ~token_text_buffer() = default;
 
     void clear() noexcept
     {
         m_end = m_data.get();
     }
 
-    void push_back(char c)
+    bool empty() const noexcept
+    {
+        return m_end == m_data.get();
+    }
+
+    void push_back(CharType c)
     {
         if (JSON_HEDLEY_UNLIKELY(m_end == m_capacity_end))
         {
-            grow(1);
+            make_room(1);
         }
         *m_end++ = c;
     }
 
-    void append(const char* first, const char* last)
+    /// drop the last character
+    void pop_back() noexcept
+    {
+        JSON_ASSERT(!empty());
+        --m_end;
+    }
+
+    void append(const CharType* first, const CharType* last)
     {
         const auto n = static_cast<std::size_t>(last - first);
         const auto room = static_cast<std::size_t>(m_capacity_end - m_end);
-        if (n > room)
+        if (JSON_HEDLEY_UNLIKELY(n > room))
         {
-            grow(n);
+            append_long(first, n);
+            return;
         }
         if (n != 0)
         {
-            std::memcpy(m_end, first, n);
+            std::memcpy(m_end, first, n * sizeof(CharType));
         }
         m_end += n;
     }
 
     /// replace the contents of @a out
-    void copy_to(std::vector<char>& out) const
+    void copy_to(std::vector<CharType>& out) const
     {
         out.assign(m_data.get(), m_end);
     }
 
   private:
-    /// make room for @a extra more characters
-    JSON_HEDLEY_NEVER_INLINE void grow(std::size_t extra)
+    /// append @a n characters that do not fit, in pieces of at most tail()
+    /// characters, so that dropping the middle keeps the last tail() of them
+    JSON_HEDLEY_NEVER_INLINE void append_long(const CharType* first, std::size_t n)
     {
-        const auto size = static_cast<std::size_t>(m_end - m_data.get());
-        const auto capacity = static_cast<std::size_t>(m_capacity_end - m_data.get());
-        const std::size_t new_capacity = (std::max)(capacity < 32 ? static_cast<std::size_t>(32) : 2 * capacity, size + extra);
-        std::unique_ptr<char[]> data(new char[new_capacity]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
-        if (size != 0)
+        while (n != 0)
         {
-            std::memcpy(data.get(), m_data.get(), size);
+            const std::size_t piece = n < tail() ? n : tail();
+            make_room(piece);
+            std::memcpy(m_end, first, piece * sizeof(CharType));
+            m_end += piece;
+            first += piece;
+            n -= piece;
         }
-        m_data = std::move(data);
-        m_end = m_data.get() + size;
-        m_capacity_end = m_data.get() + new_capacity;
     }
 
-    std::unique_ptr<char[]> m_data{}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,readability-redundant-member-init)
-    char* m_end = nullptr;
-    char* m_capacity_end = nullptr;
+    /// make room for @a extra (at most tail()) more characters: drop the
+    /// middle of a long token instead of growing beyond limit()
+    JSON_HEDLEY_NEVER_INLINE void make_room(std::size_t extra)
+    {
+        // nothing is allocated before the first character
+        std::size_t size = m_data ? static_cast<std::size_t>(m_end - m_data.get()) : 0;
+        if (size + extra > limit() && size > head() + tail())
+        {
+            std::memmove(m_data.get() + head(), m_end - tail(), tail() * sizeof(CharType));
+            m_end = m_data.get() + head() + tail();
+            size = head() + tail();
+        }
+        const std::size_t capacity = m_data ? static_cast<std::size_t>(m_capacity_end - m_data.get()) : 0;
+        if (size + extra > capacity)
+        {
+            // never more than limit(): from there on, the middle is dropped
+            const std::size_t doubled = capacity < 32 ? static_cast<std::size_t>(32) : 2 * capacity;
+            const std::size_t new_capacity = (std::max)(doubled < limit() ? doubled : limit(), size + extra);
+            std::unique_ptr<CharType[]> data(new CharType[new_capacity]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+            if (size != 0)
+            {
+                std::memcpy(data.get(), m_data.get(), size * sizeof(CharType));
+            }
+            m_data = std::move(data);
+            m_end = m_data.get() + size;
+            m_capacity_end = m_data.get() + new_capacity;
+        }
+    }
+
+    std::unique_ptr<CharType[]> m_data{}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,readability-redundant-member-init)
+    CharType* m_end = nullptr;
+    CharType* m_capacity_end = nullptr;
 };
+
+/// the part of a token that an input adapter copied out of its window
+using token_carry_buffer = token_text_buffer<char>;
+
+////////////////////
+// input adapters //
+////////////////////
+
+#ifndef JSON_NO_IO
 /*!
 Input adapter for stdio file access. The file is locked for the lifetime of the
 adapter and read with the unlocked stdio functions (see
@@ -13898,7 +13975,10 @@ class lexer : public lexer_base<BasicJsonType>
     /// streaming adapter: capture the characters
     void bulk_track_token(const char* data, std::size_t n, std::false_type /*lazy*/)
     {
-        token_string.insert(token_string.end(), data, data + n);
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            token_string.push_back(static_cast<char_type>(data[i]));
+        }
     }
 
     /// streaming input: no bulk fast path
@@ -15641,15 +15721,28 @@ scan_number_done:
         const std::size_t stop = ia.get_consumed_count() - (pending_real_unget ? 1u : 0u);
         if (JSON_HEDLEY_LIKELY(stop >= token_string_start))
         {
-            ia.copy_consumed_range(token_string_start, stop, out);
+            // only the beginning and the end of a long token are shown (see
+            // get_token_string), so copy only these
+            constexpr std::size_t head = token_text_buffer<char_type>::head();
+            constexpr std::size_t tail = token_text_buffer<char_type>::tail();
+            if (stop - token_string_start > head + tail)
+            {
+                ia.copy_consumed_range(token_string_start, token_string_start + head, out);
+                ia.copy_consumed_range(stop - tail, stop, out);
+            }
+            else
+            {
+                ia.copy_consumed_range(token_string_start, stop, out);
+            }
         }
         return out;
     }
 
     /// streaming adapter: the token was copied eagerly while scanning
-    const std::vector<char_type>& collect_token_chars(std::vector<char_type>& /*out*/, std::false_type /*lazy*/) const
+    const std::vector<char_type>& collect_token_chars(std::vector<char_type>& out, std::false_type /*lazy*/) const
     {
-        return token_string;
+        token_string.copy_to(out);
+        return out;
     }
 
     /// return the last read token (for errors only).  Will never contain EOF
@@ -15660,10 +15753,32 @@ scan_number_done:
         std::vector<char_type> reconstructed;
         const std::vector<char_type>& chars = collect_token_chars(reconstructed, std::integral_constant<bool, lazy_token_string> {});
 
-        // escape control characters
+        // a long token is shown by its first and its last head() characters;
+        // the buffers that keep it while it is read keep no more than these
+        // and a few more (see token_text_buffer)
+        constexpr std::size_t shown = token_text_buffer<char_type>::head();
         std::string result;
-        for (const auto c : chars)
+        if (chars.size() > 2 * shown)
         {
+            append_escaped(result, chars.begin(), chars.begin() + static_cast<std::ptrdiff_t>(shown));
+            result += "...";
+            append_escaped(result, chars.end() - static_cast<std::ptrdiff_t>(shown), chars.end());
+        }
+        else
+        {
+            append_escaped(result, chars.begin(), chars.end());
+        }
+        return result;
+    }
+
+  private:
+    /// append the characters [first, last) to @a result, escaping control characters
+    template<typename Iterator>
+    static void append_escaped(std::string& result, Iterator first, Iterator last)
+    {
+        for (; first != last; ++first)
+        {
+            const auto c = *first;
             if (static_cast<unsigned char>(c) <= '\x1F')
             {
                 // escape control characters
@@ -15677,9 +15792,9 @@ scan_number_done:
                 result.push_back(static_cast<std::string::value_type>(c));
             }
         }
-
-        return result;
     }
+
+  public:
 
     /// return syntax error message
     JSON_HEDLEY_RETURNS_NON_NULL
@@ -15929,7 +16044,7 @@ scan_number_done:
 
     /// raw input token string for error messages; only populated for streaming
     /// adapters (seekable adapters reconstruct it lazily via token_string_start)
-    std::vector<char_type> token_string {};
+    token_text_buffer<char_type> token_string {};
 
     /// start offset of the current token within the input, used to reconstruct
     /// the last read token on error for seekable adapters (see collect_token_chars)

@@ -494,7 +494,10 @@ class lexer : public lexer_base<BasicJsonType>
     /// streaming adapter: capture the characters
     void bulk_track_token(const char* data, std::size_t n, std::false_type /*lazy*/)
     {
-        token_string.insert(token_string.end(), data, data + n);
+        for (std::size_t i = 0; i < n; ++i)
+        {
+            token_string.push_back(static_cast<char_type>(data[i]));
+        }
     }
 
     /// streaming input: no bulk fast path
@@ -2237,15 +2240,28 @@ scan_number_done:
         const std::size_t stop = ia.get_consumed_count() - (pending_real_unget ? 1u : 0u);
         if (JSON_HEDLEY_LIKELY(stop >= token_string_start))
         {
-            ia.copy_consumed_range(token_string_start, stop, out);
+            // only the beginning and the end of a long token are shown (see
+            // get_token_string), so copy only these
+            constexpr std::size_t head = token_text_buffer<char_type>::head();
+            constexpr std::size_t tail = token_text_buffer<char_type>::tail();
+            if (stop - token_string_start > head + tail)
+            {
+                ia.copy_consumed_range(token_string_start, token_string_start + head, out);
+                ia.copy_consumed_range(stop - tail, stop, out);
+            }
+            else
+            {
+                ia.copy_consumed_range(token_string_start, stop, out);
+            }
         }
         return out;
     }
 
     /// streaming adapter: the token was copied eagerly while scanning
-    const std::vector<char_type>& collect_token_chars(std::vector<char_type>& /*out*/, std::false_type /*lazy*/) const
+    const std::vector<char_type>& collect_token_chars(std::vector<char_type>& out, std::false_type /*lazy*/) const
     {
-        return token_string;
+        token_string.copy_to(out);
+        return out;
     }
 
     /// return the last read token (for errors only).  Will never contain EOF
@@ -2256,10 +2272,32 @@ scan_number_done:
         std::vector<char_type> reconstructed;
         const std::vector<char_type>& chars = collect_token_chars(reconstructed, std::integral_constant<bool, lazy_token_string> {});
 
-        // escape control characters
+        // a long token is shown by its first and its last head() characters;
+        // the buffers that keep it while it is read keep no more than these
+        // and a few more (see token_text_buffer)
+        constexpr std::size_t shown = token_text_buffer<char_type>::head();
         std::string result;
-        for (const auto c : chars)
+        if (chars.size() > 2 * shown)
         {
+            append_escaped(result, chars.begin(), chars.begin() + static_cast<std::ptrdiff_t>(shown));
+            result += "...";
+            append_escaped(result, chars.end() - static_cast<std::ptrdiff_t>(shown), chars.end());
+        }
+        else
+        {
+            append_escaped(result, chars.begin(), chars.end());
+        }
+        return result;
+    }
+
+  private:
+    /// append the characters [first, last) to @a result, escaping control characters
+    template<typename Iterator>
+    static void append_escaped(std::string& result, Iterator first, Iterator last)
+    {
+        for (; first != last; ++first)
+        {
+            const auto c = *first;
             if (static_cast<unsigned char>(c) <= '\x1F')
             {
                 // escape control characters
@@ -2273,9 +2311,9 @@ scan_number_done:
                 result.push_back(static_cast<std::string::value_type>(c));
             }
         }
-
-        return result;
     }
+
+  public:
 
     /// return syntax error message
     JSON_HEDLEY_RETURNS_NON_NULL
@@ -2525,7 +2563,7 @@ scan_number_done:
 
     /// raw input token string for error messages; only populated for streaming
     /// adapters (seekable adapters reconstruct it lazily via token_string_start)
-    std::vector<char_type> token_string {};
+    token_text_buffer<char_type> token_string {};
 
     /// start offset of the current token within the input, used to reconstruct
     /// the last read token on error for seekable adapters (see collect_token_chars)

@@ -12,6 +12,7 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
+#include <algorithm> // min
 #include <array> // array
 #include <cctype> // toupper
 #include <cstdint> // uint32_t, uint64_t
@@ -2232,4 +2233,124 @@ TEST_CASE("serialization of short strings")
     CHECK(json("a\"b").dump() == "\"a\\\"b\"");
     CHECK(json("caf\xC3\xA9").dump() == "\"caf\xC3\xA9\"");
     CHECK(json("caf\xC3\xA9").dump(-1, ' ', true) == "\"caf\\u00e9\"");
+}
+
+TEST_CASE("token_text_buffer keeps the beginning and the end of a long token")
+{
+    using buffer_t = nlohmann::detail::token_text_buffer<char>;
+    constexpr std::size_t head = buffer_t::head();
+    constexpr std::size_t tail = buffer_t::tail();
+
+    // the characters 0, 1, ..., 250, 0, 1, ...
+    const auto at = [](std::size_t i)
+    {
+        return static_cast<char>(i % 251);
+    };
+    // whether out holds the first head and the last tail characters of a
+    // token of n characters (and maybe more characters of its middle)
+    const auto keeps_ends = [&](const std::vector<char>& out, std::size_t n)
+    {
+        if (out.size() < head + tail || out.size() > buffer_t::limit())
+        {
+            return false;
+        }
+        for (std::size_t i = 0; i < head; ++i)
+        {
+            if (out[i] != at(i))
+            {
+                return false;
+            }
+        }
+        for (std::size_t i = 0; i < tail; ++i)
+        {
+            if (out[out.size() - tail + i] != at(n - tail + i))
+            {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    SECTION("a short token is kept as it is")
+    {
+        buffer_t buffer;
+        CHECK(buffer.empty());
+        for (std::size_t i = 0; i < head + tail; ++i)
+        {
+            buffer.push_back(at(i));
+        }
+        std::vector<char> out;
+        buffer.copy_to(out);
+        REQUIRE(out.size() == head + tail);
+        bool same = true;
+        for (std::size_t i = 0; i < out.size(); ++i)
+        {
+            same = same && out[i] == at(i);
+        }
+        CHECK(same);
+    }
+
+    SECTION("characters added one by one")
+    {
+        for (const std::size_t n :
+                {
+                    head + tail + 1, buffer_t::limit(), buffer_t::limit() + 1, static_cast<std::size_t>(100000)
+                })
+        {
+            CAPTURE(n)
+            buffer_t buffer;
+            for (std::size_t i = 0; i < n; ++i)
+            {
+                buffer.push_back(at(i));
+            }
+            std::vector<char> out;
+            buffer.copy_to(out);
+            CHECK(keeps_ends(out, n));
+
+            // the last character can be handed back
+            buffer.pop_back();
+            buffer.copy_to(out);
+            CHECK(keeps_ends(out, n - 1));
+        }
+    }
+
+    SECTION("characters added in pieces of different sizes")
+    {
+        std::vector<char> input(200000);
+        for (std::size_t i = 0; i < input.size(); ++i)
+        {
+            input[i] = at(i);
+        }
+        for (const std::size_t piece :
+                {
+                    static_cast<std::size_t>(1), static_cast<std::size_t>(100), tail - 1, tail, tail + 1, static_cast<std::size_t>(65536), input.size()
+                })
+        {
+            CAPTURE(piece)
+            buffer_t buffer;
+            for (std::size_t pos = 0; pos < input.size(); pos += piece)
+            {
+                const std::size_t n = (std::min)(piece, input.size() - pos);
+                buffer.append(input.data() + pos, input.data() + pos + n);
+            }
+            std::vector<char> out;
+            buffer.copy_to(out);
+            CHECK(keeps_ends(out, input.size()));
+        }
+    }
+
+    SECTION("clear starts a new token")
+    {
+        buffer_t buffer;
+        for (std::size_t i = 0; i < 100000; ++i)
+        {
+            buffer.push_back('x');
+        }
+        buffer.clear();
+        CHECK(buffer.empty());
+        buffer.push_back('a');
+        std::vector<char> out;
+        buffer.copy_to(out);
+        CHECK(out == std::vector<char> {'a'});
+    }
 }
