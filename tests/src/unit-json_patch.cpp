@@ -2682,25 +2682,27 @@ TEST_CASE("JSON patch - consecutive operations with paths that share a prefix")
         const json doc = json::parse(R"({"a": [{"b": [1, 2, 3]}, {"b": [4, 5, 6]}], "c": {"d": {"e": 7}}})");
 
         // an element inserted before the elements of an array moves them
-        CHECK(doc.patch(json::parse(R"([
+        const json inserted = json::parse(R"([
             {"op": "test", "path": "/a/0/b/2", "value": 3},
             {"op": "add", "path": "/a/0", "value": {"b": [9]}},
             {"op": "test", "path": "/a/1/b/2", "value": 3},
             {"op": "test", "path": "/a/0/b/0", "value": 9},
             {"op": "test", "path": "/a/2/b/0", "value": 4}
-        ])")) == json::parse(R"({"a": [{"b": [9]}, {"b": [1, 2, 3]}, {"b": [4, 5, 6]}], "c": {"d": {"e": 7}}})"));
+        ])");
+        CHECK(doc.patch(inserted) == json::parse(R"({"a": [{"b": [9]}, {"b": [1, 2, 3]}, {"b": [4, 5, 6]}], "c": {"d": {"e": 7}}})"));
 
         // an element removed from the front
-        CHECK(doc.patch(json::parse(R"([
+        const json removed_front = json::parse(R"([
             {"op": "test", "path": "/a/1/b/2", "value": 6},
             {"op": "remove", "path": "/a/0"},
             {"op": "test", "path": "/a/0/b/2", "value": 6},
             {"op": "replace", "path": "/a/0/b/2", "value": 60},
             {"op": "test", "path": "/a/0/b/2", "value": 60}
-        ])")) == json::parse(R"({"a": [{"b": [4, 5, 60]}], "c": {"d": {"e": 7}}})"));
+        ])");
+        CHECK(doc.patch(removed_front) == json::parse(R"({"a": [{"b": [4, 5, 60]}], "c": {"d": {"e": 7}}})"));
 
         // a value replaced above the path that was resolved before
-        CHECK(doc.patch(json::parse(R"([
+        const json replaced_above = json::parse(R"([
             {"op": "test", "path": "/c/d/e", "value": 7},
             {"op": "replace", "path": "/c/d", "value": {"e": 8, "f": {"g": 9}}},
             {"op": "test", "path": "/c/d/e", "value": 8},
@@ -2708,7 +2710,8 @@ TEST_CASE("JSON patch - consecutive operations with paths that share a prefix")
             {"op": "remove", "path": "/c/d/f"},
             {"op": "add", "path": "/c/d/f", "value": [1]},
             {"op": "test", "path": "/c/d/f/0", "value": 1}
-        ])")) == json::parse(R"({"a": [{"b": [1, 2, 3]}, {"b": [4, 5, 6]}], "c": {"d": {"e": 8, "f": [1]}}})"));
+        ])");
+        CHECK(doc.patch(replaced_above) == json::parse(R"({"a": [{"b": [1, 2, 3]}, {"b": [4, 5, 6]}], "c": {"d": {"e": 8, "f": [1]}}})"));
 
 #if !defined(JSON_NOEXCEPTION)
         // a value removed above the path that was resolved before is gone

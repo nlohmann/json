@@ -502,7 +502,8 @@ struct document_data
     {
         const auto overlaps = [p, n](const char* b, std::size_t m) noexcept
         {
-            // (std::less: a total order also for pointers into different objects)
+            // (std::less: a total order also for pointers into different objects; std::less<> needs C++14)
+            // NOLINTNEXTLINE(modernize-use-transparent-functors)
             return n != 0 && m != 0 && std::less<const char*>()(p, b + m) && std::less<const char*>()(b, p + n);
         };
         return overlaps(owned.data(), owned.capacity())
@@ -4088,6 +4089,8 @@ void resume_array(const lockstep_path& /*path*/, const A& /*a*/, const B& /*b*/,
 template<typename BasicJsonType, typename ViewA, typename ViewB>
 bool floats_equal(const view_side<BasicJsonType, ViewA>& a, const view_side<BasicJsonType, ViewB>& b)
 {
+    // float_token_is_nan() reads at most the node length of the token, which is not null terminated
+    // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
     return (a.value_node()->extra == b.value_node()->extra && a.float_token() == b.float_token() && !(view_side<BasicJsonType, ViewA>::nav::editable() && float_token_is_nan(*a.value_node(), a.float_token().data()))) || std::equal_to<typename BasicJsonType::number_float_t>()(a.floating(), b.floating());
 }
 
