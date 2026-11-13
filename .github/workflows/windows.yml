@@ -212,13 +212,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # The module test uses `import std;`, which needs CMake's experimental
-      # import-std support. Its opt-in token is CMake-version-specific, so pin
-      # CMake to the version whose token is set in tests/module_cpp20/CMakeLists.txt.
-      - name: Get pinned CMake and ninja
+      # The module test uses `import std;`, which needs CMake 4.5 or newer.
+      - name: Get CMake 4.5+ and ninja
         uses: lukka/get-cmake@f86dd60acae0d132056913e248bdabf0e0580b7a # v4.4.5
         with:
-          cmakeVersion: 4.3.4
+          cmakeVersion: '^4.5.0'
       # CMAKE_CXX_FLAGS replaces CMake's MSVC defaults (which include /EHsc), and
       # ci_module_cpp20 forwards it to the module build, so list /EHsc explicitly
       - name: Run CMake (Debug)
