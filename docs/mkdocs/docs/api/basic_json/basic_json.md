@@ -265,7 +265,9 @@ basic_json(basic_json&& other) noexcept;
 4. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no
    `to_json()` function was provided), a strong guarantee holds: if an exception is thrown, there are no changes to any
    JSON value.
-5. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+5. Strong guarantee: if an exception is thrown, there are no changes to any JSON value. Values that are moved into
+   `init` (e.g., `a` in `#!cpp json::object({std::move(a), 5})`) are moved when the initializer list is created,
+   before the constructor runs, and stay moved-from if it throws.
 6. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
 7. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
 8. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
