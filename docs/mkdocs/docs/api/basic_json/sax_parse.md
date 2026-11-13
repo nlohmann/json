@@ -124,9 +124,10 @@ consumer `sax` has a super-linear complexity.
 
 A UTF-8 byte order mark is silently ignored.
 
-When reading from a `#!c FILE*`, the file is locked while it is parsed. The lock is recursive, so the SAX handler may
-use the same file with stdio functions, but it must not wait for another thread that uses the same `FILE` object; see
-[`JSON_DISABLE_UNLOCKED_FILE_IO`](../macros/json_disable_unlocked_file_io.md).
+When reading from a `#!c FILE*` where the C library has unlocked stdio functions, the file is locked while it is parsed,
+unless [`JSON_DISABLE_UNLOCKED_FILE_IO`](../macros/json_disable_unlocked_file_io.md) is defined to `1`.
+The lock is recursive, so the SAX handler may use the same file with stdio functions, but it must not wait for another
+thread that uses the same `FILE` object.
 
 ## Examples
 

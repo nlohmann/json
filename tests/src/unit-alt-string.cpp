@@ -531,9 +531,28 @@ TEST_CASE("alternative string type with json_view")
         CHECK(d.root().materialize() == expected);
         CHECK(alt_json::parse(d.root().dump()) == expected);
 
+        // save() and load() do not exist on big-endian targets
+#if !(defined(__BYTE_ORDER__) && defined(__ORDER_BIG_ENDIAN__) && __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__)
         const alt_editable_document loaded = alt_editable_document::load(d.save());
         CHECK(loaded.root().materialize() == expected);
+#endif
     }
 }
+
+// a std::u8string is a JSON string, whatever the string type of the JSON value
+// JSON_HAS_CPP_20 JSON_HAS_CPP_23 (do not remove; see note at top of file)
+#if defined(__cpp_lib_char8_t)
+TEST_CASE("alternative string type and std::u8string")
+{
+    const std::u8string s = u8"abc";
+    const alt_json j = s;
+    CHECK(j.is_string());
+    CHECK(j.get<alt_string>() == alt_string("abc"));
+    CHECK(j.get<std::u8string>() == s);
+
+    // the array of code units written by versions before 3.13.0
+    CHECK(alt_json::array({0x61, 0x62, 0x63}).get<std::u8string>() == s);
+}
+#endif
 
 DOCTEST_CLANG_SUPPRESS_WARNING_POP

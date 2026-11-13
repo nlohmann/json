@@ -106,6 +106,7 @@
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint32_t
 #include <cstring> // memcmp, memcpy
+#include <functional> // less
 #include <limits> // numeric_limits
 #include <map> // map
 #include <memory> // unique_ptr
@@ -187,6 +188,11 @@
     #undef NLOHMANN_VIEW_THROW
     #define NLOHMANN_VIEW_THROW JSON_THROW_USER
 #endif
+
+// debug checks of preconditions (assert(), off with NDEBUG): JSON_ASSERT is
+// one of the macros that json.hpp undefines at its end
+#include <cassert> // assert
+#define NLOHMANN_VIEW_ASSERT(x) assert(x)
 
 // the parser stores a node's first word at once where the layout of `node` is
 // known to be little-endian (MSVC targets are); elsewhere field by field
@@ -486,6 +492,24 @@ struct document_data
         }
         nodes = inline_nodes;
         node_capacity = inline_capacity;
+    }
+
+    /// whether the n bytes at p overlap memory that the next parse releases or
+    /// reuses: the owned text, the decoded strings, an owned image, and the
+    /// current buffer of strings written by edits (earlier edit buffers are not
+    /// covered, as their sizes are not kept); for the debug check in read()
+    bool holds(const char* p, std::size_t n) const noexcept
+    {
+        const auto overlaps = [p, n](const char* b, std::size_t m) noexcept
+        {
+            // (std::less: a total order also for pointers into different objects; std::less<> needs C++14)
+            // NOLINTNEXTLINE(modernize-use-transparent-functors)
+            return n != 0 && m != 0 && std::less<const char*>()(p, b + m) && std::less<const char*>()(b, p + n);
+        };
+        return overlaps(owned.data(), owned.capacity())
+               || overlaps(arena.data(), arena.capacity())
+               || overlaps(reinterpret_cast<const char*>(owned_image.data()), owned_image.capacity()) // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+               || (edits && !edits->texts.empty() && overlaps(edits->texts.back().get(), edits->text_cap));
     }
 
     /// the largest node count whose size in bytes fits a std::size_t
@@ -3239,6 +3263,14 @@ NLOHMANN_VIEW_ALWAYS_INLINE bool bytes_equal(const char* x, const char* y, std::
     return true;
 }
 
+/// whether a float node holds the text nan, which an edit writes for a NaN (and records without a digit layout, so
+/// that a parsed float is told apart by one comparison of what the walk has loaded anyway): equal tokens are an
+/// equal value, except for this one
+NLOHMANN_VIEW_ALWAYS_INLINE bool float_token_is_nan(const node& n, const char* s) noexcept
+{
+    return NLOHMANN_VIEW_UNLIKELY(n.extra == 0xFFFFu) && n.len == 3 && s[0] == 'n';
+}
+
 /// whether the n1 bytes at x are before the n2 bytes at y (memcmp() order, then the shorter first);
 /// the first difference is found eight bytes at a time
 NLOHMANN_VIEW_ALWAYS_INLINE bool bytes_less(const char* x, std::size_t n1, const char* y, std::size_t n2) noexcept
@@ -3848,7 +3880,7 @@ class lockstep
             case value_t::string:
                 return a->len == b->len && bytes_equal(m_a.str(*a), m_b.str(*b), a->len);
             case value_t::number_float: // (the token, and the digit layout that the value is read with: they only differ in a damaged image)
-                return a->extra == b->extra && a->len == b->len && bytes_equal(m_a.str(*a), m_b.str(*b), a->len);
+                return same_float(a, b, std::integral_constant<bool, EA> {});
             case value_t::number_integer:
             case value_t::number_unsigned:
                 return integer_bits(*a) == integer_bits(*b);
@@ -3943,6 +3975,17 @@ class lockstep
         return true;
     }
 
+    /// (a read-only document holds no NaN)
+    bool same_float(const node* a, const node* b, std::false_type /*editable*/) const noexcept
+    {
+        return a->extra == b->extra && a->len == b->len && bytes_equal(m_a.str(*a), m_b.str(*b), a->len);
+    }
+
+    bool same_float(const node* a, const node* b, std::true_type /*editable*/) const noexcept
+    {
+        return a->extra == b->extra && a->len == b->len && bytes_equal(m_a.str(*a), m_b.str(*b), a->len) && !float_token_is_nan(*a, m_a.str(*a));
+    }
+
     bool elements(const node* a, const node* b, unsigned budget, lockstep_path::entry& stop) noexcept
     {
         const node* pa = nav_a::first(m_a, a);
@@ -3999,9 +4042,9 @@ bool certainly_equal(const view_side<BasicJsonType, ViewA>& a, const view_side<B
     {
         return false;
     }
-    if (na == nb)
+    if (na == nb && (!view_side<BasicJsonType, ViewA>::nav::editable() || a.document().edits == nullptr))
     {
-        return true; // (the same node of the same document: documents have distinct nodes)
+        return true; // (the same node of the same document: documents have distinct nodes; a document with edits is walked, as an edit can have written a NaN, which is not equal to itself)
     }
     path.resume = nullptr;
     if (path.next < path.length && path.nodes[path.next].a == na && path.nodes[path.next].b == nb)
@@ -4046,7 +4089,9 @@ void resume_array(const lockstep_path& /*path*/, const A& /*a*/, const B& /*b*/,
 template<typename BasicJsonType, typename ViewA, typename ViewB>
 bool floats_equal(const view_side<BasicJsonType, ViewA>& a, const view_side<BasicJsonType, ViewB>& b)
 {
-    return (a.value_node()->extra == b.value_node()->extra && a.float_token() == b.float_token()) || std::equal_to<typename BasicJsonType::number_float_t>()(a.floating(), b.floating());
+    // float_token_is_nan() reads at most the node length of the token, which is not null terminated
+    // NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage)
+    return (a.value_node()->extra == b.value_node()->extra && a.float_token() == b.float_token() && !(view_side<BasicJsonType, ViewA>::nav::editable() && float_token_is_nan(*a.value_node(), a.float_token().data()))) || std::equal_to<typename BasicJsonType::number_float_t>()(a.floating(), b.floating());
 }
 
 template<typename A, typename B>
@@ -7416,6 +7461,28 @@ inline bool float_token_finite(const unsigned char* s, std::size_t len, const nu
     return true;
 }
 
+/// whether an integer token (well-formed, no fraction or exponent) fits 64
+/// bits: the parser stores a number_integer or number_unsigned node for it,
+/// and a number_float node only for a token that does not fit
+inline bool integer_token_fits(const number_token& t)
+{
+    if (t.int_digits > 20)
+    {
+        return false;
+    }
+    if (t.int_digits == 20)
+    {
+        // (20 digits are compared with 2^64 - 1; a negative one is below -2^63)
+        // (only a leading 1 needs the comparison: the first digit of 20 is not 0)
+        return !t.negative && *t.int_start == '1' && std::memcmp(t.int_start, "18446744073709551615", 20) <= 0;
+    }
+    if (t.negative && t.int_digits == 19)
+    {
+        return *t.int_start != '9' || std::memcmp(t.int_start, "9223372036854775808", 19) <= 0;
+    }
+    return true;
+}
+
 /// whether an integer node matches its token the way the parser records it
 /// (after the bounds check; the token has at most 256 characters)
 inline bool check_integer(const node& n, const unsigned char* text)
@@ -7535,7 +7602,8 @@ inline bool check_float_ranges(std::vector<float_range>& ranges, const unsigned 
         if (!plain_float_token(s, r.len, r.extra))
         {
             number_token t{};
-            if (!scan_number_token(s, r.len, t) || !float_token_finite(s, r.len, t))
+            // (an integer token is a float node only if it does not fit 64 bits)
+            if (!scan_number_token(s, r.len, t) || (!t.is_float && integer_token_fits(t)) || !float_token_finite(s, r.len, t))
             {
                 return false;
             }
@@ -11630,6 +11698,10 @@ class basic_json_document
     /// sentinel: src[size] is readable and 0 (std::string, C strings)
     void build(const char* src, std::size_t size, on_error allow_exceptions, bool comments, bool trailing_commas, bool owned, bool sentinel)
     {
+        // precondition of read(): a borrowed input is not held by this document,
+        // which releases what it holds below (checked in debug builds only, as
+        // it would cost every read() of a small message a few percent)
+        NLOHMANN_VIEW_ASSERT(owned || !m_data || !m_data->holds(src, size));
         ensure_data(src, size);
         document_data& d = *m_data;
         if (!owned)
@@ -11719,6 +11791,10 @@ class basic_json_document
     template<typename T>
     void read_kind(const T& s, on_error ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::copy_range> /*unused*/)
     {
+        // (the precondition of read() as for a borrowed input, although only an
+        // input in the owned text breaks a copy: the same call borrows, for
+        // example a std::string_view in C++17, and must not depend on that)
+        NLOHMANN_VIEW_ASSERT(!m_data || !m_data->holds(reinterpret_cast<const char*>(s.data()), static_cast<std::size_t>(s.size()))); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         build_copy(s, ae, c, tc);
     }
 
@@ -11737,7 +11813,22 @@ class basic_json_document
     template<typename T>
     void read_kind(T&& input, on_error ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::adapter> /*unused*/)
     {
+        NLOHMANN_VIEW_ASSERT(!held(input)); // (see the copy_range overload)
         build_copy(std::forward<T>(input), ae, c, tc);
+    }
+
+    /// whether an input read through the input adapter is held by this document:
+    /// string_view_t before C++17 (a string handed out by a view), for the
+    /// debug check of read(); other inputs of this kind do not point into it
+    bool held(const detail::view::string_ref& s) const noexcept
+    {
+        return m_data && m_data->holds(s.data(), s.size());
+    }
+
+    template<typename T>
+    bool held(const T& /*input*/) const noexcept
+    {
+        return false;
     }
 
     template<typename IteratorType>
@@ -11895,6 +11986,7 @@ class tuple_element<N, ::nlohmann::detail::view::view_item<View>> // NOLINT(cert
 #undef NLOHMANN_VIEW_NOCLONE
 #undef NLOHMANN_VIEW_NODISCARD
 #undef NLOHMANN_VIEW_THROW
+#undef NLOHMANN_VIEW_ASSERT
 #undef NLOHMANN_VIEW_LITTLE_ENDIAN
 #undef NLOHMANN_VIEW_REPEAT16
 #undef NLOHMANN_VIEW_REPEAT_SECOND_8

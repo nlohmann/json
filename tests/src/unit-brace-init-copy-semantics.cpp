@@ -94,6 +94,37 @@ TEST_CASE("JSON_BRACE_INIT_COPY_SEMANTICS")
         CHECK(j3 == pair_shaped);
     }
 
+    SECTION("push_back and operator+= with a single braced JSON value")
+    {
+        // with the macro, the result does not depend on the compiler;
+        // without it, GCC wraps a JSON value and Clang does not (a literal
+        // such as {1} is wrapped by both)
+        json const obj = {{"key", "value"}};
+        json const arr = {1, 2};
+
+        json a1 = json::array();
+        a1.push_back({obj});
+        CHECK(a1 == json::array({obj}));
+
+        json a2 = json::array();
+        a2 += {obj};
+        CHECK(a2 == json::array({obj}));
+
+        json b1 = json::array();
+        b1.push_back({arr});
+        CHECK(b1 == json::array({arr}));
+
+        json b2 = json::array();
+        b2 += {arr};
+        CHECK(b2 == json::array({arr}));
+
+        // a literal is copied as well
+        json c = json::array();
+        c.push_back({1});
+        c += {2};
+        CHECK(c == json::array({1, 2}));
+    }
+
     SECTION("what the macro does not change")
     {
         // lists with more than one element are unaffected

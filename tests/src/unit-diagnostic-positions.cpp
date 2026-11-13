@@ -128,16 +128,19 @@ TEST_CASE("Better diagnostics with positions")
             check_copy(depth, true);
         };
 
+        // around detail::recursion_depth_limit() (127, 128, and 129 by default)
+        const std::size_t limit = nlohmann::detail::recursion_depth_limit();
+
         check_arrays(1);
-        check_arrays(127);
-        check_arrays(128);
-        check_arrays(129);
+        check_arrays(limit > 0 ? limit - 1 : 0);
+        check_arrays(limit);
+        check_arrays(limit + 1);
         check_arrays(300);
 
         check_objects(1);
-        check_objects(127);
-        check_objects(128);
-        check_objects(129);
+        check_objects(limit > 0 ? limit - 1 : 0);
+        check_objects(limit);
+        check_objects(limit + 1);
         check_objects(300);
     }
 
@@ -186,10 +189,13 @@ TEST_CASE("Better diagnostics with positions")
             }
         };
 
+        // around detail::recursion_depth_limit() (127, 128, and 129 by default)
+        const std::size_t limit = nlohmann::detail::recursion_depth_limit();
+
         check_conversion(1);
-        check_conversion(127);
-        check_conversion(128);
-        check_conversion(129);
+        check_conversion(limit > 0 ? limit - 1 : 0);
+        check_conversion(limit);
+        check_conversion(limit + 1);
         check_conversion(300);
     }
 

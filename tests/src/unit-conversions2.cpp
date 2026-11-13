@@ -27,10 +27,12 @@ using nlohmann::json;
 #include <deque>
 #include <forward_list>
 #include <list>
+#include <map>
 #include <set>
 #include <unordered_map>
 #include <unordered_set>
 #include <valarray>
+#include <vector>
 
 // NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
 DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
@@ -707,38 +709,113 @@ TEST_CASE("std::filesystem::path")
 }
 #endif
 
-// the ADL to_json overload for std::u8string only exists under the same guard
-// as std::filesystem::path support (it is otherwise only reached indirectly,
-// via std::filesystem::path::u8string()) -- mirror both #if conditions from
-// include/nlohmann/detail/conversions/to_json.hpp exactly
-#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
+// a std::u8string is a JSON string since 3.13.0 (it was an array of code units
+// before); independent of whether std::filesystem::path is supported, see the
+// test-conversions2_no_filesystem target
+// JSON_HAS_CPP_20 JSON_HAS_CPP_23 (do not remove; see note at top of file)
 #if defined(__cpp_lib_char8_t)
 TEST_CASE("std::u8string")
 {
+    // use \u universal-character-names (rather than raw \x byte escapes
+    // or literal non-ASCII source bytes) to compose the multi-byte UTF-8
+    // encoding -- MSVC treats \x escapes used that way inside a u8
+    // literal as a nonstandard extension (warning C5321), which some of
+    // our CI configs promote to an error; \u is portable and produces
+    // the exact same encoded bytes without depending on the source
+    // file's encoding
+    const std::u8string utf8 = u8"P\u011B\u0161ina";
+
     SECTION("ascii")
     {
         const std::u8string s = u8"Path";
         json const j = s;
 
+        CHECK(j.is_string());
         CHECK(j.template get<std::string>() == "Path");
     }
 
     SECTION("utf-8")
     {
-        // use \u universal-character-names (rather than raw \x byte escapes
-        // or literal non-ASCII source bytes) to compose the multi-byte UTF-8
-        // encoding -- MSVC treats \x escapes used that way inside a u8
-        // literal as a nonstandard extension (warning C5321), which some of
-        // our CI configs promote to an error; \u is portable and produces
-        // the exact same encoded bytes without depending on the source
-        // file's encoding
-        const std::u8string s = u8"P\u011B\u0161ina";
-        json const j = s;
+        json const j = utf8;
 
+        CHECK(j.is_string());
         CHECK(j.template get<std::string>() == "P\xc4\x9b\xc5\xa1ina");
     }
-}
+
+    SECTION("round trip")
+    {
+        json const j = utf8;
+        CHECK(j.template get<std::u8string>() == utf8);
+
+        std::u8string back;
+        j.get_to(back);
+        CHECK(back == utf8);
+
+        // from a string
+        json const j_string = "P\xc4\x9b\xc5\xa1ina";
+        CHECK(j_string.template get<std::u8string>() == utf8);
+
+        // empty, and with an embedded NUL
+        CHECK(json(std::u8string()).template get<std::u8string>().empty());
+        const std::u8string with_nul(u8"a\0b", 3);
+        CHECK(json(with_nul).template get<std::u8string>() == with_nul);
+
+        // the lvalue and rvalue paths, and in containers
+        CHECK(json(utf8).template get<std::u8string>() == utf8);
+        CHECK(json(std::u8string(utf8)).template get<std::u8string>() == utf8);
+        const std::vector<std::u8string> vec = {utf8, u8"x"};
+        json const j_vec = vec;
+        CHECK(j_vec.is_array());
+        CHECK(j_vec[0].is_string());
+        CHECK(j_vec.template get<std::vector<std::u8string>>() == vec);
+        const std::map<std::string, std::u8string> map = {{"k", utf8}};
+        CHECK(json(map).template get<std::map<std::string, std::u8string>>() == map);
+    }
+
+    SECTION("array of code units (written by versions before 3.13.0)")
+    {
+        json const j = json::array({0x50, 0xC4, 0x9B, 0xC5, 0xA1, 0x69, 0x6E, 0x61});
+        CHECK(j.template get<std::u8string>() == utf8);
+        CHECK(json::array().template get<std::u8string>().empty());
+        CHECK(json::parse("[97, 98]").template get<std::u8string>() == u8"ab");
+
+        std::u8string s = u8"overwritten";
+        j.get_to(s);
+        CHECK(s == utf8);
+    }
+
+    SECTION("other types")
+    {
+#if !defined(JSON_NOEXCEPTION)
+        CHECK_THROWS_WITH_AS(json(1).template get<std::u8string>(), "[json.exception.type_error.302] type must be string or array, but is number", json::type_error);
+        CHECK_THROWS_WITH_AS(json(nullptr).template get<std::u8string>(), "[json.exception.type_error.302] type must be string or array, but is null", json::type_error);
+        CHECK_THROWS_AS(json::object().template get<std::u8string>(), json::type_error);
+        // an element that is not a number
+        CHECK_THROWS_AS(json::array({"a"}).template get<std::u8string>(), json::type_error);
 #endif
+    }
+
+    SECTION("ordered_json")
+    {
+        nlohmann::ordered_json const j = utf8;
+        CHECK(j.is_string());
+        CHECK(j.template get<std::string>() == "P\xc4\x9b\xc5\xa1ina");
+        CHECK(j.template get<std::u8string>() == utf8);
+        CHECK(nlohmann::ordered_json::array({0x61, 0x62}).template get<std::u8string>() == u8"ab");
+    }
+
+    SECTION("std::u8string_view and char8_t arrays are unchanged (arrays of code units)")
+    {
+        const std::u8string_view view = utf8;
+        json const j_view = view;
+        CHECK(j_view.is_array());
+        CHECK(j_view.size() == 8);
+
+        const char8_t arr[] = u8"ab"; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+        json const j_arr = arr;
+        CHECK(j_arr == json::array({0x61, 0x62, 0}));
+    }
+}
 #endif
 
 #if !defined(JSON_NOEXCEPTION)

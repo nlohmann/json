@@ -302,7 +302,7 @@ TEST_CASE("JSON Merge Patch on deeply nested values")
     SECTION("patching past the descent bound gives the same result")
     {
         // every depth on either side of where the iterative version takes
-        // over (detail::recursion_depth_limit(), 128)
+        // over (detail::recursion_depth_limit(), 128 by default)
         for (std::size_t depth = 0; depth <= 300; ++depth)
         {
             CAPTURE(depth)
@@ -396,7 +396,7 @@ TEST_CASE("merge_patch() with an argument that aliases *this (#5641)")
     SECTION("a patch nested past the iterative descent bound aliases *this")
     {
         // every depth on either side of where the iterative version takes
-        // over (detail::recursion_depth_limit(), 128); patching *this with
+        // over (detail::recursion_depth_limit(), 128 by default); patching *this with
         // itself is idempotent, aliased or not
         for (const std::size_t depth :
                 {

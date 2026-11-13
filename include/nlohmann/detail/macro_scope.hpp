@@ -224,6 +224,12 @@
     #define JSON_NO_THREAD_LOCAL 1
 #endif
 
+// JSON_RECURSION_DEPTH_LIMIT (the number of nesting levels the walks over a
+// value recurse into before they continue with an explicit stack; 128 by
+// default, 0 to 254 allowed) is defined and checked where it is used, in
+// detail/recursion_depth_limit.hpp. Like JSON_NO_THREAD_LOCAL it is neither part
+// of the ABI tag nor undefined at the end of json.hpp.
+
 // allow disabling exceptions
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
     #define JSON_THROW(exception) throw exception

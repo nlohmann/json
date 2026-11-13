@@ -46,6 +46,10 @@ The returned [`string_view_t`](index.md#member-types) is valid exactly as long a
 source text, which for a borrowed document must remain valid **and unmodified** for as long as the document exists,
 since floating-point values and unescaped strings are read from the source lazily.
 
+A string with escapes, a string of a document that owns its text, and an edited string must not be passed to
+[`read()`](../basic_json_document/read.md) of the document it came from: `read()` releases them before it parses its
+input. Copy the string first. (A string read unchanged from a borrowed text is not affected.)
+
 ## Examples
 
 ??? example

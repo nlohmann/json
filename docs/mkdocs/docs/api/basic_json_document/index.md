@@ -111,8 +111,9 @@ points apply to every edit:
   the end, and, with [`number_format::source`](../basic_json_view/number_format.md), keeps the spelling of every
   number that was not itself edited — see [Editing a document](../../features/json_view/editing.md) for
   why this matters.
-- [`read()`](read.md) discards all edits, [`shrink_to_fit()`](shrink_to_fit.md) does not move the node index once
-  there are edits, and [`memory_usage()`](memory_usage.md) includes the memory edits use.
+- [`read()`](read.md) discards all edits (so its `input` must not be a string obtained from this document),
+  [`shrink_to_fit()`](shrink_to_fit.md) does not move the node index once there are edits, and
+  [`memory_usage()`](memory_usage.md) includes the memory edits use.
   [`source_offset()`](../basic_json_view/source_offset.md) of a value introduced by an edit is
   `#!cpp static_cast<std::size_t>(-1)`, the same value it reports for a decoded string.
 

@@ -42,6 +42,8 @@ header. See also the [macro overview page](../../features/macros.md).
 - [**JSON_NO_IO**](json_no_io.md) - switch off functions relying on certain C++ I/O headers
 - [**JSON_NO_SIMD**](json_no_simd.md) - use only portable code instead of vector instructions (SSE2, SSSE3, NEON)
 - [**JSON_NO_THREAD_LOCAL**](json_no_thread_local.md) - switch off the use of `thread_local` storage
+- [**JSON_RECURSION_DEPTH_LIMIT**](json_recursion_depth_limit.md) - set how many nesting levels the operations on a value
+  recurse into on the call stack (default 128)
 - [**JSON_SKIP_UNSUPPORTED_COMPILER_CHECK**](json_skip_unsupported_compiler_check.md) - do not warn about unsupported compilers
 - [**JSON_USE_GLOBAL_UDLS**](json_use_global_udls.md) - place user-defined string literals (UDLs) into the global namespace
 - [**JSON_USE_SIMDUTF**](json_use_simdutf.md) - use the simdutf library to accelerate UTF-8 validation

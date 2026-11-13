@@ -2742,6 +2742,8 @@ struct reentrant_wrapper : dom_parser
     bool inner_done = false;
 };
 
+// ICC does not detect SAX members that a using-declaration exposes from a private or protected base
+#if !defined(__INTEL_COMPILER)
 class private_wrapper : private dom_parser
 {
   public:
@@ -2811,6 +2813,7 @@ class protected_wrapper : protected dom_parser
         return false;
     }
 };
+#endif
 
 // NOLINTEND(bugprone-derived-method-shadowing-base-method)
 
@@ -2964,6 +2967,7 @@ TEST_CASE("CBOR - open arrays reserve only what the input has backed")
             CHECK(innermost_capacity(result) < 16384);
         }
 
+#if !defined(__INTEL_COMPILER)
         // the reader cannot convert these to the DOM parser: they are not bound
         SECTION("private base")
         {
@@ -2980,6 +2984,7 @@ TEST_CASE("CBOR - open arrays reserve only what the input has backed")
             CHECK_FALSE(json::sax_parse(input, &handler, json::input_format_t::cbor));
             CHECK(innermost_capacity(result) == 16384);
         }
+#endif
     }
 
     SECTION("SAX events report the announced size")

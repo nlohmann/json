@@ -62,6 +62,15 @@ template<> struct StringMaker<std::partial_ordering>
 
 namespace
 {
+// nesting depths on either side of detail::recursion_depth_limit(): none, the
+// last one within the limit, the first one past it, and well past it (0, 127,
+// 128, and 200 by default)
+std::vector<std::size_t> depths_around_recursion_limit()
+{
+    const std::size_t limit = nlohmann::detail::recursion_depth_limit();
+    return {0, limit > 0 ? limit - 1 : 0, limit, limit + 72};
+}
+
 // helper function to check std::less<json::value_t>
 // see https://en.cppreference.com/w/cpp/utility/functional/less
 template <typename A, typename B, typename U = std::less<json::value_t>>
@@ -968,7 +977,7 @@ TEST_CASE("copying an object preserves its comparator's state")
     object["a"] = 3;
     REQUIRE(object.dump() == R"({"B":2,"a":3,"b":1})");
 
-    for (const std::size_t depth : std::vector<std::size_t> {0, 127, 128, 200})
+    for (const std::size_t depth : depths_around_recursion_limit())
     {
         CAPTURE(depth)
 
@@ -1011,7 +1020,7 @@ TEST_CASE("equality of an object whose comparator treats different keys as equiv
     // sanity check: the object type's own comparison already disagrees
     CHECK_FALSE(a.get_ref<const ci_json::object_t&>() == b.get_ref<const ci_json::object_t&>());
 
-    for (const std::size_t depth : std::vector<std::size_t> {0, 127, 128, 200})
+    for (const std::size_t depth : depths_around_recursion_limit())
     {
         CAPTURE(depth)
 
@@ -1135,9 +1144,10 @@ TEST_CASE("operator<=> of binary values with a different subtype does not depend
         return result;
     };
 
-    // 127 levels stay within nesting_depth_limit() (128); 128 and 200 do not,
-    // and must still agree with the levels that do
-    for (const std::size_t depth : std::vector<std::size_t> {0, 127, 128, 200})
+    // one level less than the recursion depth limit (127 by default) stays within it;
+    // the limit itself and more (128 and 200) do not, and must still agree with the
+    // levels that do
+    for (const std::size_t depth : depths_around_recursion_limit())
     {
         CAPTURE(depth)
         const json x = deep(a, depth);

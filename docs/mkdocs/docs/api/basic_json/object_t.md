@@ -102,9 +102,12 @@ objects.
 
 When converting an object from one `basic_json` specialization to another via the
 [converting constructor](basic_json.md) (overload 4), the target `object_t`'s `key_type` must be
-directly constructible from the source `basic_json`'s `string_t` type (or more generally, from the
-source object's key type). If this requirement is not met, the conversion does not fail; instead,
-the object is silently converted as an array of key-value pairs, which is incorrect. See
+directly constructible from the source object's key type (with the default `std::map`, the source `basic_json`'s
+`string_t`). If this requirement is not met and the source string type is a range of characters, the
+object is converted as an array of key-value pairs, which is incorrect: the converting constructor's
+[`JSON_ASSERT`](../macros/json_assert.md) fails; with its default definition, `assert`, the program aborts unless
+`NDEBUG` is defined, in which case the array is returned. If the source string type is not a range of characters, the
+conversion does not compile at all. See [`basic_json`](basic_json.md) and
 [issue #3425](https://github.com/nlohmann/json/issues/3425) for details and an example.
 
 ## Examples

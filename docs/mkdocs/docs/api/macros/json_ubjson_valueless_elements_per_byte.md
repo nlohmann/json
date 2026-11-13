@@ -40,9 +40,10 @@ The default value is `4`.
     ```
 
     The first is reported for `0` and negative values, the second for values such as `4.5`, `1e3`, `true`, or a
-    character of any character type (`'a'`, `L'a'`, `u8'a'`, ...), and the third for an integer type that is wider than
-    `#!cpp std::uintmax_t` (for example `unsigned __int128`). A value that is larger than the largest `#!cpp std::size_t` is treated as that largest value, so that a project can use one
-    spelling, for example `0xFFFFFFFFFFFFFFFFu`, for 32-bit and 64-bit targets.
+    character of any character type (`'a'`, `L'a'`, `u8'a'`, ...), and the third for an integer type that is wider
+    than `#!cpp std::uintmax_t` (for example `unsigned __int128`). A value that is larger than the largest `#!cpp
+    std::size_t` is treated as that largest value, so that a project can use one spelling, for example
+    `0xFFFFFFFFFFFFFFFFu`, for 32-bit and 64-bit targets.
 
 !!! info "Large values: the limit is switched off"
 

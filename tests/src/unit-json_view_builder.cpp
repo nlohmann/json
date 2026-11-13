@@ -906,3 +906,72 @@ TEST_CASE("json_view node array size limit")
     d->reserve(cap);
     CHECK(d->nodes == nodes);
 }
+
+TEST_CASE("json_view document_data::holds() (the debug check of read())")
+{
+    std::unique_ptr<document_data, document_data::deleter> d(document_data::create(0));
+    const std::string other = "[1,2,3]";
+    // an empty document holds nothing
+    CHECK(!d->holds(other.data(), other.size()));
+
+    SECTION("owned text")
+    {
+        d->owned = R"({"a":"some text that does not fit a short string"})";
+        const char* const b = d->owned.data();
+        CHECK(d->holds(b, 1));
+        CHECK(d->holds(b + 5, 3));
+        CHECK(d->holds(b + d->owned.size() - 1, 1));
+        // also after clear(), which keeps the buffer that the next parse writes
+        d->owned.clear();
+        // (b is only compared with the buffer, never read)
+        CHECK(d->holds(b, 4)); // NOLINT(clang-analyzer-cplusplus.InnerPointer)
+        CHECK(!d->holds(other.data(), other.size()));
+        CHECK(!d->holds(b, 0));
+    }
+
+    SECTION("decoded strings")
+    {
+        d->arena.assign(32, 'x');
+        CHECK(d->holds(d->arena.data() + 31, 1));
+        CHECK(d->holds(d->arena.data() + 31, 8)); // (overlapping the end)
+        CHECK(!d->holds(other.data(), other.size()));
+    }
+
+    SECTION("owned image")
+    {
+        d->owned_image.assign(16, 0);
+        CHECK(d->holds(reinterpret_cast<const char*>(d->owned_image.data()) + 8, 2)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+    }
+
+    SECTION("current edit buffer")
+    {
+        d->edits.reset(new document_data::edit_state()); // NOLINT(cppcoreguidelines-owning-memory)
+        CHECK(!d->holds(other.data(), other.size()));
+        d->edits->texts.emplace_back(new char[16]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-owning-memory)
+        d->edits->text_cap = 16;
+        CHECK(d->holds(d->edits->texts.back().get() + 3, 3));
+        CHECK(!d->holds(other.data(), other.size()));
+    }
+}
+
+TEST_CASE("json_view read() of inputs the check must accept")
+{
+    // in a debug build each read() below runs the check; none of the inputs
+    // is held by the document
+    const std::string text = R"({"a":"x\ny","b":[1,2]})";
+    nlohmann::json_document d;
+    d.read(text); // borrowed
+    d.read(text); // the same borrowed text again
+    CHECK(d.root()["b"][1].get<int>() == 2);
+    const std::string copy(d.root()["a"].get_string()); // a decoded string, copied first
+    d.read(std::string(text)); // owned
+    d.read(R"(["x"])");
+    d.read(text);
+    CHECK(copy == "x\ny");
+    nlohmann::json_editable_document e;
+    e.read(text);
+    e.set(e.root(), "a", "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]");
+    const std::string edited(e.root()["a"].get_string()); // an edited string, copied first
+    e.read(edited);
+    CHECK(e.root().size() == 16);
+}

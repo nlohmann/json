@@ -1531,6 +1531,10 @@ class basic_json_document
     /// sentinel: src[size] is readable and 0 (std::string, C strings)
     void build(const char* src, std::size_t size, on_error allow_exceptions, bool comments, bool trailing_commas, bool owned, bool sentinel)
     {
+        // precondition of read(): a borrowed input is not held by this document,
+        // which releases what it holds below (checked in debug builds only, as
+        // it would cost every read() of a small message a few percent)
+        NLOHMANN_VIEW_ASSERT(owned || !m_data || !m_data->holds(src, size));
         ensure_data(src, size);
         document_data& d = *m_data;
         if (!owned)
@@ -1620,6 +1624,10 @@ class basic_json_document
     template<typename T>
     void read_kind(const T& s, on_error ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::copy_range> /*unused*/)
     {
+        // (the precondition of read() as for a borrowed input, although only an
+        // input in the owned text breaks a copy: the same call borrows, for
+        // example a std::string_view in C++17, and must not depend on that)
+        NLOHMANN_VIEW_ASSERT(!m_data || !m_data->holds(reinterpret_cast<const char*>(s.data()), static_cast<std::size_t>(s.size()))); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
         build_copy(s, ae, c, tc);
     }
 
@@ -1638,7 +1646,22 @@ class basic_json_document
     template<typename T>
     void read_kind(T&& input, on_error ae, bool c, bool tc, std::integral_constant<input_kind, input_kind::adapter> /*unused*/)
     {
+        NLOHMANN_VIEW_ASSERT(!held(input)); // (see the copy_range overload)
         build_copy(std::forward<T>(input), ae, c, tc);
+    }
+
+    /// whether an input read through the input adapter is held by this document:
+    /// string_view_t before C++17 (a string handed out by a view), for the
+    /// debug check of read(); other inputs of this kind do not point into it
+    bool held(const detail::view::string_ref& s) const noexcept
+    {
+        return m_data && m_data->holds(s.data(), s.size());
+    }
+
+    template<typename T>
+    bool held(const T& /*input*/) const noexcept
+    {
+        return false;
     }
 
     template<typename IteratorType>

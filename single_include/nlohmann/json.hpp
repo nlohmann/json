@@ -2597,6 +2597,12 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_NO_THREAD_LOCAL 1
 #endif
 
+// JSON_RECURSION_DEPTH_LIMIT (the number of nesting levels the walks over a
+// value recurse into before they continue with an explicit stack; 128 by
+// default, 0 to 254 allowed) is defined and checked where it is used, in
+// detail/recursion_depth_limit.hpp. Like JSON_NO_THREAD_LOCAL it is neither part
+// of the ABI tag nor undefined at the end of json.hpp.
+
 // allow disabling exceptions
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
     #define JSON_THROW(exception) throw exception
@@ -6939,6 +6945,37 @@ void from_json(const BasicJsonType& j, std::unordered_map<Key, Value, Hash, KeyE
     from_json_pair_array_to_map(j, m);
 }
 
+#if defined(__cpp_lib_char8_t)
+// a std::u8string is read from a JSON string; the array of code units written by
+// versions before 3.13.0 is still accepted
+template<typename BasicJsonType, typename Tr, typename Allocator,
+         enable_if_t<std::is_same<typename json_type_of_t<BasicJsonType>::string_t::value_type, char>::value, int> = 0>
+inline void from_json(const BasicJsonType& j, std::basic_string<char8_t, Tr, Allocator>& s)
+{
+    if (j.is_string())
+    {
+        const auto& str = string_value(j);
+        const char* const data = str.data();
+        const std::size_t size = str.size();
+        std::basic_string<char8_t, Tr, Allocator> ret(s.get_allocator());
+        ret.resize(size);
+        for (std::size_t i = 0; i < size; ++i)
+        {
+            ret[i] = static_cast<char8_t>(static_cast<unsigned char>(data[i]));
+        }
+        s = std::move(ret);
+    }
+    else if (j.is_array())
+    {
+        from_json_array_impl(j, s, priority_tag<3> {});
+    }
+    else
+    {
+        throw_type_must_be("string or array", j);
+    }
+}
+#endif
+
 #if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
 
 // Workaround for MSVC 19.51 (and possibly later): in large cpp files, the compiler may fail to resolve with generic has_from_json (issue #4996)
@@ -8340,16 +8377,20 @@ inline void to_json(BasicJsonType& j, const T& t)
     to_json_tuple_impl(j, t, make_index_sequence<std::tuple_size<T>::value> {});
 }
 
-#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
+// a std::u8string is a JSON string (it was an array of code units before 3.13.0);
+// defined outside the std::filesystem guard so that the result does not depend
+// on whether std::filesystem::path is supported
 #if defined(__cpp_lib_char8_t)
 template<typename BasicJsonType, typename Tr, typename Allocator>
 inline void to_json(BasicJsonType& j, const std::basic_string<char8_t, Tr, Allocator>& s)
 {
-    using OtherAllocator = typename std::allocator_traits<Allocator>::template rebind_alloc<char>;
-    j = std::basic_string<char, std::char_traits<char>, OtherAllocator>(s.begin(), s.end(), s.get_allocator());
+    using string_t = typename BasicJsonType::string_t;
+    // char may alias any object; the code units are copied unchanged
+    j = string_t(reinterpret_cast<const char*>(s.data()), s.size());
 }
 #endif
 
+#if JSON_HAS_FILESYSTEM || JSON_HAS_EXPERIMENTAL_FILESYSTEM
 // Workaround for MSVC 19.51 (and possibly later): in large cpp files, the compiler may fail to resolve with generic has_to_json (issue #4996)
 template<typename BasicJsonType>
 struct has_to_json<BasicJsonType, std_fs::path, void> : std::true_type {};
@@ -8611,9 +8652,22 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 #include <cstddef> // size_t
+#include <type_traits> // false_type, is_integral, remove_cv, true_type
 
 // #include <nlohmann/detail/abi_macros.hpp>
 
+
+// JSON_RECURSION_DEPTH_LIMIT: the number of nesting levels the operations that
+// walk a value recurse into on the call stack before they continue with an
+// explicit stack (see detail::recursion_depth_limit() below).
+//
+// May be defined by the user before the first include of the library; it has
+// to be the same in every translation unit of a program (it is not part of the
+// ABI tag, see https://json.nlohmann.me/api/macros/json_recursion_depth_limit/).
+// Allowed: an integer constant expression from 0 to 254. The default is 128.
+#ifndef JSON_RECURSION_DEPTH_LIMIT
+    #define JSON_RECURSION_DEPTH_LIMIT 128
+#endif
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 namespace detail
@@ -8623,21 +8677,71 @@ namespace detail
 @brief the number of nesting levels an operation recurses into
 
 Operations that walk a value (copying, comparing, serializing, hashing, merging,
-...) recurse once
-per nesting level, which is fastest, but a value nested deeply enough would
-exhaust the call stack. So they recurse only this many levels deep and finish
-whatever lies below with an explicit stack. All of them share this limit.
+diffing, converting, destroying, and writing the binary formats CBOR,
+MessagePack, UBJSON, BJData, and BON8) recurse once per nesting level, which is
+fastest, but a value nested deeply enough would exhaust the call stack. So they
+recurse only this many levels deep and finish whatever lies below with an
+explicit stack that lives on the heap. All of them share this limit and none has
+a constant of its own. It is the value of the macro JSON_RECURSION_DEPTH_LIMIT,
+128 by default. (Parsing, the binary readers, flatten(), unflatten(), and
+to_bson() always use an explicit stack and do not read it, and the lockstep
+comparison of json_view documents has a fixed bound of its own, 48 levels.)
 
-Most of them pass the depth down as an argument. The copy constructor and the
-comparison operators cannot, as their signatures are fixed, so they count it
-in basic_json::nesting_depth() instead, a byte per thread; the limit must
-therefore stay below 255.
+Most of the operations pass the depth down as an argument. The copy constructor
+and the comparison operators cannot, as their signatures are fixed, so they
+count it in basic_json::nesting_depth() instead, a byte per thread. Only the
+levels that are descended into are counted, so the count never exceeds the limit.
+The limit must fit in the byte with some headroom, so that the count cannot wrap
+around: it must be below 255, and 254 is the largest value allowed. (More levels
+would hardly be useful: 254 levels need up to 576 KiB of stack in an unoptimized
+build already, twice the stack of the default.)
 
+The smallest value is 0: every operation then uses its explicit stack from the
+first level on and no operation recurses over the nesting of a value at all.
+That is slower, but needs a constant amount of call stack. It works because
+every use of the limit compares a depth with it (`depth >= limit`, or `<` for
+the opposite), which holds for 0 as for any other value; nothing computes
+`limit - 1` or `limit + 1`, so nothing wraps around. Each operation's explicit
+stack handles any nesting level, including the first, so none of them relies on
+having recursed first.
+
+The call stack that an operation needs is roughly a few KiB plus a cost per level
+times the limit. At the default of 128 levels, an unoptimized build needs up to
+about 290 KiB (`dump()` with Clang at -O0: about 2.3 KiB per level) and an
+optimized build up to about 48 KiB; with 254 levels it is up to 576 KiB and
+112 KiB, and with 0 it is 16 KiB or less. Lower the limit for threads with small
+stacks (RTOS tasks, fibers, musl threads), raise it to trade stack for speed on
+deeply nested values. All of this, with the measurements, is in the
+documentation of the macro.
+
+@sa https://json.nlohmann.me/api/macros/json_recursion_depth_limit/
 @sa https://github.com/nlohmann/json/issues/5387
 */
+/// the type of the value of JSON_RECURSION_DEPTH_LIMIT is bool or a character type
+template<typename T> struct recursion_depth_limit_is_char_or_bool : std::false_type {};
+template<> struct recursion_depth_limit_is_char_or_bool<bool> : std::true_type {};
+template<> struct recursion_depth_limit_is_char_or_bool<char> : std::true_type {};
+template<> struct recursion_depth_limit_is_char_or_bool<signed char> : std::true_type {};
+template<> struct recursion_depth_limit_is_char_or_bool<unsigned char> : std::true_type {};
+template<> struct recursion_depth_limit_is_char_or_bool<wchar_t> : std::true_type {};
+template<> struct recursion_depth_limit_is_char_or_bool<char16_t> : std::true_type {};
+template<> struct recursion_depth_limit_is_char_or_bool<char32_t> : std::true_type {};
+#if defined(__cpp_char8_t)
+template<> struct recursion_depth_limit_is_char_or_bool<char8_t> : std::true_type {};
+#endif
+
 constexpr std::size_t recursion_depth_limit() noexcept
 {
-    return 128;
+    // an integer: not a floating-point number, whose range check would pass for 1.5 or 254.0
+    // (bool and the character types are integer types, too, but true, false or 'a' are
+    // no way to say a limit; JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE refuses them as well)
+    static_assert(std::is_integral<decltype(JSON_RECURSION_DEPTH_LIMIT)>::value
+                  && !recursion_depth_limit_is_char_or_bool<typename std::remove_cv<decltype(JSON_RECURSION_DEPTH_LIMIT)>::type>::value,
+                  "JSON_RECURSION_DEPTH_LIMIT must be an integer constant (not bool or a character type)");
+    static_assert(JSON_RECURSION_DEPTH_LIMIT >= 0 && JSON_RECURSION_DEPTH_LIMIT <= 254,
+                  "JSON_RECURSION_DEPTH_LIMIT must be between 0 and 254: the nesting depth is counted in a byte per thread "
+                  "and may exceed the limit by one (see https://json.nlohmann.me/api/macros/json_recursion_depth_limit/)");
+    return static_cast<std::size_t>(JSON_RECURSION_DEPTH_LIMIT);
 }
 
 }  // namespace detail
@@ -10433,15 +10537,23 @@ struct can_compare_ne_either_order : std::integral_constant < bool,
     can_compare_ne_impl<IteratorType, SentinelType>::value ||
     can_compare_ne_reversed<IteratorType, SentinelType>::value > {};
 
-// std::nullptr_t is excluded explicitly: a literal `nullptr` passed as a
-// trailing default argument (e.g. parse(s, nullptr, ...)) must never be
-// mistaken for a sentinel, and some compilers (e.g. GCC 4.8) unreliably
-// SFINAE the `operator!=` detection above for std::nullptr_t against
-// container/string types, which would otherwise make such calls ambiguous
-// with the compatible-input overload.
+// Two kinds of SentinelType are excluded explicitly:
+//
+// - std::nullptr_t: a literal `nullptr` passed as a trailing default argument
+//   (e.g. parse(s, nullptr, ...)) must never be mistaken for a sentinel, and
+//   some compilers (e.g. GCC 4.8) unreliably SFINAE the `operator!=` detection
+//   above for std::nullptr_t against container/string types, which would
+//   otherwise make such calls ambiguous with the compatible-input overload.
+// - function pointers and functions: a parser callback passed as plain function
+//   (e.g. parse(s, cb)) is never a sentinel. The callback's parameter types
+//   make basic_json an associated class, so ADL finds the friend
+//   operator!=(const_reference, ScalarType) of basic_json, which makes
+//   `s != cb` well-formed (both convert to basic_json) and would select the
+//   iterator/sentinel overload.
 template<typename IteratorType, typename SentinelType>
 struct can_compare_ne : std::integral_constant < bool,
     !std::is_same<SentinelType, std::nullptr_t>::value &&
+    !std::is_function<typename std::remove_pointer<SentinelType>::type>::value &&
     can_compare_ne_either_order<IteratorType, SentinelType>::value > {};
 
 template<typename T>
@@ -27630,6 +27742,32 @@ class json_pointer
     };
 
     /*!
+    @brief the number of the deepest step of the previous path that is a prefix of the new one
+
+    Comparing every one of many steps with the beginning of the path would take
+    quadratic time. Instead, the length of the common beginning of the two paths
+    is computed once: a step whose prefix is not longer is a prefix of the new
+    path, too. For few steps, which is the usual case, @ref resolve_plain
+    compares them, which is cheaper.
+    */
+    template<typename Steps>
+    JSON_HEDLEY_NEVER_INLINE static std::size_t deepest_shared_step(const string_t& path, const std::size_t length, const string_t& previous, const Steps& steps) noexcept
+    {
+        const std::size_t same = common_prefix_length(path.data(), previous.data(), (std::min)(length, previous.size()));
+        std::size_t depth = steps.size();
+        for (; depth > 1; --depth)
+        {
+            // a step ends at a token boundary of the previous path
+            const std::size_t prefix = steps[depth - 1].first;
+            if (prefix <= same && (prefix == length || path[prefix] == '/'))
+            {
+                break;
+            }
+        }
+        return depth;
+    }
+
+    /*!
     @brief resolve a plain JSON pointer without building its reference tokens
 
     @param[in] root    the value the pointer starts at
@@ -27657,13 +27795,20 @@ class json_pointer
         if (cache.path != nullptr && !steps.empty() && steps[0].second == root)
         {
             const string_t& previous = *cache.path;
-            for (depth = steps.size(); depth > 1; --depth)
+            if (JSON_HEDLEY_UNLIKELY(steps.size() > 16))
             {
-                // a step ends at a token boundary of the previous path
-                const std::size_t prefix = steps[depth - 1].first;
-                if (prefix <= length && (prefix == length || path[prefix] == '/') && std::memcmp(path.data(), previous.data(), prefix) == 0)
+                depth = deepest_shared_step(path, length, previous, steps);
+            }
+            else
+            {
+                for (depth = steps.size(); depth > 1; --depth)
                 {
-                    break;
+                    // a step ends at a token boundary of the previous path
+                    const std::size_t prefix = steps[depth - 1].first;
+                    if (prefix <= length && (prefix == length || path[prefix] == '/') && std::memcmp(path.data(), previous.data(), prefix) == 0)
+                    {
+                        break;
+                    }
                 }
             }
             steps.resize(depth);
@@ -30874,6 +31019,14 @@ class binary_writer
         write_container_iterative<msgpack_walk>(root);
     }
 
+    // a function, not an inline condition: for an object the type is never
+    // valueless and MSVC would warn about a constant expression (C4127)
+    static constexpr bool valueless_array_fits(const bool valueless_type, const std::size_t size,
+            const std::size_t written) noexcept
+    {
+        return !valueless_type || size <= detail::valueless_elements_base - written;
+    }
+
     /*!
     @brief write the start of an array (@a IsArray) or object: its opening
            marker, the optimized type, and the count
@@ -30922,7 +31075,7 @@ class binary_writer
             if (same_prefix && !(use_bjdata && is_bjdata_excluded_type_marker(first_prefix)))
             {
                 const bool valueless_type = IsArray && (first_prefix == 'Z' || first_prefix == 'T' || first_prefix == 'F');
-                if (!valueless_type || size <= detail::valueless_elements_base - valueless_elements_written)
+                if (valueless_array_fits(valueless_type, size, valueless_elements_written))
                 {
                     prefix_required = false;
                     oa.write_character(to_char_type('$'));
@@ -40782,8 +40935,10 @@ public:
     }
 
 #ifndef JSON_NO_THREAD_LOCAL
-    // nesting_depth() is a byte and may exceed the limit by one level
-    static_assert(detail::recursion_depth_limit() < 255, "the nesting depth count must fit in a byte");
+    // nesting_depth() is a byte that never exceeds the limit (JSON_RECURSION_DEPTH_LIMIT),
+    // which is at most 254: the largest value stays one below the byte's maximum, so
+    // that the count cannot wrap around to 0 and let a descent go on without a bound.
+    // recursion_depth_limit() checks this range with a static_assert.
 
     /*!
     @brief how many levels the operation going on in this thread has descended into
@@ -40794,8 +40949,15 @@ public:
     user code nests them anyway, sharing the count only ends a descent sooner
     than it had to, which costs a little speed and is never wrong.
 
-    A byte is enough: the count never exceeds the limit by more than the single
-    level that notices the limit has been reached.
+    A byte is enough: only the levels that are descended into are counted
+    (@ref nesting_depth_guard), so the count never exceeds the limit, and the
+    limit is at most 254.
+
+    The count is per thread and not per value or per library configuration: all
+    translation units of a program share it, even if they were compiled with
+    different values of JSON_RECURSION_DEPTH_LIMIT (which is not supported, see
+    the documentation of the macro); each of them then compares the shared count
+    with its own limit.
     */
     static std::uint8_t& nesting_depth() noexcept
     {
@@ -40853,14 +41015,25 @@ public:
 #endif
         {
 #ifndef JSON_NO_THREAD_LOCAL
-            ++nesting_depth();
+            // Only a level that is entered is counted, so that the count never
+            // exceeds the limit. A level that is not entered is finished without
+            // descending, and whatever runs while it is (a copy made by a custom
+            // base class, say) sees the same count as the level itself did and
+            // is not entered either.
+            if (m_okay)
+            {
+                ++nesting_depth();
+            }
 #endif
         }
 
         ~nesting_depth_guard()
         {
 #ifndef JSON_NO_THREAD_LOCAL
-            --nesting_depth();
+            if (m_okay)
+            {
+                --nesting_depth();
+            }
 #endif
         }
 
@@ -44772,7 +44945,10 @@ public:
     */
     void update_members(const iterator& first, const iterator& last, const bool merge_objects, const std::size_t depth)
     {
-        if (JSON_HEDLEY_UNLIKELY(depth >= detail::recursion_depth_limit()))
+        // without merge_objects the loop below never descends, so there is no
+        // call stack to save (and the explicit stack always merges); the
+        // distinction matters for a limit of 0, which reaches this at depth 0
+        if (JSON_HEDLEY_UNLIKELY(merge_objects && depth >= detail::recursion_depth_limit()))
         {
             update_members_iteratively(first, last);
             return;

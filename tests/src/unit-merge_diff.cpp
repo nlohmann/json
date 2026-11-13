@@ -930,14 +930,15 @@ TEST_CASE("JSON Merge Patch diff of deeply nested values")
     SECTION("the patch is the same past the descent bound")
     {
         // depths on either side of the nesting depth up to which merge_diff()
-        // recurses (detail::recursion_depth_limit(), 128); not every depth up
+        // recurses (detail::recursion_depth_limit(), 128 by default); not every depth up
         // to 300, to keep the test fast under Valgrind
         std::vector<std::size_t> depths;
         for (std::size_t depth = 0; depth <= 16; ++depth)
         {
             depths.push_back(depth);
         }
-        for (std::size_t depth = 120; depth <= 136; ++depth)
+        const std::size_t limit = nlohmann::detail::recursion_depth_limit();
+        for (std::size_t depth = limit > 8 ? limit - 8 : 0; depth <= limit + 8; ++depth)
         {
             depths.push_back(depth);
         }

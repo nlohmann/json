@@ -36,15 +36,21 @@ using NLOHMANN_JSON_NAMESPACE::adl_serializer;
 using NLOHMANN_JSON_NAMESPACE::basic_json;
 using NLOHMANN_JSON_NAMESPACE::basic_json_document;
 using NLOHMANN_JSON_NAMESPACE::basic_json_view;
+using NLOHMANN_JSON_NAMESPACE::is_json_view;
 using NLOHMANN_JSON_NAMESPACE::json;
 using NLOHMANN_JSON_NAMESPACE::json_document;
+using NLOHMANN_JSON_NAMESPACE::json_editable_document;
+using NLOHMANN_JSON_NAMESPACE::json_editable_view;
 using NLOHMANN_JSON_NAMESPACE::json_pointer;
 using NLOHMANN_JSON_NAMESPACE::json_view;
 using NLOHMANN_JSON_NAMESPACE::ordered_json;
 using NLOHMANN_JSON_NAMESPACE::ordered_json_document;
+using NLOHMANN_JSON_NAMESPACE::ordered_json_editable_document;
+using NLOHMANN_JSON_NAMESPACE::ordered_json_editable_view;
 using NLOHMANN_JSON_NAMESPACE::ordered_json_view;
 using NLOHMANN_JSON_NAMESPACE::ordered_map;
 using NLOHMANN_JSON_NAMESPACE::to_string;
+using NLOHMANN_JSON_NAMESPACE::view_mode;
 
 inline namespace literals
 {
