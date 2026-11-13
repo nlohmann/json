@@ -471,6 +471,10 @@ endif()
 
 add_subdirectory(abi)
 
+if (JSON_ClangTidyPlugin)
+    add_subdirectory(clang_tidy_plugin)
+endif()
+
 #############################################################################
 # Test the generated build configs
 #############################################################################
