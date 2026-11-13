@@ -648,6 +648,22 @@ TEST_CASE("json_view images: edited documents")
         d.set(d.root(), "text");
         check_round_trip(d);
     }
+
+    SECTION("a float copied from another document keeps its spelling")
+    {
+        using nf = nlohmann::json_editable_view::number_format;
+        const json_document other = json_document::parse("[1.0E0, 100000000000000000000]");
+        json_editable_document d = json_editable_document::parse("[1.50]");
+        d.push_back(d.root(), other.root()[0]);
+        d.push_back(d.root(), other.root()[1]);
+        d.push_back(d.root(), d.root()[0]);
+        const json_document loaded = json_document::load(d.save());
+        CHECK(d.root().dump(-1, ' ', false, nf::source) == "[1.50,1.0E0,100000000000000000000,1.50]");
+        CHECK(loaded.root().dump(-1, ' ', false, nlohmann::json_view::number_format::source) == d.root().dump(-1, ' ', false, nf::source));
+        CHECK(d.root()[1].number_token() == "1.0E0");
+        CHECK(d.root().dump() == "[1.5,1.0,1e+20,1.5]");
+        CHECK(loaded.root().dump() == d.root().dump());
+    }
 }
 
 TEST_CASE("json_view images: ownership")

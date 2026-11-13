@@ -9350,6 +9350,12 @@ class view_serializer
         std::memcpy(to, from, n);
     }
 
+    bool nonfinite_token(const node& n) const noexcept
+    {
+        const char* const t = m_doc.str(n);
+        return t[0] == 'n' || t[0] == 'i' || (n.len > 1 && t[1] == 'i');
+    }
+
     /// a compile-time option as a runtime condition: testing the template
     /// argument directly makes a condition like `Editable && c` constant when
     /// the option is off, which MSVC reports as C4127
@@ -9518,6 +9524,12 @@ class view_serializer
                     {
                         room(n->len);
                         copy(src + n->off, n->len);
+                    }
+                    else if (enabled(SourceNumbers && Editable) && !nonfinite_token(*n))
+                    {
+                        room(n->len);
+                        copy_long(w, m_doc.str(*n), n->len);
+                        w += n->len;
                     }
                     else if (enabled(fast_double::value))
                     {

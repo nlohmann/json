@@ -49,9 +49,10 @@ An editable document keeps both. [`dump()`](../../api/basic_json_view/dump.md) o
 document order — a member [`set`](../../api/basic_json_document/set.md) added goes at the end, exactly where it was
 inserted, and an [`erase`](../../api/basic_json_document/erase.md)d member simply leaves a gap: everything around it
 keeps its place — and [`number_format::source`](../../api/basic_json_view/number_format.md) keeps the exact spelling
-of every number an edit did not itself touch; a number an edit *did* touch is written the way
-[`BasicJsonType::dump()`](../../api/basic_json/dump.md) would write it, since there is no source spelling for a brand
-new value. See [Writing a view back](reading.md#writing-a-view-back).
+of every number of the source text and of every number an edit copied from a view; a number an edit wrote from a C++
+or `BasicJsonType` value is written the way [`BasicJsonType::dump()`](../../api/basic_json/dump.md) would write it,
+since there is no source spelling for it. (An integer copied from another document is written in canonical form, so
+`-0` becomes `0`.) See [Writing a view back](reading.md#writing-a-view-back).
 
 ??? example "Example: patch a configuration, keeping member order and number spellings"
 
