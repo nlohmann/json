@@ -64,13 +64,13 @@ stack for the nesting.)
 
 The call stack still needs room for the levels that are recursed into, and the default limit assumes a stack of ordinary
 size. The stack that an operation needs is roughly proportional to the limit; with the default of 128 levels, the most
-demanding operation (`dump` in an unoptimized build) needed up to 288 KiB, and an optimized build needed 48 KiB or less,
-in measurements on macOS with arm64. The most demanding operation needed this much stack at the limits `0`, `32`,
-`128`, and `254`:
+demanding operations (copying a value and converting it to another `basic_json` type, in an unoptimized build) needed
+up to 224 KiB, and an optimized build needed 48 KiB or less, in measurements on macOS with arm64. The most demanding
+operation needed this much stack at the limits `0`, `32`, `128`, and `254`:
 
 | Stack needed, in KiB | limit 0 | limit 32 | limit 128 (default) | limit 254 |
 |---|---:|---:|---:|---:|
-| unoptimized build (`-O0`) | 16 or less | 80 | 288 | 576 |
+| unoptimized build (`-O0`) | 16 or less | 64 | 224 | 448 |
 | optimized build (`-O2`) | 16 or less | 16 or less | 48 | 112 |
 
 A thread with a smaller stack (a task of a real-time operating system, a fiber, or a thread of the musl C library, whose

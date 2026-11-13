@@ -2603,6 +2603,16 @@ JSON_HEDLEY_DIAGNOSTIC_POP
 // detail/recursion_depth_limit.hpp. Like JSON_NO_THREAD_LOCAL it is neither part
 // of the ABI tag nor undefined at the end of json.hpp.
 
+// forced inlining of the serializer's helpers only in optimized builds: at -O0,
+// GCC and Clang give every inlined copy its own stack slots, which made the
+// recursive frame of serializer::dump_container() about 2.3 KB (MSVC does not
+// expand __forceinline at /Ob0, so it keeps it)
+#if defined(__OPTIMIZE__) || defined(_MSC_VER)
+    #define JSON_INTERNAL_SERIALIZER_INLINE JSON_HEDLEY_ALWAYS_INLINE
+#else
+    #define JSON_INTERNAL_SERIALIZER_INLINE inline
+#endif
+
 // allow disabling exceptions
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
     #define JSON_THROW(exception) throw exception
@@ -36985,7 +36995,7 @@ class serializer
     for a container; writing them from here spares each the entry and exit of
     that function.
     */
-    JSON_HEDLEY_ALWAYS_INLINE void dump_element(const BasicJsonType& val,
+    JSON_INTERNAL_SERIALIZER_INLINE void dump_element(const BasicJsonType& val,
             const std::size_t current_indent,
             const std::size_t depth)
     {
@@ -37691,7 +37701,7 @@ class serializer
     }
 
     /// write out the bytes pending in @ref string_buffer and reset @a bytes
-    JSON_HEDLEY_ALWAYS_INLINE void emit_pending(std::size_t& bytes)
+    JSON_INTERNAL_SERIALIZER_INLINE void emit_pending(std::size_t& bytes)
     {
         if (bytes != 0)
         {
@@ -37703,7 +37713,7 @@ class serializer
     /// write buffer and reset index if fewer than 13 bytes are left, as this
     /// is the maximal number of bytes to be written ("\uxxxx\uxxxx\0") for one
     /// code point
-    JSON_HEDLEY_ALWAYS_INLINE void reserve_string_buffer(std::size_t& bytes)
+    JSON_INTERNAL_SERIALIZER_INLINE void reserve_string_buffer(std::size_t& bytes)
     {
         if (string_buffer.size() - bytes < 13)
         {
@@ -38064,7 +38074,7 @@ class serializer
           inlining both into the pretty-printing loops once @ref dump_escaped
           has grown, which made indented output up to 13% slower
     */
-    JSON_HEDLEY_ALWAYS_INLINE void put_indent(std::size_t indent)
+    JSON_INTERNAL_SERIALIZER_INLINE void put_indent(std::size_t indent)
     {
         // closing braces at the outermost level ask for no indentation at all
         if (indent == 0)
@@ -38118,7 +38128,7 @@ class serializer
     its room and four stores of the indentation, see @ref put_short_literal_indent.
     */
     template<std::size_t N>
-    JSON_HEDLEY_ALWAYS_INLINE void put_literal_indent(const char (&s)[N], const std::size_t indent) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+    JSON_INTERNAL_SERIALIZER_INLINE void put_literal_indent(const char (&s)[N], const std::size_t indent) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
         if (JSON_HEDLEY_LIKELY(put_short_literal_indent(s, indent)))
         {
@@ -38138,7 +38148,7 @@ class serializer
     @a indent is wider or the write buffer lacks the room.
     */
     template<std::size_t N>
-    JSON_HEDLEY_ALWAYS_INLINE bool put_short_literal_indent(const char (&s)[N], const std::size_t indent) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+    JSON_INTERNAL_SERIALIZER_INLINE bool put_short_literal_indent(const char (&s)[N], const std::size_t indent) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
         constexpr std::size_t length = N - 1;
         if (indent > 32 || write_buffer_pos + length + 32 > write_buffer.size())
@@ -38165,7 +38175,7 @@ class serializer
     write-through path for oversized runs.
     */
     template<std::size_t N>
-    JSON_HEDLEY_ALWAYS_INLINE void put_literal(const char (&s)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+    JSON_INTERNAL_SERIALIZER_INLINE void put_literal(const char (&s)[N]) // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
     {
         static_assert(N >= 2, "put_literal expects a non-empty string literal");
         // the array bound counts the terminating NUL, which is not written
@@ -47885,6 +47895,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 // clean up
 #undef JSON_ASSERT
 #undef JSON_INTERNAL_CATCH
+#undef JSON_INTERNAL_SERIALIZER_INLINE
 #undef JSON_THROW
 #undef JSON_PRIVATE_UNLESS_TESTED
 #undef NLOHMANN_BASIC_JSON_TPL_DECLARATION

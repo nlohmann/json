@@ -230,6 +230,16 @@
 // detail/recursion_depth_limit.hpp. Like JSON_NO_THREAD_LOCAL it is neither part
 // of the ABI tag nor undefined at the end of json.hpp.
 
+// forced inlining of the serializer's helpers only in optimized builds: at -O0,
+// GCC and Clang give every inlined copy its own stack slots, which made the
+// recursive frame of serializer::dump_container() about 2.3 KB (MSVC does not
+// expand __forceinline at /Ob0, so it keeps it)
+#if defined(__OPTIMIZE__) || defined(_MSC_VER)
+    #define JSON_INTERNAL_SERIALIZER_INLINE JSON_HEDLEY_ALWAYS_INLINE
+#else
+    #define JSON_INTERNAL_SERIALIZER_INLINE inline
+#endif
+
 // allow disabling exceptions
 #if (defined(__cpp_exceptions) || defined(__EXCEPTIONS) || defined(_CPPUNWIND)) && !defined(JSON_NOEXCEPTION)
     #define JSON_THROW(exception) throw exception
