@@ -18,7 +18,9 @@ JSON object value
 
 ## Exception safety
 
-Strong guarantee: if an exception is thrown, there are no changes in the JSON value.
+Strong guarantee: if an exception is thrown, there are no changes in the JSON value. Values that are moved into `init`
+(e.g., `a` in `#!cpp json::object({std::move(a), 5})`) are moved when the initializer list is created, before this
+function runs, and stay moved-from if it throws.
 
 ## Exceptions
 
