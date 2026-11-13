@@ -50,8 +50,8 @@ flowchart LR
   enabled explicitly. Invalid UTF-8 is rejected.
 - **Errors are reported, not ignored.** Malformed input results in a [`parse_error`](../home/exceptions.md#parse-errors)
   with the byte position of the error. Binary readers do not trust announced sizes: strings and binary values grow
-  only as bytes are actually read, arrays reserve at most a fixed number of elements up front, and sizes that no
-  container can hold are rejected.
+  only as bytes are actually read, arrays reserve at most a fixed number of elements up front (and all of them
+  together no more than the input read so far can back), and sizes that no container can hold are rejected.
 - **Memory is owned by values.** Each `basic_json` value owns its content, and there is no manual memory management in
   user code. The destructor recurses only over a bounded number of nesting levels and then continues without the call
   stack, so destroying a deeply nested value does not exhaust the stack.

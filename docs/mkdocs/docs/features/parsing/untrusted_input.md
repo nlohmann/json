@@ -93,11 +93,21 @@ For the binary formats, an announced size is never trusted outright:
   actually consumed, rather than allocating the announced length up front — a truncated input runs out of bytes
   (reported as a parse error) instead of triggering an oversized allocation.
 - When an array announces its number of elements and the array container supports `reserve()` (as `#!cpp std::vector`,
-  the default, does), the library reserves storage for at most 16384 of them upfront, regardless of how large the
-  announced count is; further elements still grow the container normally as they are read. A truncated input whose
-  count is larger than its remaining bytes therefore reserves at most that much before the parse error is reported.
-  Every array element takes at least one byte of input, except in the [UBJSON](../binary_formats/ubjson.md) arrays of
-  type `Z`, `T` or `F` described below.
+  the default, does), the DOM parser reserves storage for them before the elements are read, but for at most 16384
+  elements per array, regardless of how large the announced count is; further elements still grow the container
+  normally as they are read. The arrays that are open at the same time hold their storage at the same time, and an
+  announcement is not backed by input when it is read, so the elements reserved for all arrays of one input together
+  may not exceed 65,536 plus 2 for every byte of input read so far; an array that announces more gets what is left
+  of that and grows as its elements arrive. An element takes at least one byte of input (except in the
+  [UBJSON](../binary_formats/ubjson.md) arrays of type `Z`, `T` or `F` described below), so the elements of the
+  arrays that were read use up what was reserved for them, and only arrays that are nested deeply, with an array as
+  their first element, can announce more than is left. For a truncated or hostile input, the storage that
+  announcements can hold is therefore at most (65,536 + 2 per byte of input) values, that is about 1 MiB plus 32 bytes
+  per byte of input with 16-byte values (a value is larger with `JSON_DIAGNOSTICS` or `JSON_DIAGNOSTIC_POSITIONS`, 24 to
+  40 bytes, and so is the bound). For example, 100,000 nested CBOR array headers `99 40 00` (300,000 bytes) that
+  announce 16384 elements each peaked at 23 MiB, against 1.65 GiB if every array reserved what it announced and 12 MiB
+  with version 3.12.0, which reserved nothing.
+  A [SAX](../../api/json_sax/index.md) handler is not affected: it is told the announced number of elements.
 - An announced array or object size that exceeds what the target container could ever hold (its `max_size()`) is
   rejected immediately as [`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408), without
   attempting to allocate anything.
@@ -105,11 +115,17 @@ For the binary formats, an announced size is never trusted outright:
   `start_array(0)` and the DOM parser reserves nothing.
 - A UBJSON array of type `Z`, `T` or `F` has no payload, so its announced count is not bounded by the input. One array
   may announce at most 1,048,576 elements, and all such arrays of one input together may contain at most 1,048,576
-  elements plus 4 for every byte read so far (checked when each array's header has been read); beyond that the input is
-  rejected as [`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408). For a DOM that bounds the memory these
-  arrays can need to about 80 bytes per byte of input plus about 33 MB for the first 1,048,576 elements; a SAX handler
-  receives at most that many events. Every other optimized array element, and every UBJSON object member (it has a
-  key), takes at least one byte of input.
+  elements plus _K_ for every byte read so far (checked when each array's header has been read), where _K_ is the
+  value of the macro
+  [`JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE`](../../api/macros/json_ubjson_valueless_elements_per_byte.md), 4 by
+  default; beyond that the input is rejected as
+  [`out_of_range.408`](../../home/exceptions.md#jsonexceptionout_of_range408). For a DOM that bounds the memory these
+  arrays can need to about 20 _K_ bytes per byte of input (81 at the default, measured; 312 for _K_ = 16) plus about
+  33 MB for the first 1,048,576 elements; a SAX handler receives at most that many events. Every other optimized array
+  element, and every UBJSON object member (it has a key), takes at least one byte of input. Leave the macro at the
+  default for input you do not control; raise it only to read trusted files that version 3.12.0 or earlier wrote with
+  long arrays of these types, and see its page for how a value is chosen and what it costs. The limit of one array
+  does not depend on the macro.
 
 ## Strings
 

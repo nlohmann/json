@@ -19,19 +19,17 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-#include <cstdio>
 #include <iostream>
-#include <sstream>
-#include <utility>
 #include <fstream>
-#include <limits>
 #include <list>
 #include <set>
 #include "make_test_data_available.hpp"
 #include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
 #include "sax_countdown.hpp"
+#include "allocation_counter.hpp"
 #include "sax_event_loggers.hpp"
+#include "ubjson_valueless.hpp"
 using utils::SaxCountdown;
 using utils::SaxEventLogger;
 
@@ -2440,208 +2438,22 @@ TEST_CASE("UBJSON optimized arrays of a valueless type are bounded")
     }
 }
 
-namespace
+TEST_CASE("UBJSON the writer keeps the valueless elements of an input within the base")
 {
-/// SAX consumer that counts the values and keeps the id of a parse error
-struct ValuelessEventCounter : public nlohmann::json_sax<json>
-{
-    bool null() override
-    {
-        return ++values < stop_after;
-    }
-    bool boolean(bool /*val*/) override
-    {
-        return ++values < stop_after;
-    }
-    bool number_integer(json::number_integer_t /*val*/) override
-    {
-        ++values;
-        return true;
-    }
-    bool number_unsigned(json::number_unsigned_t /*val*/) override
-    {
-        ++values;
-        return true;
-    }
-    bool number_float(json::number_float_t /*val*/, const std::string& /*s*/) override
-    {
-        ++values;
-        return true;
-    }
-    bool string(std::string& /*val*/) override
-    {
-        ++values;
-        return true;
-    }
-    bool binary(json::binary_t& /*val*/) override
-    {
-        ++values;
-        return true;
-    }
-    bool start_object(std::size_t /*elements*/) override
-    {
-        return true;
-    }
-    bool key(std::string& /*val*/) override
-    {
-        return true;
-    }
-    bool end_object() override
-    {
-        return true;
-    }
-    bool start_array(std::size_t /*elements*/) override
-    {
-        return true;
-    }
-    bool end_array() override
-    {
-        return true;
-    }
-    bool parse_error(std::size_t /*position*/, const std::string& /*last_token*/, const json::exception& ex) override
-    {
-        error_id = ex.id;
-        return false;
-    }
-
-    /// the handler refuses the value that makes this many
-    std::size_t stop_after = (std::numeric_limits<std::size_t>::max)();
-    std::size_t values = 0;
-    int error_id = 0;
-};
-
-/// appends `[$<marker>#l<count>` (nine bytes) to @a v
-void append_valueless_array(std::vector<std::uint8_t>& v, const char marker, const std::uint32_t count)
-{
-    v.push_back('[');
-    v.push_back('$');
-    v.push_back(static_cast<std::uint8_t>(marker));
-    v.push_back('#');
-    v.push_back('l');
-    v.push_back(static_cast<std::uint8_t>(count >> 24));
-    v.push_back(static_cast<std::uint8_t>(count >> 16));
-    v.push_back(static_cast<std::uint8_t>(count >> 8));
-    v.push_back(static_cast<std::uint8_t>(count));
-}
-
-/// `[` followed by one `[$<marker>#l<count>` per entry of @a counts and `]`
-std::vector<std::uint8_t> valueless_arrays(const char marker, const std::vector<std::uint32_t>& counts)
-{
-    std::vector<std::uint8_t> v = {'['};
-    for (const auto count : counts)
-    {
-        append_valueless_array(v, marker, count);
-    }
-    v.push_back(']');
-    return v;
-}
-} // namespace
-
-TEST_CASE("UBJSON the valueless elements of a whole input are bounded")
-{
-    // The per-container limit alone let nine bytes (`[$Z#l` and a count of
-    // 1048576) announce a million values, and every further nine bytes another
-    // million. The elements of all containers of type 'Z', 'T' or 'F' in one
-    // input are now added up: they may not exceed 1048576 plus 4 for every
-    // byte read when the container's header has been read.
-    //
-    // The tests count events with a SAX handler where they can: building and
-    // comparing values of a million elements is what makes them slow under
-    // Valgrind, so there is one rejection and one round trip with a DOM.
+    // The budget of the reader is 1048576 plus a rate per byte read, see
+    // unit-ubjson_valueless.cpp, which tests it for several values of the rate.
+    // The writer does not use the rate and stays within the base
     json _;
-    const char* const budget_message = "[json.exception.out_of_range.408] syntax error while parsing UBJSON size: excessive number of elements without payload";
-
-    // two arrays that exceed the limit: the second one, with its header read
-    // at byte 19, may hold 4 * 19 = 76 values on top of the base of 1048576
-    const std::uint32_t over_first = 524288;
-    const std::uint32_t over_second = 1048576 + 76 - over_first + 1;
-
-    SECTION("the input of the original report is rejected")
-    {
-        // 362 bytes (40 arrays of 1048576 values) used to allocate 661 MB; the
-        // second array is the one that is refused
-        const auto input = valueless_arrays('Z', {over_first, over_second});
-        CHECK_THROWS_WITH_AS(_ = json::from_ubjson(input), budget_message, json::out_of_range&);
-    }
-
-    SECTION("every input adapter applies the budget")
-    {
-        const auto input = valueless_arrays('Z', {over_first, over_second});
-
-        // stream; not strict, which does not matter
-        std::stringstream stream;
-        stream.write(reinterpret_cast<const char*>(input.data()), static_cast<std::streamsize>(input.size()));
-        ValuelessEventCounter from_stream;
-        CHECK(!json::sax_parse(stream, &from_stream, json::input_format_t::ubjson, false));
-        CHECK(from_stream.error_id == 408);
-
-        // a container that is not contiguous; the counts of arrays of
-        // different types are added up
-        std::vector<std::uint8_t> mixed = {'['};
-        append_valueless_array(mixed, 'T', over_first);
-        append_valueless_array(mixed, 'F', over_second);
-        mixed.push_back(']');
-        const std::list<std::uint8_t> as_list(mixed.begin(), mixed.end());
-        ValuelessEventCounter from_list;
-        CHECK(!json::sax_parse(as_list.begin(), as_list.end(), &from_list, json::input_format_t::ubjson));
-        CHECK(from_list.error_id == 408);
-        CHECK(from_list.values == over_first);
-
-        // FILE*
-        FILE* const file = std::tmpfile(); // NOLINT(cppcoreguidelines-owning-memory)
-        REQUIRE(file != nullptr);
-        CHECK(std::fwrite(input.data(), 1, input.size(), file) == input.size());
-        CHECK(std::fseek(file, 0, SEEK_SET) == 0);
-        ValuelessEventCounter from_file;
-        CHECK(!json::sax_parse(file, &from_file, json::input_format_t::ubjson));
-        CHECK(from_file.error_id == 408);
-        std::fclose(file); // NOLINT(cert-err33-c,cppcoreguidelines-owning-memory)
-    }
-
-    SECTION("the limit is exact and the bytes read raise it")
-    {
-        // [ [$Z#l 524288] [$U#l 4096 + 4096 bytes] [$Z#l count] ]: chars_read
-        // is 1 + 9 + (9 + 4096) + 9 = 4124 when the last header has been read,
-        // so the last array may hold 4 * 4124 = 16496 values on top of the
-        // base of 1048576 less the 524288 of the first array
-        const std::uint32_t last_allowed = 1048576 + 16496 - 524288;
-        for (const std::uint32_t count :
-                {
-                    last_allowed, last_allowed + 1
-                })
-        {
-            CAPTURE(count)
-            std::vector<std::uint8_t> input = {'['};
-            append_valueless_array(input, 'Z', 524288);
-            input.insert(input.end(), {'[', '$', 'U', '#', 'l', 0x00, 0x00, 0x10, 0x00});
-            input.insert(input.end(), 4096, 0x01);
-            append_valueless_array(input, 'Z', count);
-            input.push_back(']');
-            ValuelessEventCounter sax;
-            const bool accepted = count == last_allowed;
-            CHECK(json::sax_parse(input, &sax, json::input_format_t::ubjson) == accepted);
-            CHECK(sax.error_id == (accepted ? 0 : 408));
-            CHECK(sax.values == 524288u + 4096u + (accepted ? count : 0u));
-        }
-
-        // an array of 1048576 values on its own is accepted as before
-        const std::vector<std::uint8_t> single = {'[', '$', 'Z', '#', 'l', 0x00, 0x10, 0x00, 0x00};
-        // (the handler ends the parse at the first value, so that the million
-        // values are not read)
-        ValuelessEventCounter sax;
-        sax.stop_after = 1;
-        CHECK(!json::sax_parse(single, &sax, json::input_format_t::ubjson));
-        CHECK(sax.error_id == 0);
-        CHECK(sax.values == 1);
-    }
 
     SECTION("to_ubjson writes the typed form up to the base only")
     {
         // 1048 rows of 1000 values fit under the base of 1048576, the 1049th
         // would not: its elements are written one by one. Written all typed,
-        // 1100 rows of 6 bytes would be refused by a reader (1075 rows are the
-        // most it accepts). The rows hold null, true or false, and the
-        // fallback does not depend on which
+        // 1100 rows of 6 bytes would be refused by a reader with the default
+        // rate of the macro JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE (1074 rows
+        // are the most it accepts); the writer does not follow the macro, since
+        // the limit of a reader is never below the base. The rows hold null,
+        // true or false, and the fallback does not depend on which
         std::vector<std::uint8_t> encoded;
         {
             json table = json::array();
@@ -2657,7 +2469,7 @@ TEST_CASE("UBJSON the valueless elements of a whole input are bounded")
         CHECK(encoded.size() == 7 + (1048 * 6) + (52 * (4 + 1000)));
 
         // the output is read back
-        ValuelessEventCounter sax;
+        utils::ValuelessEventCounter sax;
         CHECK(json::sax_parse(encoded, &sax, json::input_format_t::ubjson));
         CHECK(sax.error_id == 0);
         CHECK(sax.values == 1100u * 1000u);
@@ -2684,7 +2496,7 @@ TEST_CASE("UBJSON the valueless elements of a whole input are bounded")
         // an object member costs a key, so the count is bounded by the input
         // and is not charged to the budget
         const std::vector<std::uint8_t> input = {'{', '$', 'Z', '#', 'l', 0x00, 0x10, 0x00, 0x00};
-        ValuelessEventCounter sax;
+        utils::ValuelessEventCounter sax;
         CHECK(!json::sax_parse(input, &sax, json::input_format_t::ubjson));
         CHECK(sax.error_id == 110);
         CHECK(sax.values == 0);
@@ -2877,6 +2689,60 @@ TEST_CASE("issue #5405 - array reserve for definite-length UBJSON arrays")
 
         SaxCountdown scp(1000000); // large enough to never trigger an abort
         CHECK(json::sax_parse(packed, &scp, json::input_format_t::ubjson));
+    }
+}
+
+TEST_CASE("UBJSON - open arrays reserve only what the input has backed")
+{
+    // an array that announces its size gets storage for (up to 16384 of) its
+    // elements when it opens; the arrays that are open at the same time must
+    // not hold more than the input read so far can back
+    SECTION("nested headers that announce 16384 elements and are never completed")
+    {
+        // 200 levels would hold 200 * 16384 * sizeof(json),
+        // if each of them reserved what it announces
+        const auto input = utils::repeated({'[', '#', 'I', 0x40, 0x00}, 200);
+
+        utils::counts() = utils::allocation_counts{};
+        const auto j = utils::counted_json::from_ubjson(input, true, false);
+        CHECK(j.is_discarded());
+        CAPTURE(utils::counts().peak)
+        // the credit is 65,536 values; the base peaks at more than 3 million
+        CHECK(utils::counts().peak < sizeof(utils::counted_json) * 128 * 1024);
+    }
+
+    SECTION("a completed array is still reserved in one allocation")
+    {
+        json array = json::array();
+        for (int i = 0; i < 10000; ++i)
+        {
+            array.push_back(i % 100);
+        }
+
+        // an array without a size is not reserved, so only these two
+        {
+            const auto packed = json::to_ubjson(array, true);
+
+            utils::counts() = utils::allocation_counts{};
+            const auto j = utils::counted_json::from_ubjson(packed);
+            CHECK(j.size() == 10000);
+            // the array and its storage; growing the storage as the elements
+            // arrive would take more than a dozen allocations
+            CAPTURE(utils::counts().allocations)
+            CHECK(utils::counts().allocations <= 4);
+        }
+
+        {
+            const auto packed = json::to_ubjson(array, true, true);
+
+            utils::counts() = utils::allocation_counts{};
+            const auto j = utils::counted_json::from_ubjson(packed);
+            CHECK(j.size() == 10000);
+            // the array and its storage; growing the storage as the elements
+            // arrive would take more than a dozen allocations
+            CAPTURE(utils::counts().allocations)
+            CHECK(utils::counts().allocations <= 4);
+        }
     }
 }
 

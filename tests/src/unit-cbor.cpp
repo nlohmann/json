@@ -29,6 +29,7 @@ using nlohmann::json;
 #include "round_trip_corpus.hpp"
 #include "test_utils.hpp"
 #include "sax_countdown.hpp"
+#include "allocation_counter.hpp"
 #include "sax_event_loggers.hpp"
 using utils::SaxCountdown;
 using utils::SaxEventLogger;
@@ -2706,6 +2707,294 @@ TEST_CASE("issue #5405 - array reserve for definite-length CBOR arrays")
 
         SaxCountdown scp(1000000); // large enough to never trigger an abort
         CHECK(json::sax_parse(packed, &scp, json::input_format_t::cbor));
+    }
+}
+
+namespace
+{
+// NOLINTBEGIN(bugprone-derived-method-shadowing-base-method)
+using dom_parser = nlohmann::detail::json_sax_dom_parser<json, nlohmann::detail::input_stream_adapter>;
+
+// handlers that wrap a DOM parser, as users of the SAX interface do
+struct public_wrapper : dom_parser
+{
+    explicit public_wrapper(json& result) : dom_parser(result, false)
+    {}
+};
+
+/// parses another input with itself while the first parse is still running
+struct reentrant_wrapper : dom_parser
+{
+    explicit reentrant_wrapper(json& result) : dom_parser(result, false)
+    {}
+
+    bool start_array(std::size_t len)
+    {
+        if (!inner_done)
+        {
+            inner_done = true;
+            const std::vector<std::uint8_t> input = {0x80};
+            json::sax_parse(input, this, json::input_format_t::cbor);
+        }
+        return dom_parser::start_array(len);
+    }
+
+    bool inner_done = false;
+};
+
+// ICC does not detect SAX members that a using-declaration exposes from a private or protected base
+#if !defined(__INTEL_COMPILER)
+class private_wrapper : private dom_parser
+{
+  public:
+    explicit private_wrapper(json& result) : dom_parser(result, false)
+    {}
+
+    using dom_parser::null;
+    using dom_parser::boolean;
+    using dom_parser::number_integer;
+    using dom_parser::number_unsigned;
+    using dom_parser::number_float;
+    using dom_parser::string;
+    using dom_parser::binary;
+    using dom_parser::start_array;
+    using dom_parser::end_array;
+    using dom_parser::parse_error;
+
+    // the DOM parser has private overloads of these, which a using
+    // declaration cannot expose; the input of the test has no objects
+    static bool start_object(std::size_t /*len*/)
+    {
+        return false;
+    }
+
+    static bool key(std::string& /*val*/)
+    {
+        return false;
+    }
+
+    static bool end_object()
+    {
+        return false;
+    }
+};
+
+class protected_wrapper : protected dom_parser
+{
+  public:
+    explicit protected_wrapper(json& result) : dom_parser(result, false)
+    {}
+
+    using dom_parser::null;
+    using dom_parser::boolean;
+    using dom_parser::number_integer;
+    using dom_parser::number_unsigned;
+    using dom_parser::number_float;
+    using dom_parser::string;
+    using dom_parser::binary;
+    using dom_parser::start_array;
+    using dom_parser::end_array;
+    using dom_parser::parse_error;
+
+    // the DOM parser has private overloads of these, which a using
+    // declaration cannot expose; the input of the test has no objects
+    static bool start_object(std::size_t /*len*/)
+    {
+        return false;
+    }
+
+    static bool key(std::string& /*val*/)
+    {
+        return false;
+    }
+
+    static bool end_object()
+    {
+        return false;
+    }
+};
+#endif
+
+// NOLINTEND(bugprone-derived-method-shadowing-base-method)
+
+/// the capacity of the fifth array of five that are open
+std::size_t innermost_capacity(const json& result)
+{
+    const json* node = &result;
+    for (int level = 0; level < 4; ++level)
+    {
+        node = &node->front();
+    }
+    return node->get_ref<const json::array_t&>().capacity();
+}
+} // namespace
+
+TEST_CASE("CBOR - open arrays reserve only what the input has backed")
+{
+    // an array that announces its size gets storage for (up to 16384 of) its
+    // elements when it opens; the arrays that are open at the same time must
+    // not hold more than the input read so far can back
+    SECTION("nested headers that announce 16384 elements and are never completed")
+    {
+        // 200 levels would hold 200 * 16384 * sizeof(json),
+        // if each of them reserved what it announces
+        const auto input = utils::repeated({0x99, 0x40, 0x00}, 200);
+
+        utils::counts() = utils::allocation_counts{};
+        const auto j = utils::counted_json::from_cbor(input, true, false);
+        CHECK(j.is_discarded());
+        CAPTURE(utils::counts().peak)
+        // the credit is 65,536 values; the base peaks at more than 3 million
+        CHECK(utils::counts().peak < sizeof(utils::counted_json) * 128 * 1024);
+    }
+
+    SECTION("a completed array is still reserved in one allocation")
+    {
+        json array = json::array();
+        for (int i = 0; i < 10000; ++i)
+        {
+            array.push_back(i % 100);
+        }
+
+        {
+            const auto packed = json::to_cbor(array);
+
+            utils::counts() = utils::allocation_counts{};
+            const auto j = utils::counted_json::from_cbor(packed);
+            CHECK(j.size() == 10000);
+            // the array and its storage; growing the storage as the elements
+            // arrive would take more than a dozen allocations
+            CAPTURE(utils::counts().allocations)
+            CHECK(utils::counts().allocations <= 4);
+        }
+    }
+
+    SECTION("an array that is given less than it announces is still decoded")
+    {
+        // five levels that announce 16384 elements each, the first of which
+        // is the next level: they are more than the input could back when
+        // they open
+        constexpr std::size_t levels = 5;
+        std::vector<std::uint8_t> input;
+        for (std::size_t level = 0; level < levels; ++level)
+        {
+            input.insert(input.end(), {0x99, 0x40, 0x00});
+        }
+        input.insert(input.end(), 16384, 0x01);
+        for (std::size_t level = 1; level < levels; ++level)
+        {
+            input.insert(input.end(), 16383, 0x02);
+        }
+
+        const auto j = json::from_cbor(input);
+        const json* node = &j;
+        for (std::size_t level = 0; level < levels; ++level)
+        {
+            REQUIRE(node->is_array());
+            CHECK(node->size() == 16384);
+            node = &node->front();
+        }
+        CHECK(*node == 1);
+        CHECK(j.back() == 2);
+    }
+
+    SECTION("a DOM parser that a parse has finished with is not bounded by the input of that parse")
+    {
+        // the DOM parser learns where the reader counts its characters, and
+        // must forget it when the parse is over: a handler may be driven by
+        // other code afterwards, while the reader no longer exists
+        // five levels announce more than the credit of one input, which a
+        // parse of one byte has hardly refilled
+        const auto check_unbounded = [](dom_parser & parser, json & result)
+        {
+            for (int level = 0; level < 5; ++level)
+            {
+                CHECK(parser.start_array(16384));
+            }
+
+            const json* node = &result;
+            for (int level = 0; level < 4; ++level)
+            {
+                REQUIRE(node->is_array());
+                REQUIRE(node->size() == 1);
+                node = &node->front();
+            }
+            REQUIRE(node->is_array());
+            CHECK(node->get_ref<const json::array_t&>().capacity() == 16384);
+        };
+
+        SECTION("after a parse that succeeded")
+        {
+            json result;
+            dom_parser parser(result, false);
+            const std::vector<std::uint8_t> input = {0x80};
+            CHECK(json::sax_parse(input, &parser, json::input_format_t::cbor));
+            check_unbounded(parser, result);
+        }
+
+#if !defined(JSON_NOEXCEPTION)
+        SECTION("after a parse that threw")
+        {
+            json result;
+            dom_parser parser(result, true);
+            const std::vector<std::uint8_t> input = {0x1C}; // not a CBOR value
+            CHECK_THROWS_AS(json::sax_parse(input, &parser, json::input_format_t::cbor), json::parse_error&);
+            check_unbounded(parser, result);
+        }
+#endif
+    }
+
+    SECTION("a handler that wraps a DOM parser is bound if the reader can reach the parser")
+    {
+        // five arrays announce 16384 elements: the credit of one input covers
+        // four of them, and a parse of 15 bytes has hardly refilled it
+        const auto input = utils::repeated({0x99, 0x40, 0x00}, 5);
+
+        SECTION("public base")
+        {
+            json result;
+            public_wrapper handler(result);
+            CHECK_FALSE(json::sax_parse(input, &handler, json::input_format_t::cbor));
+            CHECK(innermost_capacity(result) < 16384);
+        }
+
+        SECTION("public base, a parse inside the parse")
+        {
+            json result;
+            reentrant_wrapper handler(result);
+            CHECK_FALSE(json::sax_parse(input, &handler, json::input_format_t::cbor));
+            CHECK(handler.inner_done);
+            CHECK(innermost_capacity(result) < 16384);
+        }
+
+#if !defined(__INTEL_COMPILER)
+        // the reader cannot convert these to the DOM parser: they are not bound
+        SECTION("private base")
+        {
+            json result;
+            private_wrapper handler(result);
+            CHECK_FALSE(json::sax_parse(input, &handler, json::input_format_t::cbor));
+            CHECK(innermost_capacity(result) == 16384);
+        }
+
+        SECTION("protected base")
+        {
+            json result;
+            protected_wrapper handler(result);
+            CHECK_FALSE(json::sax_parse(input, &handler, json::input_format_t::cbor));
+            CHECK(innermost_capacity(result) == 16384);
+        }
+#endif
+    }
+
+    SECTION("SAX events report the announced size")
+    {
+        SaxEventLogger logger;
+        const std::vector<std::uint8_t> input = {0x99, 0x40, 0x00};
+        CHECK_FALSE(json::sax_parse(input, &logger, json::input_format_t::cbor));
+        REQUIRE(logger.events.size() == 2);
+        CHECK(logger.events[0] == "start_array(16384)");
+        CHECK(logger.events[1] == "parse_error(4)");
     }
 }
 
