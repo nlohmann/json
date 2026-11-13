@@ -2591,7 +2591,7 @@ TEST_CASE("UBJSON the valueless elements of a whole input are bounded")
         FILE* const file = std::tmpfile(); // NOLINT(cppcoreguidelines-owning-memory)
         REQUIRE(file != nullptr);
         CHECK(std::fwrite(input.data(), 1, input.size(), file) == input.size());
-        std::rewind(file);
+        CHECK(std::fseek(file, 0, SEEK_SET) == 0);
         ValuelessEventCounter from_file;
         CHECK(!json::sax_parse(file, &from_file, json::input_format_t::ubjson));
         CHECK(from_file.error_id == 408);
