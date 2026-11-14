@@ -362,6 +362,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      # get-cmake extracts the Ninja zip with the system unzip, which the Clang
+      # image lacks; other Clang jobs get away with it by hitting the cache.
+      - name: Install unzip (Clang)
+        if: matrix.container == 'silkeh/clang:latest'
+        run: apt-get update ; apt-get install -y unzip
       # The module test uses `import std;`, which needs CMake 4.5 or newer.
       - name: Get CMake 4.5+ and ninja
         uses: lukka/get-cmake@16e8153a8b4918849d92aad131befe67a3705daa # v4.5.0
