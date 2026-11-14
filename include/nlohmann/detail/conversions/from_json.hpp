@@ -725,6 +725,11 @@ inline bool from_json_enum_keyed_object(const BasicJsonType& j, Map& m, std::tru
 {
     if (!j.is_object())
     {
+        // an array of pairs is read by the caller; name both accepted types
+        if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
+        {
+            throw_type_must_be("array or object", j);
+        }
         return false;
     }
     m.clear();
@@ -741,6 +746,11 @@ inline bool from_json_enum_keyed_object(const View& v, Map& m, std::true_type /*
     using json_t = typename View::basic_json_type;
     if (!v.is_object())
     {
+        // an array of pairs is read by the caller; name both accepted types
+        if (JSON_HEDLEY_UNLIKELY(!v.is_array()))
+        {
+            throw_type_must_be("array or object", v);
+        }
         return false;
     }
     m.clear();

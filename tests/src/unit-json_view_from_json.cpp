@@ -286,6 +286,10 @@ TEST_CASE("json_view from_json")
         const json_view v = d.root();
         CHECK(same<std::map<color, int>>(v, j, "pairs"));
         CHECK((v["pairs"].get<std::map<color, int>>() == std::map<color, int> {{color::red, 1}, {color::green, 2}}));
+#if !defined(JSON_NOEXCEPTION)
+        CHECK(exception_of_call([&] { static_cast<void>(v["number"].get<std::map<color, int>>()); }) == "[json.exception.type_error.302] type must be array or object, but is number");
+        CHECK(exception_of_call([&] { static_cast<void>(v["number"].get<std::map<color, int>>()); }) == exception_of_call([&] { static_cast<void>(j["number"].get<std::map<color, int>>()); }));
+#endif
     }
 
     SECTION("std types: the same values as from the materialized value")
