@@ -1669,3 +1669,60 @@ TEST_CASE("UTF-8 check of whole strings")
     CHECK(valid > 20000);
     CHECK(valid < 80000);
 }
+
+TEST_CASE("UTF-8 check of long strings")
+{
+    // Where a vector check is available, valid_utf8_string() skips ASCII 16
+    // bytes at a time, checks eight blocks from the first one that is not
+    // ASCII without testing for ASCII in between, and collects the errors of
+    // all blocks until the end. A sequence of each length and each kind of
+    // ill-formed sequence is put at every offset of strings that are longer
+    // than eight blocks: before, inside, at the end of, and after these
+    // blocks, and across every block boundary.
+    const char* const pieces[] = // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+    {
+        "\xC3\xA9", "\xE2\x82\xAC", "\xE0\xA0\x80", "\xEF\xBF\xBF", "\xF0\x9F\x98\x80", "\xF4\x8F\xBF\xBF",
+        "\x80", "\xC0\xAF", "\xC3", "\xE2\x82", "\xED\xA0\x80", "\xF0\x9F", "\xF0\x9F\x98", "\xF4\x90\x80\x80", "\xFF"
+    };
+    // the text around the piece: ASCII only, a sequence at the start (so that
+    // the check of eight blocks starts there), and a sequence in every block
+    const char* const fillers[] = {"", "\xC3\xA9", "\xE2\x82\xAC"}; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+    std::size_t valid = 0;
+    std::size_t invalid = 0;
+    for (const char* const piece : pieces)
+    {
+        for (std::size_t filler = 0; filler < 3; ++filler)
+        {
+            std::string base;
+            if (filler == 1)
+            {
+                base += fillers[1];
+            }
+            while (base.size() < 300)
+            {
+                base += (filler == 2 && base.size() % 16 == 5) ? std::string(fillers[2]) : std::string("x");
+            }
+            for (std::size_t offset = 0; offset <= base.size(); ++offset)
+            {
+                // (not inside a sequence of the text around the piece)
+                if (offset < base.size() && (static_cast<unsigned char>(base[offset]) & 0xC0u) == 0x80u)
+                {
+                    continue;
+                }
+                std::string s = base;
+                s.insert(offset, piece);
+                const auto* data = reinterpret_cast<const unsigned char*>(s.data());
+                const bool expected = nlohmann::detail::is_valid_utf8(s);
+                (expected ? valid : invalid) += 1;
+                CAPTURE(offset)
+                CAPTURE(filler)
+                CAPTURE(piece)
+                CHECK(nlohmann::detail::valid_utf8_string(data, s.size()) == expected);
+                CHECK((nlohmann::detail::valid_utf8_prefix(data, s.size()) == s.size()) == expected);
+            }
+        }
+    }
+    // the six well-formed pieces are valid at every offset, the others at none
+    CHECK(valid * 9 == invalid * 6);
+    CHECK(valid > 5000);
+}
