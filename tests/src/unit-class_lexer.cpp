@@ -2331,6 +2331,8 @@ TEST_CASE("token_text_buffer keeps the beginning and the end of a long token")
             for (std::size_t pos = 0; pos < input.size(); pos += piece)
             {
                 const std::size_t n = (std::min)(piece, input.size() - pos);
+                // false positive: append() on an empty buffer allocates in append_long() before writing
+                // @infer-ignore NULLPTR_DEREFERENCE
                 buffer.append(input.data() + pos, input.data() + pos + n);
             }
             std::vector<char> out;
