@@ -108,7 +108,7 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
     /// access to successor
     reference operator[](difference_type n) const
     {
-        return *(this->operator+(n));
+        return this->base()[-n - 1];
     }
 
     /// return the key of an object iterator
