@@ -8689,14 +8689,9 @@ inline std::size_t plain_output_run(const unsigned char* s, std::size_t n) noexc
     }
     // NOLINTEND(portability-simd-intrinsics)
 #endif
-    constexpr std::uint64_t ones = 0x0101010101010101ull;
-    constexpr std::uint64_t high = 0x8080808080808080ull;
     for (; i + 8 <= n; i += 8)
     {
-        const std::uint64_t v = read_eight_bytes(s + i);
-        const std::uint64_t q = v ^ 0x2222222222222222ull; // '"'
-        const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull; // '\\'
-        const std::uint64_t stop = (((q - ones) & ~q) | ((b - ones) & ~b) | ((v - 0x2020202020202020ull) & ~v)) & high;
+        const std::uint64_t stop = swar_string_delimiter(read_eight_bytes(s + i));
         if (stop != 0)
         {
             // the lowest flagged byte is the first stop: borrows only flag bytes above a true one
