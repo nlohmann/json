@@ -830,13 +830,13 @@ TEST_CASE("iterators 2")
             {
                 {
                     auto it = j_object.rbegin();
-                    CHECK_THROWS_WITH_AS(it[0], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(it[1], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(it[0], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(it[1], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators", json::invalid_iterator&);
                 }
                 {
                     auto it = j_object.crbegin();
-                    CHECK_THROWS_WITH_AS(it[0], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(it[1], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(it[0], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(it[1], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators", json::invalid_iterator&);
                 }
             }
 

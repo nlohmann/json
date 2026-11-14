@@ -874,4 +874,16 @@ TEST_CASE("issue #5317 - nested indefinite-length CBOR string chunks are rejecte
     CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t>({0xA1, 0x7F, 0x7F, 0xFF, 0xFF, 0x01})), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR string: indefinite-length string is not allowed inside indefinite-length string; last byte: 0x7F", json::parse_error&);
 }
 
+TEST_CASE("issue #6113 - reverse_iterator::operator[] on an object throws invalid_iterator.209 instead of 208")
+{
+    json j_object = {{"one", 1}, {"two", 2}};
+    auto rit = j_object.rbegin();
+    CHECK_THROWS_WITH_AS((void)rit[0], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators", json::invalid_iterator&);
+    CHECK_THROWS_WITH_AS((void)rit[1], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators", json::invalid_iterator&);
+
+    auto crit = j_object.crbegin();
+    CHECK_THROWS_WITH_AS((void)crit[0], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators", json::invalid_iterator&);
+    CHECK_THROWS_WITH_AS((void)crit[1], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators", json::invalid_iterator&);
+}
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
