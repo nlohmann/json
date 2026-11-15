@@ -58,7 +58,9 @@ is not UTF-8 encoded and `error_handler` is set to `strict`
 
 ## Complexity
 
-Linear.
+Linear in the size of the result. With an `indent`, every line starts with up to `indent` characters per nesting level,
+so the result can be larger than the value by a factor of its nesting depth (see
+[Parsing untrusted input](../../features/parsing/untrusted_input.md#nesting-depth)).
 
 ## Notes
 
