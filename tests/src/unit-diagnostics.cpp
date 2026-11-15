@@ -109,6 +109,44 @@ TEST_CASE("Regression tests for extended diagnostics")
         CHECK_THROWS_WITH_AS(j.unflatten(), "[json.exception.type_error.315] (/~1foo) values in object must be primitive", json::type_error);
     }
 
+    SECTION("Regression test for issue #6107 - diagnostics path of a deeply nested value is built in linear time")
+    {
+        // A path of 1000 tokens used to be assembled by repeatedly copying
+        // the prefix built so far; the message must still be exact.
+        const std::size_t depth = 1000;
+        std::string input(depth, '[');
+        input += "1";
+        input += std::string(depth, ']');
+        const json j = json::parse(input);
+        const json* leaf = &j;
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            leaf = &(*leaf)[0];
+        }
+        std::string expected = "[json.exception.type_error.302] (";
+        for (std::size_t i = 0; i < depth; ++i)
+        {
+            expected += "/0";
+        }
+        expected += ") type must be string, but is number";
+        try
+        {
+            const std::string s = leaf->get<std::string>();
+            (void)s;
+            CHECK(false);
+        }
+        catch (const json::type_error& e)
+        {
+            CHECK(std::string(e.what()) == expected);
+        }
+
+        // Keys that need escaping still come out escaped.
+        json j2;
+        j2["a/b"]["c~d"] = 1;
+        std::string s;
+        CHECK_THROWS_WITH_AS(s = j2["a/b"]["c~d"].get<std::string>(), "[json.exception.type_error.302] (/a~1b/c~0d) type must be string, but is number", json::type_error);
+    }
+
     SECTION("Regression test for issue #5675 - to_bson: out_of_range.415 has no diagnostics context")
     {
         json const j = {{"a", {{"b", json::binary({1, 2}, 300)}}}};
