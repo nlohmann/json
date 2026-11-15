@@ -16236,6 +16236,19 @@ template<typename ArrayType>
 inline void reserve_array(ArrayType& /*arr*/, std::size_t /*len*/, priority_tag<0> /*unused*/)
 {}
 
+/// reserve capacity for @a count elements in array @a arr, where @a count is
+/// at most reserve_cap() already (see json_sax_dom_error_state::reserve_count)
+template<typename ArrayType>
+auto reserve_array_capped(ArrayType& arr, std::size_t count, priority_tag<1> /*unused*/)
+-> decltype(arr.reserve(count), void())
+{
+    arr.reserve(count);
+}
+
+template<typename ArrayType>
+inline void reserve_array_capped(ArrayType& /*arr*/, std::size_t /*count*/, priority_tag<0> /*unused*/)
+{}
+
 /*!
 @brief reports an object or array whose announced size exceeds max_size()
 
@@ -16478,32 +16491,35 @@ class json_sax_dom_error_state
     announces more than what is left of that is given what is left, and
     grows as its elements arrive. Without the position of the input (the
     parser is not driven by a binary_reader that is running) nothing is
-    bounded but the cap of reserve_array().
+    bounded but reserve_cap() for each array.
 
-    The common case, an array that announces no more than the credit left,
-    costs a comparison and a subtraction. It is charged what it announces, which
-    for an array of more than reserve_cap() elements is more than reserve_array()
-    reserves for it, which its own elements refill as they are read.
+    The common case, an array whose reservation is no more than the credit
+    left, costs a comparison and a subtraction. An array is charged what is
+    reserved for it, at most reserve_cap() elements, not what it announces, so
+    an array of more elements does not take credit from the arrays nested in
+    it.
     */
     std::size_t reserve_count(const std::size_t len) noexcept
     {
-        if (JSON_HEDLEY_LIKELY(len <= reserve_credit))
+        const std::size_t count = (std::min)(len, reserve_cap());
+        if (JSON_HEDLEY_LIKELY(count <= reserve_credit))
         {
-            reserve_credit -= len;
-            return len;
+            reserve_credit -= count;
+            return count;
         }
-        return reserve_count_slowly(len);
+        return reserve_count_slowly(count);
     }
 
   private:
+    /// @a count is at most reserve_cap()
     JSON_HEDLEY_NEVER_INLINE
-    std::size_t reserve_count_slowly(const std::size_t len) noexcept
+    std::size_t reserve_count_slowly(std::size_t count) noexcept
     {
         constexpr std::size_t max_size = (std::numeric_limits<std::size_t>::max)();
         if (input_position == nullptr)
         {
             reserve_credit = max_size;
-            return len;
+            return count;
         }
 
         // refill the credit with 'reserved_elements_per_byte' for every
@@ -16521,7 +16537,6 @@ class json_sax_dom_error_state
             credit_position = position;
         }
 
-        std::size_t count = (std::min)(len, reserve_cap());
         count = (std::min)(count, reserve_credit);
         reserve_credit -= count;
         return count;
@@ -17367,7 +17382,7 @@ class json_sax_dom_parser : public json_sax_dom_error_state
 
         if (len != detail::unknown_size())
         {
-            reserve_array(*ref->m_data.m_value.array, reserve_count(len), priority_tag<1> {});
+            reserve_array_capped(*ref->m_data.m_value.array, reserve_count(len), priority_tag<1> {});
         }
     }
 
@@ -17715,7 +17730,7 @@ class json_sax_dom_binary_parser : public json_sax_dom_error_state
 
         if (len != detail::unknown_size())
         {
-            reserve_array(*ref_stack.back()->m_data.m_value.array, reserve_count(len), priority_tag<1> {});
+            reserve_array_capped(*ref_stack.back()->m_data.m_value.array, reserve_count(len), priority_tag<1> {});
         }
 
         return true;
@@ -18007,7 +18022,7 @@ class json_sax_dom_callback_parser : public json_sax_dom_error_state
 
             if (len != detail::unknown_size())
             {
-                reserve_array(*ref_stack.back()->m_data.m_value.array, reserve_count(len), priority_tag<1> {});
+                reserve_array_capped(*ref_stack.back()->m_data.m_value.array, reserve_count(len), priority_tag<1> {});
             }
         }
 
@@ -18626,8 +18641,9 @@ JSON_INLINE_VARIABLE constexpr std::size_t max_valueless_container_size = 1 << 2
 
 The limit @ref max_valueless_container_size applies to each container on its
 own, so on its own it lets 9 bytes announce 1048576 values, and every further
-8 bytes (a row of an optimized array of arrays) another 1048576. The elements of all containers of a valueless type
-in one input are therefore added up, and the sum must stay below this base
+8 bytes (a row of an optimized array of arrays) another 1048576. The elements
+of all containers of a valueless type in one input are therefore added up, and
+the sum must stay below this base
 plus @ref valueless_elements_per_byte for every byte read so far. The base is
 the per-container limit, so a container that was accepted on its own before
 the sum was introduced is still accepted at the start of an input.

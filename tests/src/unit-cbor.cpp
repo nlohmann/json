@@ -2898,6 +2898,33 @@ TEST_CASE("CBOR - open arrays reserve only what the input has backed")
         CHECK(j.back() == 2);
     }
 
+    SECTION("an array that announces more than 16384 elements is charged what it is reserved")
+    {
+        // an array of 20000 elements (header 9A 00 00 4E 20) and three nested
+        // arrays of 16384: the four reservations of 16384 add up to the credit
+        // of 65,536. Charged the 20000 it announces, the outer array would
+        // leave the innermost one less than it announces
+        std::vector<std::uint8_t> input = {0x9A, 0x00, 0x00, 0x4E, 0x20};
+        const auto nested = utils::repeated({0x99, 0x40, 0x00}, 3);
+        input.insert(input.end(), nested.begin(), nested.end());
+
+        json result;
+        dom_parser parser(result, false);
+        CHECK_FALSE(json::sax_parse(input, &parser, json::input_format_t::cbor));
+        const json* node = &result;
+        for (int level = 0; level < 4; ++level)
+        {
+            CAPTURE(level)
+            REQUIRE(node->is_array());
+            CHECK(node->get_ref<const json::array_t&>().capacity() == 16384);
+            if (level < 3)
+            {
+                REQUIRE(node->size() == 1);
+                node = &node->front();
+            }
+        }
+    }
+
     SECTION("a DOM parser that a parse has finished with is not bounded by the input of that parse")
     {
         // the DOM parser learns where the reader counts its characters, and

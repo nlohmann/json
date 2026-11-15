@@ -88,8 +88,9 @@ JSON_INLINE_VARIABLE constexpr std::size_t max_valueless_container_size = 1 << 2
 
 The limit @ref max_valueless_container_size applies to each container on its
 own, so on its own it lets 9 bytes announce 1048576 values, and every further
-8 bytes (a row of an optimized array of arrays) another 1048576. The elements of all containers of a valueless type
-in one input are therefore added up, and the sum must stay below this base
+8 bytes (a row of an optimized array of arrays) another 1048576. The elements
+of all containers of a valueless type in one input are therefore added up, and
+the sum must stay below this base
 plus @ref valueless_elements_per_byte for every byte read so far. The base is
 the per-container limit, so a container that was accepted on its own before
 the sum was introduced is still accepted at the start of an input.
