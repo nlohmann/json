@@ -13,11 +13,14 @@
     #include <optional> // optional
 #endif
 
-#include <iterator> // begin, end, make_move_iterator, move_iterator
+#include <cstddef> // ptrdiff_t
+#include <functional> // hash
+#include <iterator> // begin, end, distance, make_move_iterator, move_iterator
 #include <memory> // allocator_traits
 #include <string> //  basic_string, char_traits
 #include <tuple> // tuple, get
-#include <type_traits> // is_same, is_constructible, is_floating_point, is_enum, underlying_type
+#include <type_traits> // false_type, is_same, is_constructible, is_floating_point, is_enum, underlying_type
+#include <unordered_set> // unordered_set
 #include <utility> // move, forward, declval, pair
 #include <valarray> // valarray
 #include <vector> // vector
@@ -254,6 +257,41 @@ struct external_constructor<value_t::array>
 #endif
 };
 
+/// an object type that appends members without checking whether the key is
+/// new (e.g., ordered_map::emplace_new_key)
+template<typename ObjectType>
+using detect_emplace_new_key_t = decltype(std::declval<ObjectType&>().emplace_new_key(
+                                     std::declval<const typename ObjectType::key_type&>(),
+                                     std::declval<typename ObjectType::mapped_type>()));
+
+/// whether std::hash can hash a key
+template<typename Key>
+using detect_std_hash_t = decltype(std::hash<Key>()(std::declval<const Key&>()));
+
+// std::hash is only named once the object type appends by key: VS 2015
+// static-asserts on std::hash of a type without one instead of reporting a
+// substitution failure
+template<typename ObjectType, bool = is_detected<detect_emplace_new_key_t, ObjectType>::value>
+struct detect_hashable_object_key : std::false_type {};
+template<typename ObjectType>
+struct detect_hashable_object_key<ObjectType, true>
+    : is_detected<detect_std_hash_t, typename ObjectType::key_type> {};
+
+/// how to build an object from an element range:
+/// 0: the range constructor is enough: the object type drops repeated keys
+///    itself (std::map), or the source cannot hold any (insert() reports
+///    whether it inserted, as for std::map and std::unordered_map)
+/// 1: the object type appends without a key check (ordered_map) and the
+///    source can hold repeated keys (std::multimap, std::unordered_multimap):
+///    append, and drop a repeated key found with a hash table
+/// 2: like 1, but the key type has no std::hash: emplace one by one, so that
+///    the object type's own (linear) key check drops repeated keys
+template<typename ObjectType, typename Source>
+using object_range_kind = std::integral_constant < int,
+      (!is_detected<detect_emplace_new_key_t, ObjectType>::value ||
+       is_detected<insert_result_second_t, Source>::value) ? 0 :
+      (detect_hashable_object_key<ObjectType>::value ? 1 : 2) >;
+
 template<>
 struct external_constructor<value_t::object>
 {
@@ -278,8 +316,8 @@ struct external_constructor<value_t::object>
         using std::begin;
         using std::end;
 
-        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::object_t>(make_move_iterator_if_owned<CompatibleObjectType>(begin(obj)), make_move_iterator_if_owned<CompatibleObjectType>(end(obj))));
-        j.replace_value(value_t::object, value);
+        construct_range(j, make_move_iterator_if_owned<CompatibleObjectType>(begin(obj)), make_move_iterator_if_owned<CompatibleObjectType>(end(obj)),
+                        object_range_kind<typename BasicJsonType::object_t, CompatibleObjectType> {});
     }
 
     template < typename BasicJsonType, typename CompatibleObjectType,
@@ -289,7 +327,77 @@ struct external_constructor<value_t::object>
         using std::begin;
         using std::end;
 
-        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::object_t>(begin(obj), end(obj)));
+        construct_range(j, begin(obj), end(obj),
+                        object_range_kind<typename BasicJsonType::object_t, CompatibleObjectType> {});
+    }
+
+  private:
+    /// the object type's range constructor drops repeated keys, or the source
+    /// cannot hold any
+    template<typename BasicJsonType, typename Iterator>
+    static void construct_range(BasicJsonType& j, Iterator first, Iterator last, std::integral_constant<int, 0> /*kind*/)
+    {
+        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::object_t>(first, last));
+        j.replace_value(value_t::object, value);
+    }
+
+    /// the source can hold repeated keys and the object type appends them all:
+    /// append, and drop a repeated key to keep the first (as std::map does).
+    /// Repeated keys are found with a hash table over the element positions in
+    /// members, so that the keys are neither copied nor moved into it
+    template<typename BasicJsonType, typename Iterator>
+    static void construct_range(BasicJsonType& j, Iterator first, Iterator last, std::integral_constant<int, 1> /*kind*/)
+    {
+        using object_t = typename BasicJsonType::object_t;
+        using key_type = typename object_t::key_type;
+
+        object_t members;
+        struct position_hash
+        {
+            const object_t* container;
+            std::size_t operator()(const std::size_t position) const
+            {
+                return std::hash<key_type> {}((container->begin() + static_cast<std::ptrdiff_t>(position))->first);
+            }
+        };
+        struct position_equal
+        {
+            const object_t* container;
+            bool operator()(const std::size_t a, const std::size_t b) const
+            {
+                return typename object_t::key_compare {}((container->begin() + static_cast<std::ptrdiff_t>(a))->first, (container->begin() + static_cast<std::ptrdiff_t>(b))->first);
+            }
+        };
+        const auto size = static_cast<std::size_t>(std::distance(first, last));
+        std::unordered_set<std::size_t, position_hash, position_equal> positions(0, position_hash{&members}, position_equal{&members});
+        positions.reserve(size);
+        members.reserve(size);
+        for (; first != last; ++first)
+        {
+            auto&& member = *first;
+            members.emplace_new_key(member.first, static_cast < decltype(member) && > (member).second);
+            if (!positions.insert(members.size() - 1).second)
+            {
+                members.pop_back(); // a repeated key: keep the first
+            }
+        }
+        const typename BasicJsonType::json_value value(std::move(members));
+        j.replace_value(value_t::object, value);
+    }
+
+    /// like kind 1, but the key type has no std::hash: emplace one by one, so
+    /// that the object type's own (linear) key check drops repeated keys
+    template<typename BasicJsonType, typename Iterator>
+    static void construct_range(BasicJsonType& j, Iterator first, Iterator last, std::integral_constant<int, 2> /*kind*/)
+    {
+        typename BasicJsonType::object_t members;
+        members.reserve(static_cast<std::size_t>(std::distance(first, last)));
+        for (; first != last; ++first)
+        {
+            auto&& member = *first;
+            members.emplace(member.first, static_cast < decltype(member) && > (member).second);
+        }
+        const typename BasicJsonType::json_value value(std::move(members));
         j.replace_value(value_t::object, value);
     }
 };

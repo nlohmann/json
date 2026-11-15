@@ -61,6 +61,14 @@ std::equal_to<>     // since C++14
 - **find**
 - **insert**
 
+!!! note "The range and initializer-list constructors do not check for repeated keys"
+
+    The range and initializer-list constructors append the elements as given: the caller must pass unique keys, as
+    for `emplace_new_key`. A source that can hold repeated keys, such as `#!cpp std::multimap` or
+    `#!cpp std::unordered_multimap`, produces a container with duplicate keys, which violates the one-member-per-key
+    invariant the other members rely on. Building an [`ordered_json`](ordered_json.md) from a `#!cpp std::multimap`
+    or `#!cpp std::unordered_multimap` is safe: the conversion keeps the first of repeated keys, as `#!cpp std::map` does.
+
 ## Exception safety
 
 **emplace**, **operator\[\]**, and **insert(value)** have the strong exception guarantee: if an exception is thrown (for
