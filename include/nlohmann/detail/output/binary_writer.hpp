@@ -1214,12 +1214,14 @@ class binary_writer
             // reader has nothing but the declared count to bound the allocation
             // by. It refuses one array of more than max_valueless_container_size
             // elements, and all such arrays of one input together when they add
-            // up to more than valueless_elements_base plus a number per byte
-            // read. Write the unoptimized form, at one byte per element, for
-            // an array that would exceed the base with the arrays written so
-            // far, so that the result can be read back: the limit of a reader
-            // is never below the base. Objects are not affected: every element
-            // is preceded by its key.
+            // up to more than valueless_elements_base plus
+            // JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE per byte read. Write the
+            // unoptimized form, at one byte per element, for an array that
+            // would exceed the base with the arrays written so far, so that the
+            // result can be read back: the limit of a reader is never below the
+            // base, whatever the macro is set to, so the writer does not use
+            // it (and a reader with a larger rate reads this output as well).
+            // Objects are not affected: every element is preceded by its key.
             if (same_prefix && !(use_bjdata && is_bjdata_excluded_type_marker(first_prefix)))
             {
                 const bool valueless_type = IsArray && (first_prefix == 'Z' || first_prefix == 'T' || first_prefix == 'F');
