@@ -622,7 +622,7 @@ TEST_CASE("BON8")
             // with a terminated string, strict = false leaves the next value in the stream
             std::istringstream terminated(std::string("\x61\xFF\x90", 3));
             CHECK(json::from_bon8(terminated, false) == "a");
-            CHECK(terminated.tellg() == 2);
+            CHECK((terminated.tellg() == 2));
             CHECK(json::from_bon8(terminated, false) == 0);
 
             // without the terminator, the next value would be lost
