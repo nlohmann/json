@@ -23,8 +23,10 @@ using nlohmann::json;
     using namespace nlohmann::literals; // NOLINT(google-build-using-namespace)
 #endif
 
+#include <algorithm>
 #include <cerrno>
 #include <cstdlib>
+#include <ctime>
 #include <limits>
 #include <map>
 #include <random>
@@ -1239,6 +1241,34 @@ TEST_CASE("flatten of structured values")
     }
 
 #if !defined(JSON_NOEXCEPTION)
+    SECTION("unflatten with a key that is a prefix of an earlier key")
+    {
+        // json visits the shorter key first; ordered_json may see it last
+        CHECK_THROWS_WITH_AS(nlohmann::ordered_json::parse(R"({"/a/b":2,"/a":1})").unflatten(),
+                             "[json.exception.type_error.313] invalid value to unflatten", nlohmann::ordered_json::type_error&);
+        CHECK_THROWS_WITH_AS(nlohmann::ordered_json::parse(R"({"/a/0/b":1,"/a/0":2})").unflatten(),
+                             "[json.exception.type_error.313] invalid value to unflatten", nlohmann::ordered_json::type_error&);
+        CHECK_THROWS_WITH_AS(nlohmann::ordered_json::parse(R"({"/x":1,"":2})").unflatten(),
+                             "[json.exception.type_error.313] invalid value to unflatten", nlohmann::ordered_json::type_error&);
+
+        // the same members in the other order
+        CHECK_THROWS_WITH_AS(nlohmann::ordered_json::parse(R"({"/a":1,"/a/b":2})").unflatten(),
+                             "[json.exception.type_error.313] invalid value to unflatten", nlohmann::ordered_json::type_error&);
+        CHECK_THROWS_WITH_AS(json::parse(R"({"/a/b":2,"/a":1})").unflatten(),
+                             "[json.exception.type_error.313] invalid value to unflatten", json::type_error&);
+    }
+#endif
+
+    SECTION("unflatten with a null at a key that is a prefix of another key")
+    {
+        // the null keeps the container, whichever key comes first
+        CHECK(nlohmann::ordered_json::parse(R"({"/a/b":2,"/a":null})").unflatten() == nlohmann::ordered_json::parse(R"({"a":{"b":2}})"));
+        CHECK(nlohmann::ordered_json::parse(R"({"/a":null,"/a/b":2})").unflatten() == nlohmann::ordered_json::parse(R"({"a":{"b":2}})"));
+        CHECK(nlohmann::ordered_json::parse(R"({"/a/0":1,"/a":null})").unflatten() == nlohmann::ordered_json::parse(R"({"a":[1]})"));
+        CHECK(json::parse(R"({"/a/b":2,"/a":null})").unflatten() == json::parse(R"({"a":{"b":2}})"));
+    }
+
+#if !defined(JSON_NOEXCEPTION)
     SECTION("an object with the key \"0\" next to a non-index key does not round-trip")
     {
         // the third documented case in which j != j.flatten().unflatten()
@@ -1559,4 +1589,295 @@ TEST_CASE("JSON patch with moves and copies")
     json inplace = doc;
     CHECK_THROWS_AS(inplace.patch_inplace(json::parse(R"([{"op":"move","from":"","path":""}])")), json::out_of_range&);
     CHECK(inplace == doc);
+}
+
+namespace
+{
+// the keys of a shape of flattened objects with long keys; `zero` is the
+// token that is repeated `m` times
+// 0: one key, 1: one `zero` followed by tokens 1, 2: the token 1 followed by
+// tokens `zero`, 3 and 4: two keys with a long prefix, apart from other keys,
+// 5: the same for two long branches, 6: more of the keys of 3
+std::vector<std::string> shape_keys(const int shape, const std::size_t m, const std::string& zero)
+{
+    std::string repeated;
+    for (std::size_t i = 0; i < m; ++i)
+    {
+        repeated += "/" + zero;
+    }
+    std::vector<std::string> keys;
+    switch (shape)
+    {
+        case 0:
+            keys.push_back(repeated);
+            break;
+        case 1:
+        {
+            std::string key = "/" + zero;
+            for (std::size_t i = 1; i < m; ++i)
+            {
+                key += "/1";
+            }
+            keys.push_back(key);
+            break;
+        }
+        case 2:
+        {
+            std::string key = "/1";
+            for (std::size_t i = 1; i < m; ++i)
+            {
+                key += "/" + zero;
+            }
+            keys.push_back(key);
+            break;
+        }
+        case 3:
+        case 4:
+            keys = {repeated + "/a0", "/10", repeated + "/a1", "/11"};
+            break;
+        case 5:
+            keys = {"/x" + repeated + "/a0", "/y" + repeated + "/a0", "/x" + repeated + "/a1", "/y" + repeated + "/a1"};
+            break;
+        case 6:
+            for (int j = 0; j < 4; ++j)
+            {
+                keys.push_back(repeated + "/a" + std::to_string(j));
+                keys.push_back("/1" + std::to_string(j));
+            }
+            break;
+        default:
+            break;
+    }
+    return keys;
+}
+
+// the best of `runs` times in seconds that std::clock() measures to unflatten the keys,
+// which an ordered_json holds in the order they are given (shape 4 uses a
+// json, which sorts them)
+double unflatten_cpu_time(const int shape, const std::size_t m, const int runs, const std::string& zero)
+{
+    const std::vector<std::string> keys = shape_keys(shape, m, zero);
+    nlohmann::ordered_json ordered = nlohmann::ordered_json::object();
+    json sorted = json::object();
+    for (const auto& key : keys)
+    {
+        ordered[key] = 1;
+        sorted[key] = 1;
+    }
+
+    double best = 1e30;
+    for (int i = 0; i < runs; ++i)
+    {
+        const std::clock_t start = std::clock();
+        if (shape == 4)
+        {
+            const json nested = sorted.unflatten();
+        }
+        else
+        {
+            const nlohmann::ordered_json nested = ordered.unflatten();
+        }
+        best = (std::min)(best, static_cast<double>(std::clock() - start) / static_cast<double>(CLOCKS_PER_SEC));
+    }
+    return best;
+}
+} // namespace
+
+TEST_CASE("unflatten of keys with many reference tokens")
+{
+    using nlohmann::ordered_json;
+
+    SECTION("which prefixes become arrays")
+    {
+        // sorted keys that share a long beginning
+        CHECK(json({{"/x/y/q/1", 5}, {"/x/y/w/0", 4}, {"/x/y/w/1", 3}, {"/x/y/z/0", 1}, {"/x/y/z/1", 2}}).unflatten() ==
+        json::parse(R"({"x":{"y":{"q":{"1":5},"w":[4,3],"z":[1,2]}}})"));
+
+        // prefixes that differ in the position of a slash only
+        CHECK(json({{"/a/0/x", 1}, {"/a/1/y", 3}, {"/ab/1", 2}}).unflatten() ==
+        json::parse(R"({"a":[{"x":1},{"y":3}],"ab":{"1":2}})"));
+        CHECK(json({{"/a/b/1", 1}, {"/ab/0", 2}}).unflatten() ==
+        json::parse(R"({"a":{"b":{"1":1}},"ab":[2]})"));
+
+        // tokens longer than one word, escapes, and a token 0 below a token 1
+        const std::string t = "token_with_more_than_eight_bytes";
+        CHECK(json({{"/" + t + "/1/b/0", 1}, {"/" + t + "/0", 2}, {"/" + t + "/2/a~1b", 3}}).unflatten() ==
+        json::parse(R"({"token_with_more_than_eight_bytes":[2,{"b":[1]},{"a/b":3}]})"));
+
+        // prefixes of more than 64 bytes, that share a long beginning
+        std::string deep;
+        json expected = {{"a", {1, 2}}, {"b", {{"1", 3}}}, {"c", {{"1", {{"x", {4}}}}}}};
+        for (int i = 0; i < 30; ++i)
+        {
+            deep += "/seg";
+            expected = {{"seg", expected}};
+        }
+        CHECK(json({{deep + "/c/1/x/0", 4}, {deep + "/a/1", 2}, {deep + "/b/1", 3}, {deep + "/a/0", 1}}).unflatten() == expected);
+        CHECK(json(ordered_json({{deep + "/c/1/x/0", 4}, {deep + "/a/1", 2}, {deep + "/b/1", 3}, {deep + "/a/0", 1}}).unflatten()) == expected);
+        CHECK(json(ordered_json({{deep + "/a/1", 2}, {deep + "/a/0", 1}, {deep + "/b/1", 3}, {deep + "/c/1/x/0", 4}}).unflatten()) == expected);
+
+        // prefixes of every length around the limit up to which they are hashed directly
+        for (std::size_t length = 40; length < 90; ++length)
+        {
+            const std::string name(length, 'x');
+            const json flat = {{"/" + name + "/a/0", 1}, {"/" + name + "/a/1", 2}, {"/" + name + "/b/1", 3}, {"/" + name + "/c/1/0", 4}};
+            CHECK(flat.unflatten() == json({{name, {{"a", {1, 2}}, {"b", {{"1", 3}}}, {"c", {{"1", {4}}}}}}}));
+        }
+
+        // only the parent of a token 0 is an array, however deep the key is
+        CHECK(json({{"/0/1/1/1", 1}}).unflatten() == json::parse(R"([{"1":{"1":{"1":1}}}])"));
+        CHECK(json({{"/1/1/1/0", 1}}).unflatten() == json::parse(R"({"1":{"1":{"1":[1]}}})"));
+        CHECK(json({{"/1/0/1/0", 1}}).unflatten() == json::parse(R"({"1":[{"1":[1]}]})"));
+    }
+
+    SECTION("the result does not depend on the order of the keys")
+    {
+        // random documents without empty containers and without the key "0" in
+        // an object: flatten() and unflatten() are inverse to each other
+        std::mt19937 gen(20261110); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
+        const std::vector<std::string> names = {"a", "b", "ab", "1", "2", "10", "a/b", "a~b", "token_with_more_than_eight_bytes", "x"};
+
+        struct builder
+        {
+            std::mt19937& gen;
+            const std::vector<std::string>& names;
+
+            json operator()(int depth) const
+            {
+                const int kind = std::uniform_int_distribution<int>(0, 9)(gen);
+                if (depth == 0 || kind < 3)
+                {
+                    return kind;
+                }
+                json result = kind < 6 ? json::array() : json::object();
+                const int size = std::uniform_int_distribution<int>(1, 4)(gen);
+                for (int i = 0; i < size; ++i)
+                {
+                    if (kind < 6)
+                    {
+                        result.push_back((*this)(depth - 1));
+                    }
+                    else
+                    {
+                        result[names[std::uniform_int_distribution<std::size_t>(0, names.size() - 1)(gen)]] = (*this)(depth - 1);
+                    }
+                }
+                return result;
+            }
+        };
+        const builder build{gen, names};
+
+        for (int round = 0; round < 200; ++round)
+        {
+            const json doc = build(6);
+            const json flat = doc.flatten();
+            CHECK(flat.unflatten() == doc);
+
+            // the same entries in shuffled order, in an object that keeps it
+            std::vector<std::pair<std::string, json>> entries;
+            for (const auto& el : flat.items())
+            {
+                entries.emplace_back(el.key(), el.value());
+            }
+            std::shuffle(entries.begin(), entries.end(), gen);
+            ordered_json shuffled = ordered_json::object();
+            for (const auto& e : entries)
+            {
+                shuffled[e.first] = e.second;
+            }
+            CHECK(json(shuffled.unflatten()) == doc);
+        }
+    }
+
+    SECTION("keys with long prefixes, in every order")
+    {
+        // prefixes of more than 64 bytes that share a long beginning, and
+        // continue with tokens that start the same way
+        std::string deep;
+        for (int i = 0; i < 30; ++i)
+        {
+            deep += "/seg";
+        }
+        const std::string other = deep.substr(0, 70) + "/x" + deep.substr(70);
+        std::vector<std::string> keys = {deep + "/a/0", deep + "/ab/1", deep + "/ab/x", deep + "/abc/0/y/0", other + "/b/1/0", deep + "/abc/1"};
+        std::sort(keys.begin(), keys.end());
+
+        // the result for the keys in sorted order, which json iterates in
+        json sorted = json::object();
+        for (const auto& key : keys)
+        {
+            sorted[key] = 1;
+        }
+        const json expected = sorted.unflatten();
+        CHECK(expected.is_object());
+
+        // ordered_json iterates in the order the keys were added
+        std::vector<std::size_t> order(keys.size());
+        for (std::size_t i = 0; i < order.size(); ++i)
+        {
+            order[i] = i;
+        }
+        std::size_t permutations = 0;
+        bool all_equal = true;
+        do
+        {
+            nlohmann::ordered_json flat = nlohmann::ordered_json::object();
+            for (const auto i : order)
+            {
+                flat[keys[i]] = 1;
+            }
+            all_equal = all_equal && json(flat.unflatten()) == expected;
+            ++permutations;
+        }
+        while (std::next_permutation(order.begin(), order.end()));
+        CHECK(permutations == 720);
+        CHECK(all_equal);
+    }
+
+    SECTION("time is linear in the number of tokens")
+    {
+        // A bound in seconds would depend on the machine. Instead, the time is
+        // compared with the time for the same keys with the token 0 replaced by
+        // a token that is not a number: there is no array, so no prefix is
+        // looked up. The ratio is 1 to 3 for a linear algorithm, and between
+        // 12 and 100 when looking up a prefix takes time proportional to its
+        // length. The time that std::clock() measures is mostly the time of the
+        // processor, which a busy machine does not inflate (on MSVC, it is the
+        // time that has passed), and the best of two or three runs counts.
+        for (int shape = 0; shape < 7; ++shape)
+        {
+            // the shapes with several keys, in an order that does not sort them,
+            // need more tokens to be slow enough to tell
+            const bool many = shape == 3 || shape == 5 || shape == 6;
+            const std::size_t m = many ? 40000 : 10000;
+            const int runs = many ? 2 : 3;
+
+            // a busy machine may spoil one comparison, hardly two
+            bool linear = false;
+            double t_array = 0;
+            double t_object = 0;
+            for (int attempt = 0; attempt < 2 && !linear; ++attempt)
+            {
+                t_array = unflatten_cpu_time(shape, m, runs, "0");
+                t_object = (std::max)(unflatten_cpu_time(shape, m, runs, "a"), 1e-3);
+                linear = t_array < 6 * t_object;
+            }
+            CAPTURE(shape)
+            CAPTURE(t_array)
+            CAPTURE(t_object)
+            CHECK(linear);
+        }
+
+        // the nesting is as expected: an array exactly below each token 0
+        const json nested_deep = json::object({{shape_keys(0, 1000, "0")[0], 1}}).unflatten();
+        std::size_t depth = 0;
+        for (const json* p = &nested_deep; p->is_array(); p = &p->back())
+        {
+            ++depth;
+        }
+        CHECK(depth == 1000);
+        const json nested_ones = json::object({{shape_keys(1, 1000, "0")[0], 1}}).unflatten();
+        CHECK(nested_ones.is_array());
+        CHECK(nested_ones.back().is_object());
+    }
 }
