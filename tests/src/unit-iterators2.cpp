@@ -850,6 +850,7 @@ TEST_CASE("iterators 2")
                     CHECK(it[3] == json(3));
                     CHECK(it[4] == json(2));
                     CHECK(it[5] == json(1));
+                    CHECK((j_array.rbegin() + 2)[1] == json(3));
                 }
                 {
                     auto it = j_array.crbegin();
@@ -859,6 +860,7 @@ TEST_CASE("iterators 2")
                     CHECK(it[3] == json(3));
                     CHECK(it[4] == json(2));
                     CHECK(it[5] == json(1));
+                    CHECK((j_array.crbegin() + 2)[3] == json(1));
                 }
             }
 
