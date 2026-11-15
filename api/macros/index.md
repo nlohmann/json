@@ -22,6 +22,7 @@ Some aspects of the library can be configured by defining preprocessor macros **
 - [**JSON_PRECISE_STREAM_POSITION**](https://json.nlohmann.me/api/macros/json_precise_stream_position/index.md) - opt in to leaving an input stream positioned right after a parsed number
 - [**JSON_STRICT_BINARY_UTF8**](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) - opt in to checking strings for valid UTF-8 in the CBOR, UBJSON, BJData, and BSON writers
 - [**JSON_STRICT_NUL_HANDLING**](https://json.nlohmann.me/api/macros/json_strict_nul_handling/index.md) - opt in to rejecting a NUL byte in the input instead of treating it as end of input
+- [**JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE**](https://json.nlohmann.me/api/macros/json_ubjson_valueless_elements_per_byte/index.md) - set how many elements of UBJSON arrays of `null`, `true`, or `false` an input may announce per byte it has
 
 ## Language support
 

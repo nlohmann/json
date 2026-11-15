@@ -190,6 +190,8 @@ byte position of error: 8
 
 This error indicates a syntax error while deserializing a JSON text. The error message describes that an unexpected token (character) was encountered, and the member `byte` indicates the error position.
 
+The message ends with the last read token (`last read: '...'`), with control characters written as `<U+XXXX>`. A token of more than 8192 characters is shown by its first and its last 4096 characters, separated by `...`.
+
 Example message
 
 Input ended prematurely:
@@ -1130,7 +1132,7 @@ Example messages
 
 The size of an array or object in a [binary format](https://json.nlohmann.me/features/binary_formats/index.md) exceeds the maximal capacity: the size following `#` for [UBJSON](https://json.nlohmann.me/features/binary_formats/ubjson/index.md)/[BJData](https://json.nlohmann.me/features/binary_formats/bjdata/index.md), or the encoded length for [CBOR](https://json.nlohmann.me/features/binary_formats/cbor/index.md).
 
-The exception is also thrown for a [UBJSON](https://json.nlohmann.me/features/binary_formats/ubjson/index.md) array of a type that is encoded by its marker alone (`Z`, `T` or `F`) whose declared count exceeds 1,048,576 (`1 << 20`). Such an array has no payload, so its count alone decides how much memory is allocated, and a handful of bytes would otherwise describe billions of values. [`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) writes longer arrays of these types without the `$` type annotation (the `#` count and one marker per element are kept), so any value it produces can still be read back.
+The exception is also thrown for [UBJSON](https://json.nlohmann.me/features/binary_formats/ubjson/index.md) arrays of a type that is encoded by its marker alone (`Z`, `T` or `F`). Such an array has no payload, so its count alone decides how much memory is allocated, and a handful of bytes would otherwise describe billions of values. It is thrown if the declared count of one array exceeds 1,048,576 (`1 << 20`), and if the counts of all such arrays read so far in one input add up to more than 1,048,576 plus 4 for every byte of the input read when the header of the last array has been read. The 4 is the default of the macro [`JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE`](https://json.nlohmann.me/api/macros/json_ubjson_valueless_elements_per_byte/index.md), which raises it (for the limit of the whole input; the limit of one array stays). [`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) writes an array of these types without the `$` type annotation (the `#` count and one marker per element are kept) when it is longer, or when it would bring the total of the typed arrays written so far above 1,048,576, so everything it produces can be read back. Only input written by another encoder, or by version 3.12.0 and earlier of this library, can exceed the limit: for example, 1,100 rows of 1,000 `null` values or 210,000 rows of 25, each with a `$Z` annotation. Version 3.12.0 writes such a row in 5 bytes (6 above 255 elements, 8 above 32,767), so rows of 20 or fewer such values are never rejected at the default; define the macro to a larger value to read them.
 
 Example messages
 
@@ -1148,6 +1150,10 @@ Example messages
 
 ```
 [json.exception.out_of_range.408] syntax error while parsing UBJSON size: excessive array size
+```
+
+```
+[json.exception.out_of_range.408] syntax error while parsing UBJSON size: excessive number of elements without payload
 ```
 
 ### json.exception.out_of_range.409

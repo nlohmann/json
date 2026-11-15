@@ -10,7 +10,14 @@ Importing the module instead of including the header reduces the compile time of
 
 The `nlohmann.json` module requires that the build system is configured to build and resolve modules when imported. Obviously, as modules were introduced in C++20, this feature can only be used in C++20 and subsequent versions.
 
-To enable building the `nlohmann.json` module (which is not done by default), the macro `NLOHMANN_JSON_BUILD_MODULES` must be passed to the build system.
+To enable building the `nlohmann.json` module (which is not done by default), set the CMake option [`NLOHMANN_JSON_BUILD_MODULES`](https://json.nlohmann.me/integration/cmake/#nlohmann_json_build_modules) and link the `nlohmann_json_modules` target.
+
+With CMake, building the module needs:
+
+- CMake 3.28 or newer, and
+- a generator that scans for modules: Ninja (1.11 or newer), Ninja Multi-Config, or Visual Studio 2022 or newer.
+
+The example below also uses `import std;`. CMake supports it without experimental opt-in since version 4.5, and then only with the Ninja generators and these toolchains: Clang 18.1.2 or newer (with libc++ or libstdc++), MSVC toolset 14.36 (Visual Studio 17.6) or newer, and GCC 15 or newer (GCC 16 on macOS). With older CMake versions, `import std;` needs CMake's version-specific experimental opt-in.
 
 ## Example
 
@@ -68,7 +75,7 @@ Additionally, the following `nlohmann::detail` symbols are exported, solely to w
 
 ## Known issues
 
-C++20 modules support is exercised in CI against current GCC and Clang on Ubuntu, and the default MSVC toolset on Windows Server 2022 — there is no documented minimum compiler version, unlike feature-test-macro-gated features such as [`JSON_HAS_RANGES`](https://json.nlohmann.me/api/macros/json_has_ranges/index.md).
+C++20 modules support is exercised in CI with CMake 4.5 and `import std;` against current GCC and Clang on Ubuntu, and the default MSVC toolset on Windows Server 2022 — there is no documented minimum compiler version, unlike feature-test-macro-gated features such as [`JSON_HAS_RANGES`](https://json.nlohmann.me/api/macros/json_has_ranges/index.md).
 
 Known compiler issues
 

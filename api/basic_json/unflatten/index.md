@@ -24,7 +24,7 @@ The function can throw the following exceptions:
 
 - Throws [`type_error.314`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error314) if value is not an object
 - Throws [`type_error.315`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error315) if object values are not primitive
-- Throws [`type_error.313`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error313) if a key (JSON pointer) leads to a conflicting nesting; example: `"invalid value to unflatten"`
+- Throws [`type_error.313`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error313) if a key (JSON pointer) leads to a conflicting nesting, for example if a key with a value other than `null` is a prefix of another key (as `/a` and `/a/b`), in whichever order the keys come; example: `"invalid value to unflatten"`
 - Throws [`parse_error.106`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error106) if an array index in a key begins with '0'; example: `"array index '01' must not begin with '0'"`
 - Throws [`parse_error.107`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error107) if a key is not empty and does not begin with a slash (`/`); example: `"JSON pointer must be empty or begin with '/' - was: 'a'"`
 - Throws [`parse_error.108`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error108) if a tilde (`~`) in a key is not followed by `0` or `1`; example: `"escape character '~' must be followed with '0' or '1'"`
@@ -113,3 +113,4 @@ Output:
 - Added in version 2.0.0.
 - Made the array/object decision independent of the object's iteration order in version 3.13.0 unreleased.
 - Throws [`parse_error.109`](https://json.nlohmann.me/home/exceptions/#jsonexceptionparse_error109) instead of [`out_of_range.404`](https://json.nlohmann.me/home/exceptions/#jsonexceptionout_of_range404) for a one-character array index that is not a digit (e.g., `/x`) in version 3.13.0 unreleased, as it already did for longer ones.
+- Throws [`type_error.313`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error313) for a key that is a prefix of an earlier key in version 3.13.0 unreleased; before, an object type that keeps the insertion order (such as [`ordered_json`](https://json.nlohmann.me/api/ordered_json/index.md)) silently replaced the nested value.

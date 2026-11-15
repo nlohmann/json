@@ -175,6 +175,7 @@ Output:
 - [Binary formats](https://json.nlohmann.me/features/binary_formats/index.md) - overview and comparison of the supported binary formats
 - [Binary values](https://json.nlohmann.me/features/binary_values/index.md) - how binary values and subtypes are handled
 - [`from_ubjson`](https://json.nlohmann.me/api/basic_json/from_ubjson/index.md) - create a JSON value from an input in UBJSON format
+- [`JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE`](https://json.nlohmann.me/api/macros/json_ubjson_valueless_elements_per_byte/index.md) - set how many elements of arrays of `null`, `true`, or `false` a reader accepts per byte of input
 - [`to_cbor`](https://json.nlohmann.me/api/basic_json/to_cbor/index.md) - create a CBOR serialization of a JSON value
 - [`to_msgpack`](https://json.nlohmann.me/api/basic_json/to_msgpack/index.md) - create a MessagePack serialization of a JSON value
 - [`to_bson`](https://json.nlohmann.me/api/basic_json/to_bson/index.md) - create a BSON serialization of a JSON value
@@ -185,4 +186,5 @@ Output:
 
 - Added in version 3.1.0.
 - Added `error_handler` parameter in version 3.13.0 unreleased. Its default, `keep`, writes the bytes of a string or object key that is not valid UTF-8 unchanged, as before; `strict` (the default if [`JSON_STRICT_BINARY_UTF8`](https://json.nlohmann.me/api/macros/json_strict_binary_utf8/index.md) is enabled) throws `type_error.316`.
+- Writes arrays of `Z`, `T`, or `F` without the `$` type annotation (`[#n Z Z ...`) once their elements in one call add up to more than 1,048,576, in version 3.13.0 unreleased, so that `from_ubjson` can read the output back. Such output is larger: 270,000 rows of 100 `null` values take 26.8 MB instead of 1.35 MB. The limit does not depend on [`JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE`](https://json.nlohmann.me/api/macros/json_ubjson_valueless_elements_per_byte/index.md): a reader accepts at least 1,048,576 elements whatever it is set to, so the writer follows that base only.
 - Throws `type_error.321` for a discarded value since version 3.13.0 unreleased; previously, a discarded value nested in an array or object was silently skipped, producing invalid UBJSON.

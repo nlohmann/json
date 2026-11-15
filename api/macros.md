@@ -26,6 +26,8 @@ header. See also the [macro overview page](../../features/macros.md).
   UBJSON, BJData, and BSON writers
 - [**JSON_STRICT_NUL_HANDLING**](json_strict_nul_handling.md) - opt in to rejecting a NUL byte in the input instead of
   treating it as end of input
+- [**JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE**](json_ubjson_valueless_elements_per_byte.md) - set how many elements of
+  UBJSON arrays of `null`, `true`, or `false` an input may announce per byte it has
 
 ## Language support
 

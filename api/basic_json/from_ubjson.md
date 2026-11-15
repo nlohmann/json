@@ -89,8 +89,11 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 - Throws [out_of_range.406](../../home/exceptions.md#jsonexceptionout_of_range406) if a high-precision number, or a
   float64 when `number_float_t` is `float`, does not fit into `number_float_t`
 - Throws [out_of_range.408](../../home/exceptions.md#jsonexceptionout_of_range408) if the count of an optimized
-  container exceeds the capacity of the container (or of `std::size_t`), or if an optimized array of `Z`, `T`, or `F` has
-  more than 1,048,576 elements
+  container exceeds the capacity of the container (or of `std::size_t`; an array of type `N` is empty, so only the
+  latter applies to it), if an optimized array of `Z`, `T`, or `F` has more than 1,048,576 elements, or if the
+  optimized arrays of `Z`, `T`, and `F` in the input together have more than 1,048,576 elements plus
+  [`JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE`](../macros/json_ubjson_valueless_elements_per_byte.md) (4 by default) for
+  every byte read so far
 
 ## Complexity
 
@@ -143,6 +146,8 @@ Linear in the size of the input.
 - [Parsing untrusted input](../../features/parsing/untrusted_input.md) - limits and safe handling of hostile data
 - [Binary values](../../features/binary_values.md) - how binary values and subtypes are handled
 - [`to_ubjson`](to_ubjson.md) - create a UBJSON serialization of a JSON value
+- [`JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE`](../macros/json_ubjson_valueless_elements_per_byte.md) -
+  set how many elements of arrays of `null`, `true`, or `false` the input may announce per byte
 - [`from_cbor`](from_cbor.md) - create a JSON value from an input in CBOR format
 - [`from_msgpack`](from_msgpack.md) - create a JSON value from an input in MessagePack format
 - [`from_bson`](from_bson.md) - create a JSON value from an input in BSON format
@@ -156,6 +161,12 @@ Linear in the size of the input.
 - Extended container support (1) to include types with lvalue-only ADL `begin`/`end` (matching `std::begin`/`std::end` semantics) in version 3.13.0.
 - Extended overload (2) to accept heterogeneous iterator+sentinel pairs (C++20 ranges support) in version 3.13.0.
 - Added `error_handler` parameter in version 3.13.0.
+- Report `start_array(0)` to a SAX handler for an optimized array of type `N` (`[$N#n`), whatever its count, in version
+  3.13.0.
+- Limited the total number of elements of optimized arrays of `Z`, `T`, and `F` in one input in version 3.13.0; the
+  number of elements per byte can be set with
+  [`JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE`](../macros/json_ubjson_valueless_elements_per_byte.md), for example to read
+  files written by version 3.12.0 and earlier that exceed the default.
 
 !!! warning "Deprecation"
 
