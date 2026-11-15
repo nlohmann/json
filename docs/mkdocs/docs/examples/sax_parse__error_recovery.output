@@ -1,0 +1,19 @@
+byte 49: [json.exception.parse_error.101] parse error at line 3, column 20: syntax error while parsing array - unexpected string literal; expected ']'
+byte 51: [json.exception.parse_error.101] parse error at line 3, column 22: syntax error while parsing value - unexpected ']'; expected '[', '{', or a literal
+byte 70: [json.exception.parse_error.101] parse error at line 4, column 17: syntax error while parsing value - invalid literal; last read: '"valid": tru,'
+byte 86: [json.exception.parse_error.101] parse error at line 5, column 15: syntax error while parsing value - invalid number; expected digit after '.'; last read: '1.,'
+byte 109: [json.exception.parse_error.101] parse error at line 6, column 22: syntax error while parsing object - unexpected end of input; expected '}'
+
+valid JSON: false
+{
+    "name": "Hello World",
+    "nested": {
+        "x": 1
+    },
+    "size": 1,
+    "tags": [
+        "a",
+        "b"
+    ],
+    "valid": null
+}

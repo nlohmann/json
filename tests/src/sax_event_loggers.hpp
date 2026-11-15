@@ -131,11 +131,13 @@ struct SaxEventLogger : public nlohmann::json_sax<nlohmann::json>
     {
         errored = true;
         events.push_back("parse_error(" + std::to_string(position) + ")");
-        return false;
+        return recover;
     }
 
     std::vector<std::string> events {}; // NOLINT(readability-redundant-member-init)
     bool errored = false;
+    /// whether parse_error() asks the parser to recover from the error (see #3989)
+    bool recover = false;
 };
 
 struct SaxEventLoggerExitAfterStartObject : public SaxEventLogger

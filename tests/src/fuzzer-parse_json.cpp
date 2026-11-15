@@ -24,11 +24,16 @@ array data, it performs the following steps:
 The pointer range takes the bulk fast paths, the other input adapters read byte
 by byte; see check_input_adapters().
 
+Furthermore, it parses data with a SAX parser that recovers from every error
+and checks that the events are balanced, that parsing ends, and that valid
+input is parsed without errors (see #3989).
+
 The provided function `LLVMFuzzerTestOneInput` can be used in different fuzzer
 drivers.
 */
 
 #include "fuzzer_common.hpp"
+#include "fuzzer-recovering_checker.hpp"
 
 namespace
 {
@@ -59,6 +64,13 @@ struct accept_json
 // see http://llvm.org/docs/LibFuzzer.html
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
+    // recover from all errors, reading from memory and from a stream
+    {
+        const auto checker = check_recovering_parse(data, size, json::input_format_t::json);
+        assert(checker.events <= (4 * size) + 4);
+        assert((checker.errors == 0) == json::accept(data, data + size));
+    }
+
     // step 0: parse input without exceptions
     bool noexcept_threw = false;
     json const j_noexcept = parse_without_exceptions([&] { return json::parse(data, data + size, nullptr, false); }, noexcept_threw);
