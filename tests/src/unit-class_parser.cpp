@@ -3269,3 +3269,116 @@ TEST_CASE("a plain function is accepted as parser callback for containers")
     CHECK((nlohmann::detail::can_compare_ne<std::string::const_iterator, std::string::const_iterator>::value));
     CHECK((nlohmann::detail::can_compare_ne<const char*, const char*>::value));
 }
+
+#if !defined(JSON_NOEXCEPTION)
+TEST_CASE("parse error message of a long token")
+{
+    // the message of a parse error shows the last read token; a long token is
+    // shown by its first and its last 4096 characters, and the message is the
+    // same for every kind of input
+    const auto message = [](const std::string & text, int kind) -> std::string
+    {
+        json _;
+        try
+        {
+            if (kind == 0)
+            {
+                _ = json::parse(text);
+            }
+            else if (kind == 1)
+            {
+                std::istringstream stream(text);
+                _ = json::parse(stream);
+            }
+            else if (kind == 2)
+            {
+                FILE* const file = std::tmpfile(); // NOLINT(cppcoreguidelines-owning-memory)
+                REQUIRE(file != nullptr);
+                CHECK(std::fwrite(text.data(), 1, text.size(), file) == text.size());
+                CHECK(std::fseek(file, 0, SEEK_SET) == 0);
+                try
+                {
+                    _ = json::parse(file);
+                }
+                catch (...)
+                {
+                    std::fclose(file); // NOLINT(cert-err33-c,cppcoreguidelines-owning-memory)
+                    throw;
+                }
+                std::fclose(file); // NOLINT(cert-err33-c,cppcoreguidelines-owning-memory)
+            }
+            else
+            {
+                const std::list<char> chars(text.begin(), text.end());
+                _ = json::parse(chars.begin(), chars.end());
+            }
+        }
+        catch (const json::parse_error& e)
+        {
+            return e.what();
+        }
+        return "no error";
+    };
+
+    SECTION("a short token is shown completely")
+    {
+        const std::string text = "[\"" + std::string(8000, 'a') + "\x01\"]";
+        const std::string expected = "last read: '\"" + std::string(8000, 'a') + "<U+0001>'";
+        for (int kind = 0; kind < 4; ++kind)
+        {
+            CAPTURE(kind)
+            const std::string m = message(text, kind);
+            CHECK(m.size() > expected.size());
+            CHECK(m.compare(m.size() - expected.size(), expected.size(), expected) == 0);
+        }
+    }
+
+    SECTION("a long string")
+    {
+        const std::string text = "[\"" + std::string(100000, 'a') + "b\x01\"]";
+        // the token is '"', 100,000 times 'a', 'b', and the control character
+        const std::string expected = "last read: '\"" + std::string(4095, 'a') + "..." + std::string(4094, 'a') + "b<U+0001>'";
+        for (int kind = 0; kind < 4; ++kind)
+        {
+            CAPTURE(kind)
+            const std::string m = message(text, kind);
+            CHECK(m.size() > expected.size());
+            CHECK(m.compare(m.size() - expected.size(), expected.size(), expected) == 0);
+        }
+    }
+
+    SECTION("a long run of whitespace after a number")
+    {
+        // the token begins with the number and ends with the invalid character
+        const std::string text = "[1," + std::string(100000, '\n') + "?]";
+        std::string expected = "last read: '1,";
+        for (int i = 0; i < 4094; ++i)
+        {
+            expected += "<U+000A>";
+        }
+        expected += "...";
+        for (int i = 0; i < 4095; ++i)
+        {
+            expected += "<U+000A>";
+        }
+        expected += "?'";
+        for (int kind = 0; kind < 4; ++kind)
+        {
+            CAPTURE(kind)
+            const std::string m = message(text, kind);
+            CHECK(m.size() > expected.size());
+            CHECK(m.compare(m.size() - expected.size(), expected.size(), expected) == 0);
+        }
+    }
+
+    SECTION("valid input with a long run of whitespace")
+    {
+        const std::string text = "1" + std::string(100000, ' ');
+        for (int kind = 0; kind < 4; ++kind)
+        {
+            CAPTURE(kind)
+            CHECK(message(text, kind) == "no error");
+        }
+    }
+}
+#endif

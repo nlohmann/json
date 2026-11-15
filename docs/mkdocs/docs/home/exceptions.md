@@ -140,6 +140,8 @@ Exceptions have ids 1xx.
 
 This error indicates a syntax error while deserializing a JSON text. The error message describes that an unexpected token (character) was encountered, and the member `byte` indicates the error position.
 
+The message ends with the last read token (`last read: '...'`), with control characters written as `<U+XXXX>`. A token of more than 8192 characters is shown by its first and its last 4096 characters, separated by `...`.
+
 !!! failure "Example message"
 
     Input ended prematurely:
