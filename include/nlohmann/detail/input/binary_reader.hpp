@@ -177,6 +177,17 @@ class binary_reader
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
         }
 
+        // BON8: a string ends at the first byte that cannot continue it. If
+        // that byte follows the value, the reader has already taken it from
+        // the input and holds it in bon8_pushback. Without the end-of-input
+        // check below it would be dropped, and the next read would start
+        // behind it, so report the missing 0xFF instead.
+        if (result && !strict && input_format == input_format_t::bon8 && bon8_pushback_size != 0)
+        {
+            get_bon8();
+            return last_byte_error(exception_id::unexpected_end_of_input, "string at the end of the value is not terminated by 0xFF", "value", "");
+        }
+
         // strict mode: next byte must be EOF
         if (result && strict)
         {
