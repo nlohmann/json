@@ -64,13 +64,13 @@ stack for the nesting.)
 
 The call stack still needs room for the levels that are recursed into, and the default limit assumes a stack of ordinary
 size. The stack that an operation needs is roughly proportional to the limit; with the default of 128 levels, the most
-demanding operation (`dump` in an unoptimized build) needed up to 288 KiB, and an optimized build needed 48 KiB or less,
-in measurements on macOS with arm64. The most demanding operation needed this much stack at the limits `0`, `32`,
-`128`, and `254`:
+demanding operations (copying a value and converting it to another `basic_json` type, in an unoptimized build) needed
+up to 224 KiB, and an optimized build needed 48 KiB or less, in measurements on macOS with arm64. The most demanding
+operation needed this much stack at the limits `0`, `32`, `128`, and `254`:
 
 | Stack needed, in KiB | limit 0 | limit 32 | limit 128 (default) | limit 254 |
 |---|---:|---:|---:|---:|
-| unoptimized build (`-O0`) | 16 or less | 80 | 288 | 576 |
+| unoptimized build (`-O0`) | 16 or less | 64 | 224 | 448 |
 | optimized build (`-O2`) | 16 or less | 16 or less | 48 | 112 |
 
 A thread with a smaller stack (a task of a real-time operating system, a fiber, or a thread of the musl C library, whose
@@ -80,6 +80,20 @@ only the stack that is needed and the speed (values nested more deeply than the 
 result. See the [documentation of the macro](../../api/macros/json_recursion_depth_limit.md) for the complete tables,
 the speed, and the rules for choosing a value. Destroying a value (its destructor) recurses over the same number of
 levels and then continues without the call stack, and needs 32 KiB or less at every limit.
+
+!!! warning "Indented output and flattened keys grow with the depth"
+
+    Some results are larger than the value by a factor of its nesting depth.
+    [`dump`](../../api/basic_json/dump.md) with an `indent` of `n` (and likewise `operator<<` with `std::setw(n)` and
+    [`basic_json_view::dump`](../../api/basic_json_view/dump.md)) writes up to `n` characters per nesting level in
+    front of every line, and [`flatten`](../../api/basic_json/flatten.md) repeats the path of every value in its key.
+    For the 80,001-byte array `[1,[1,...[1,1]...]]` with 20,000 levels, `dump(1)` returns 600 MB, `dump(4)` 2.4 GB,
+    and the keys of `flatten()` hold 400 MB. A compact `dump()` without indentation stays the size of the value. If you
+    pretty-print, log, or flatten untrusted input, limit its nesting depth while parsing, for example with a
+    [parser callback](parser_callbacks.md#recipe-max-nesting-depth-via-a-callback): with a limit of `d`, every line has
+    at most `n * d` indentation characters, and every flattened key has at most `d` reference tokens.
+    [`JSON_RECURSION_DEPTH_LIMIT`](../../api/macros/json_recursion_depth_limit.md) does not help here: it changes only
+    how much of the call stack a walk uses, never its result, and it does not limit the depth that `parse()` accepts.
 
 ## Input size
 
@@ -140,6 +154,20 @@ values for a repeated key ends up in the parsed object. If your application must
 silently resolving them one way or another, see the
 [parser callback recipe for rejecting duplicate keys](parser_callbacks.md#recipe-rejecting-duplicate-object-keys).
 
+## Objects with many keys in `ordered_json`
+
+[`ordered_json`](../../api/ordered_json.md) keeps the members of an object in a vector in insertion order
+([`ordered_map`](../../api/ordered_map.md)) and finds a key by searching all members. Parsing JSON text into an
+`ordered_json` avoids that search for objects with many keys and takes linear time. The binary readers
+([`from_cbor`](../../api/basic_json/from_cbor.md), [`from_msgpack`](../../api/basic_json/from_msgpack.md),
+[`from_ubjson`](../../api/basic_json/from_ubjson.md), [`from_bjdata`](../../api/basic_json/from_bjdata.md),
+[`from_bson`](../../api/basic_json/from_bson.md), and [`from_bon8`](../../api/basic_json/from_bon8.md)) do not yet:
+reading an object of `n` keys into an `ordered_json` costs time proportional to `n²`. A flat object of 40,000 keys
+(about 300 KB of CBOR) takes about 1.3 s, against a few milliseconds as JSON text or into a `json`
+([#6104](https://github.com/nlohmann/json/issues/6104)). `json` is not affected. If you read untrusted binary input
+into `ordered_json`, bound the input size more tightly, read it into a `json`, or reject objects with many keys in a
+[SAX handler](sax_interface.md).
+
 ## Numbers
 
 A number whose value cannot be represented — for instance `1E1000`, which overflows `double` — is rejected while
@@ -171,9 +199,11 @@ indices (or the pointer as a whole) before using them, or use [`at`](../../api/b
 
 - Wrap parsing in a `#!cpp try`/`#!cpp catch` block, or use `allow_exceptions=false`/`accept()` if your environment
   cannot use exceptions; never let `JSON_NOEXCEPTION`'s `abort()` be the first time you think about error handling.
-- If the input's nesting depth matters to you, enforce your own limit with a
-  [parser callback](parser_callbacks.md#recipe-max-nesting-depth-via-a-callback) or a
+- If the input's nesting depth matters to you (for example because you pretty-print, log, or flatten it), enforce your
+  own limit with a [parser callback](parser_callbacks.md#recipe-max-nesting-depth-via-a-callback) or a
   [SAX handler](sax_interface.md); the library bounds the call stack but not memory use.
+- If you read untrusted binary input into `ordered_json`, mind that objects with many keys are
+  [slow to read](#objects-with-many-keys-in-ordered_json).
 - Bound the size of the input itself before parsing, independent of the library's own bounded allocations for binary
   format lengths.
 - Decide up front how you want a string with invalid UTF-8 — from any source, not only parsing — to be serialized

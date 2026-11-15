@@ -18,7 +18,8 @@ Strong exception safety: if an exception occurs, the original value stays intact
 
 ## Complexity
 
-Linear in the size of the JSON value.
+Linear in the size of the result. Every key repeats the path of its value, so the keys can be larger than the value by a
+factor of its nesting depth (see [Parsing untrusted input](../../features/parsing/untrusted_input.md#nesting-depth)).
 
 ## Notes
 

@@ -69,8 +69,10 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 
 ## Exceptions
 
-- Throws [parse_error.110](../../home/exceptions.md#jsonexceptionparse_error110) if the given input ends prematurely or
-  the end of the file was not reached when `strict` was set to true
+- Throws [parse_error.110](../../home/exceptions.md#jsonexceptionparse_error110) if the given input ends prematurely,
+  if the end of the file was not reached when `strict` was set to true, or if a string at the end of the value is not
+  terminated by 0xFF although a byte follows it (also when `strict` is false: the byte that ends the string is
+  taken from the input, so the next value would be lost)
 - Throws [parse_error.112](../../home/exceptions.md#jsonexceptionparse_error112) if a parse error occurs, for instance
   an invalid byte, a string that is not valid UTF-8, or an object key that is not a string
 
