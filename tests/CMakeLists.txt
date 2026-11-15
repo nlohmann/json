@@ -1,5 +1,12 @@
 cmake_minimum_required(VERSION 3.13...4.0)
 
+# The unit tests use no C++ modules. Without this, CMake 4.5 scans the C++20 and
+# newer test targets and builds a `std` module for them, compiling the standard
+# library's module sources with the test warning flags (which fails with
+# -Werror) or failing to configure when the libc++ module sources are missing.
+# The module test in tests/module_cpp20 is a separate project and unaffected.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+
 option(JSON_Valgrind    "Execute test suite with Valgrind." OFF)
 option(JSON_FastTests   "Skip expensive/slow tests." OFF)
 option(JSON_TestSimdutf "Build the unit tests against the simdutf UTF-8 validation backend." OFF)

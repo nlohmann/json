@@ -17,8 +17,8 @@ using namespace nlohmann::literals;
 // Standard-library facilities are pulled in via `import std;` rather than
 // textual `#include`s: mixing `import` with textual standard headers does not
 // compile under GCC's C++20 modules implementation, whereas `import std;` works
-// across GCC, Clang, and MSVC. This requires C++23 and CMake's (experimental)
-// import-std support; see CMakeLists.txt.
+// across GCC, Clang, and MSVC. This requires C++23 and CMake 4.5 or newer;
+// see CMakeLists.txt.
 int main()
 {
     // basic_json / json: parsing and value access

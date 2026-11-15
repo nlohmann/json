@@ -165,7 +165,8 @@ std::ifstream f("example.json");
 json data = json::parse(f);
 ```
 
-If using modules (enabled with `NLOHMANN_JSON_BUILD_MODULES`), this example becomes:
+If using modules (enabled with `NLOHMANN_JSON_BUILD_MODULES`; `import std;` needs CMake 4.5 or newer, see the
+[modules documentation](https://json.nlohmann.me/features/modules/)), this example becomes:
 ```cpp
 import std;
 import nlohmann.json;
