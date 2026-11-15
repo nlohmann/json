@@ -1169,6 +1169,14 @@ class binary_writer
         write_container_iterative<msgpack_walk>(root);
     }
 
+    // a function, not an inline condition: for an object the type is never
+    // valueless and MSVC would warn about a constant expression (C4127)
+    static constexpr bool valueless_array_fits(const bool valueless_type, const std::size_t size,
+            const std::size_t written) noexcept
+    {
+        return !valueless_type || size <= detail::valueless_elements_base - written;
+    }
+
     /*!
     @brief write the start of an array (@a IsArray) or object: its opening
            marker, the optimized type, and the count
@@ -1204,20 +1212,27 @@ class binary_writer
 
             // an optimized array of a valueless type carries no payload, so a
             // reader has nothing but the declared count to bound the allocation
-            // by and refuses an excessive one. Write the unoptimized form for
-            // those, at one byte per element, so the result can be read back.
-            // Objects are not affected: every element is preceded by its key.
-            const bool valueless_type = (first_prefix == 'Z' || first_prefix == 'T' || first_prefix == 'F');
-            const bool excessive_valueless = IsArray
-                                             && valueless_type
-                                             && size > detail::max_valueless_container_size;
-
-            if (same_prefix && !excessive_valueless
-                    && !(use_bjdata && is_bjdata_excluded_type_marker(first_prefix)))
+            // by. It refuses one array of more than max_valueless_container_size
+            // elements, and all such arrays of one input together when they add
+            // up to more than valueless_elements_base plus a number per byte
+            // read. Write the unoptimized form, at one byte per element, for
+            // an array that would exceed the base with the arrays written so
+            // far, so that the result can be read back: the limit of a reader
+            // is never below the base. Objects are not affected: every element
+            // is preceded by its key.
+            if (same_prefix && !(use_bjdata && is_bjdata_excluded_type_marker(first_prefix)))
             {
-                prefix_required = false;
-                oa.write_character(to_char_type('$'));
-                oa.write_character(first_prefix);
+                const bool valueless_type = IsArray && (first_prefix == 'Z' || first_prefix == 'T' || first_prefix == 'F');
+                if (valueless_array_fits(valueless_type, size, valueless_elements_written))
+                {
+                    prefix_required = false;
+                    oa.write_character(to_char_type('$'));
+                    oa.write_character(first_prefix);
+                    if (valueless_type)
+                    {
+                        valueless_elements_written += size;
+                    }
+                }
             }
         }
 
@@ -5441,6 +5456,10 @@ class binary_writer
     /// how to treat a string value or object key that is not valid UTF-8
     /// (CBOR, MessagePack, UBJSON, BJData, and BSON; not BON8)
     const error_handler_t error_handler = binary_writer_default_error_handler();
+
+    /// UBJSON: the number of elements written so far in optimized arrays of a
+    /// valueless type, which a reader adds up and bounds
+    std::size_t valueless_elements_written = 0;
 };
 
 }  // namespace detail

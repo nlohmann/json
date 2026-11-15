@@ -1050,11 +1050,17 @@ The size of an array or object in a [binary format](../features/binary_formats/i
 the size following `#` for [UBJSON](../features/binary_formats/ubjson.md)/[BJData](../features/binary_formats/bjdata.md),
 or the encoded length for [CBOR](../features/binary_formats/cbor.md).
 
-The exception is also thrown for a [UBJSON](../features/binary_formats/ubjson.md) array of a type that is encoded by its
-marker alone (`Z`, `T` or `F`) whose declared count exceeds 1,048,576 (`1 << 20`). Such an array has no payload, so its
-count alone decides how much memory is allocated, and a handful of bytes would otherwise describe billions of values.
-[`to_ubjson`](../api/basic_json/to_ubjson.md) writes longer arrays of these types without the `$` type annotation (the `#`
-count and one marker per element are kept), so any value it produces can still be read back.
+The exception is also thrown for [UBJSON](../features/binary_formats/ubjson.md) arrays of a type that is encoded by
+its marker alone (`Z`, `T` or `F`). Such an array has no payload, so its count alone decides how much memory is
+allocated, and a handful of bytes would otherwise describe billions of values. It is thrown if the declared count of one
+array exceeds 1,048,576 (`1 << 20`), and if the counts of all such arrays read so far in one input add up to more than
+1,048,576 plus 4 for every byte of the input read when the header of the last array has been read.
+[`to_ubjson`](../api/basic_json/to_ubjson.md) writes an array of these types without the `$` type annotation (the `#`
+count and one marker per element are kept) when it is longer, or when it would bring the total of the typed arrays
+written so far above 1,048,576, so everything it produces can be read back. Only input written by another encoder, or
+by version 3.12.0 and earlier of this library, can exceed the limit: for example, 1,100 rows of 1,000 `null` values or
+210,000 rows of 25, each with a `$Z` annotation. Version 3.12.0 writes such a row in 5 bytes (6 above 255 elements),
+so rows of 20 or fewer such values are never rejected.
 
 !!! failure "Example messages"
 
@@ -1069,6 +1075,9 @@ count and one marker per element are kept), so any value it produces can still b
     ```
     ```
     [json.exception.out_of_range.408] syntax error while parsing UBJSON size: excessive array size
+    ```
+    ```
+    [json.exception.out_of_range.408] syntax error while parsing UBJSON size: excessive number of elements without payload
     ```
 
 ### json.exception.out_of_range.409
