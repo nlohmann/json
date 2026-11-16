@@ -18,6 +18,10 @@ before including the `json.hpp` header.
 
 ## Function with runtime assertions
 
+The examples below identify the failing assertion and the function containing it.
+The exact diagnostic format, source filename, and line number depend on the platform,
+library version, and whether the single-header or multi-header version is used.
+
 ### Unchecked access to a const value
 
 Function [`operator[]`](../api/basic_json/operator%5B%5D.md) implements unchecked access for arrays and objects. Whereas
@@ -46,11 +50,7 @@ See also the documentation on [element access](element_access/index.md).
     }
     ```
 
-    Output:
-
-    ```
-    Assertion failed: (it != m_data.m_value.object->end()), function operator[], file json.hpp, line 28795.
-    ```
+    The assertion `#!cpp it != m_data.m_value.object->end()` fails in `#!cpp operator[]`.
 
 ??? example "Example 2: Invalid array index in a JSON pointer"
 
@@ -69,11 +69,7 @@ See also the documentation on [element access](element_access/index.md).
     }
     ```
 
-    Output:
-
-    ```
-    Assertion failed: (idx < m_data.m_value.array->size()), function operator[], file json.hpp, line 28758.
-    ```
+    The assertion `#!cpp idx < ptr->m_data.m_value.array->size()` fails in `#!cpp get_unchecked`.
 
 ### Constructing from an uninitialized iterator range
 
@@ -96,11 +92,7 @@ uninitialized iterator is undefined behavior and yields a runtime assertion.
     }
     ```
 
-    Output:
-
-    ```
-    Assertion failed: (m_object != nullptr), function operator++, file iter_impl.hpp, line 368.
-    ```
+    The assertion `#!cpp first.m_object != nullptr` fails in `#!cpp basic_json`.
 
 ### Operations on uninitialized iterators
 
@@ -123,11 +115,7 @@ behavior and yields a runtime assertion.
     }
     ```
 
-    Output:
-
-    ```
-    Assertion failed: (m_object != nullptr), function operator++, file iter_impl.hpp, line 368.
-    ```
+    The assertion `#!cpp m_object != nullptr` fails in `#!cpp operator++`.
 
 ## Changes
 
