@@ -7810,30 +7810,47 @@ namespace detail
  * leave j with the type of the new value, but the pointer to the destroyed old one.
  */
 
-// a move iterator over the elements of an rvalue container, unless they are
-// const (e.g., std::set): libstdc++ before GCC 5 defines the reference of a
-// std::move_iterator as value_type&&, which cannot bind to a const element
-template<typename Iterator>
-std::move_iterator<Iterator> make_move_iterator_if_mutable_impl(const Iterator& it, std::true_type /*mutable*/)
-{
-    return std::make_move_iterator(it);
-}
+// reference type of the elements of a const T
+template<typename T>
+using const_range_reference_t = decltype(*std::declval<iterator_t<const T>&>());
 
-template<typename Iterator>
-Iterator make_move_iterator_if_mutable_impl(const Iterator& it, std::false_type /*mutable*/)
-{
-    return it;
-}
+// a container that owns its elements propagates constness to them (deep
+// constness): the elements of a const std::vector<std::string> are const. A
+// non-owning range (a span, an iterator range) has shallow constness: a const
+// span still gives mutable access to the elements it refers to. Moving from an
+// rvalue of such a range would empty the storage it refers to, so the elements
+// of an rvalue range are only moved if it has deep constness.
+template<typename T>
+using owns_its_elements = std::is_const<typename std::remove_reference<detected_t<const_range_reference_t, T>>::type>;
 
 template<typename Iterator>
 using is_mutable_iterator = std::integral_constant < bool,
       !std::is_const<typename std::remove_reference<decltype(*std::declval<Iterator&>())>::type>::value >;
 
+// a move iterator over the elements of an rvalue container that owns them,
+// unless they are const (e.g., std::set): libstdc++ before GCC 5 defines the
+// reference of a std::move_iterator as value_type&&, which cannot bind to a
+// const element
 template<typename Iterator>
-auto make_move_iterator_if_mutable(const Iterator& it)
--> decltype(make_move_iterator_if_mutable_impl(it, is_mutable_iterator<Iterator> {}))
+std::move_iterator<Iterator> make_move_iterator_if_impl(const Iterator& it, std::true_type /*move*/)
 {
-    return make_move_iterator_if_mutable_impl(it, is_mutable_iterator<Iterator> {});
+    return std::make_move_iterator(it);
+}
+
+template<typename Iterator>
+Iterator make_move_iterator_if_impl(const Iterator& it, std::false_type /*move*/)
+{
+    return it;
+}
+
+template<typename Container, typename Iterator>
+using moves_elements = conjunction<owns_its_elements<Container>, is_mutable_iterator<Iterator>>;
+
+template<typename Container, typename Iterator>
+auto make_move_iterator_if_owned(const Iterator& it)
+-> decltype(make_move_iterator_if_impl(it, moves_elements<Container, Iterator> {}))
+{
+    return make_move_iterator_if_impl(it, moves_elements<Container, Iterator> {});
 }
 
 template<value_t> struct external_constructor;
@@ -7955,14 +7972,14 @@ struct external_constructor<value_t::array>
         j.replace_value(value_t::array, value);
     }
 
-    /// an rvalue container: move its elements
+    /// an rvalue container: move its elements if it owns them
     template<typename BasicJsonType, typename CompatibleArrayType>
     static void construct_moving(BasicJsonType& j, CompatibleArrayType& arr)
     {
         using std::begin;
         using std::end;
 
-        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::array_t>(make_move_iterator_if_mutable(begin(arr)), make_move_iterator_if_mutable(end(arr))));
+        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::array_t>(make_move_iterator_if_owned<CompatibleArrayType>(begin(arr)), make_move_iterator_if_owned<CompatibleArrayType>(end(arr))));
         j.replace_value(value_t::array, value);
     }
 
@@ -8016,14 +8033,14 @@ struct external_constructor<value_t::object>
         j.replace_value(value_t::object, value);
     }
 
-    /// an rvalue container: move its values
+    /// an rvalue container: move its values if it owns them
     template<typename BasicJsonType, typename CompatibleObjectType>
     static void construct_moving(BasicJsonType& j, CompatibleObjectType& obj)
     {
         using std::begin;
         using std::end;
 
-        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::object_t>(make_move_iterator_if_mutable(begin(obj)), make_move_iterator_if_mutable(end(obj))));
+        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::object_t>(make_move_iterator_if_owned<CompatibleObjectType>(begin(obj)), make_move_iterator_if_owned<CompatibleObjectType>(end(obj))));
         j.replace_value(value_t::object, value);
     }
 
@@ -8218,7 +8235,8 @@ using is_rvalue_array_to_json = conjunction<is_movable_container_rvalue<T>,
       is_compatible_string_type<BasicJsonType, T>,
       is_compatible_binary_type<BasicJsonType, T>>>>;
 
-// rvalue containers: their elements are moved instead of copied
+// rvalue containers: their elements are moved instead of copied if the
+// container owns them (see owns_its_elements)
 template<typename BasicJsonType, typename CompatibleArrayType,
          enable_if_t<is_rvalue_array_to_json<BasicJsonType, CompatibleArrayType>::value, int> = 0>
 inline void to_json(BasicJsonType& j, CompatibleArrayType && arr) // NOLINT(cppcoreguidelines-missing-std-forward)
