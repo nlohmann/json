@@ -301,17 +301,17 @@ class unhashable_key
         return m_value.data();
     }
 
-    friend bool operator<(const unhashable_key& lhs, const unhashable_key& rhs)
+    friend bool operator<(const unhashable_key& lhs, const unhashable_key& rhs) noexcept
     {
         return lhs.m_value < rhs.m_value;
     }
-    friend bool operator==(const unhashable_key& lhs, const unhashable_key& rhs)
+    friend bool operator==(const unhashable_key& lhs, const unhashable_key& rhs) noexcept
     {
         return lhs.m_value == rhs.m_value;
     }
 
   private:
-    std::string m_value;
+    std::string m_value{}; // NOLINT(readability-redundant-member-init): needed for GCC -Weffc++
 };
 
 // an object type that appends members without a key check, like ordered_map,

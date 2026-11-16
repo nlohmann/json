@@ -286,11 +286,13 @@ struct detect_hashable_object_key<ObjectType, true>
 ///    append, and drop a repeated key found with a hash table
 /// 2: like 1, but the key type has no std::hash: emplace one by one, so that
 ///    the object type's own (linear) key check drops repeated keys
+template < typename ObjectType, typename Source,
+           bool = is_detected<detect_emplace_new_key_t, ObjectType>::value &&
+           !is_detected<insert_result_second_t, Source>::value >
+struct object_range_kind : std::integral_constant < int, 0> {};
 template<typename ObjectType, typename Source>
-using object_range_kind = std::integral_constant < int,
-      (!is_detected<detect_emplace_new_key_t, ObjectType>::value ||
-       is_detected<insert_result_second_t, Source>::value) ? 0 :
-      (detect_hashable_object_key<ObjectType>::value ? 1 : 2) >;
+struct object_range_kind<ObjectType, Source, true>
+    : std::integral_constant < int, detect_hashable_object_key<ObjectType>::value ? 1 : 2 > {};
 
 template<>
 struct external_constructor<value_t::object>
@@ -332,6 +334,28 @@ struct external_constructor<value_t::object>
     }
 
   private:
+    /// hash of a member's position in an ordered object type's members
+    template<typename ObjectType>
+    struct member_position_hash
+    {
+        const ObjectType* container;
+        std::size_t operator()(const std::size_t position) const noexcept
+        {
+            return std::hash<typename ObjectType::key_type> {}((container->begin() + static_cast<std::ptrdiff_t>(position))->first);
+        }
+    };
+
+    /// equality of two member positions in an ordered object type's members
+    template<typename ObjectType>
+    struct member_position_equal
+    {
+        const ObjectType* container;
+        bool operator()(const std::size_t a, const std::size_t b) const noexcept
+        {
+            return typename ObjectType::key_compare {}((container->begin() + static_cast<std::ptrdiff_t>(a))->first, (container->begin() + static_cast<std::ptrdiff_t>(b))->first);
+        }
+    };
+
     /// the object type's range constructor drops repeated keys, or the source
     /// cannot hold any
     template<typename BasicJsonType, typename Iterator>
@@ -349,27 +373,11 @@ struct external_constructor<value_t::object>
     static void construct_range(BasicJsonType& j, Iterator first, Iterator last, std::integral_constant<int, 1> /*kind*/)
     {
         using object_t = typename BasicJsonType::object_t;
-        using key_type = typename object_t::key_type;
 
         object_t members;
-        struct position_hash
-        {
-            const object_t* container;
-            std::size_t operator()(const std::size_t position) const
-            {
-                return std::hash<key_type> {}((container->begin() + static_cast<std::ptrdiff_t>(position))->first);
-            }
-        };
-        struct position_equal
-        {
-            const object_t* container;
-            bool operator()(const std::size_t a, const std::size_t b) const
-            {
-                return typename object_t::key_compare {}((container->begin() + static_cast<std::ptrdiff_t>(a))->first, (container->begin() + static_cast<std::ptrdiff_t>(b))->first);
-            }
-        };
         const auto size = static_cast<std::size_t>(std::distance(first, last));
-        std::unordered_set<std::size_t, position_hash, position_equal> positions(0, position_hash{&members}, position_equal{&members});
+        std::unordered_set<std::size_t, member_position_hash<object_t>, member_position_equal<object_t>>
+        positions(0, member_position_hash<object_t> {&members}, member_position_equal<object_t> {&members});
         positions.reserve(size);
         members.reserve(size);
         for (; first != last; ++first)
