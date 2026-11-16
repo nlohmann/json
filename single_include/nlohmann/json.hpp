@@ -15782,9 +15782,14 @@ scan_number_done:
         std::string result;
         if (chars.size() > 2 * shown)
         {
-            append_escaped(result, chars.begin(), chars.begin() + static_cast<std::ptrdiff_t>(shown));
+            // the lexer reads bytes (wide characters arrive as UTF-8), so
+            // move both cuts to character boundaries to keep the message
+            // valid UTF-8; this only shortens the two parts
+            const auto head_end = chars.begin() + static_cast<std::ptrdiff_t>(utf8_head_cut(chars.data(), shown));
+            const auto tail_begin = chars.end() - static_cast<std::ptrdiff_t>(shown);
+            append_escaped(result, chars.begin(), head_end);
             result += "...";
-            append_escaped(result, chars.end() - static_cast<std::ptrdiff_t>(shown), chars.end());
+            append_escaped(result, tail_begin + static_cast<std::ptrdiff_t>(utf8_tail_skip(&*tail_begin)), chars.end());
         }
         else
         {
@@ -15794,6 +15799,55 @@ scan_number_done:
     }
 
   private:
+    /// whether @a c is a UTF-8 continuation byte
+    static bool is_utf8_continuation(const char_type c) noexcept
+    {
+        return (static_cast<unsigned char>(c) & 0xC0u) == 0x80u;
+    }
+
+    /*!
+    @brief the length of the first @a n characters at @a data without a UTF-8
+           character that begins there but does not end there
+
+    Looks only at the last 4 of these characters: in valid UTF-8, at most 3
+    bytes of a character can be before the cut.
+    */
+    static std::size_t utf8_head_cut(const char_type* data, const std::size_t n) noexcept
+    {
+        std::size_t lead = n - 1;
+        while (lead > n - 4 && is_utf8_continuation(data[lead]))
+        {
+            --lead;
+        }
+        const auto c = static_cast<unsigned char>(data[lead]);
+        std::size_t length = 1;
+        if (c >= 0xF0u)
+        {
+            length = 4;
+        }
+        else if (c >= 0xE0u)
+        {
+            length = 3;
+        }
+        else if (c >= 0xC0u)
+        {
+            length = 2;
+        }
+        return lead + length > n ? lead : n;
+    }
+
+    /// the number of UTF-8 continuation bytes (at most 3) at @a data, which
+    /// belong to a character that begins before it
+    static std::size_t utf8_tail_skip(const char_type* data) noexcept
+    {
+        std::size_t skip = 0;
+        while (skip < 3 && is_utf8_continuation(data[skip]))
+        {
+            ++skip;
+        }
+        return skip;
+    }
+
     /// append the characters [first, last) to @a result, escaping control characters
     template<typename Iterator>
     static void append_escaped(std::string& result, Iterator first, Iterator last)
