@@ -38122,7 +38122,7 @@ class serializer
             put_literal("\"subtype\": ");
             if (binary.has_subtype())
             {
-                dump_integer(binary.subtype());
+                dump_subtype(binary.subtype());
             }
             else
             {
@@ -38148,7 +38148,7 @@ class serializer
             put_literal("],\"subtype\":");
             if (binary.has_subtype())
             {
-                dump_integer(binary.subtype());
+                dump_subtype(binary.subtype());
                 put_char('}');
             }
             else
@@ -39370,6 +39370,40 @@ class serializer
     }
 
     /*!
+    @brief dump the subtype of a binary value
+
+    The subtype is a std::uint64_t, whatever the number types are. @ref
+    dump_integer converts its argument to the magnitude type of
+    number_unsigned_t, so it writes the subtype only if that type has at least
+    64 bits; otherwise (it would truncate the subtype) the digits are written
+    one by one.
+
+    @param[in] subtype  the subtype to dump
+    */
+    void dump_subtype(std::uint64_t subtype)
+    {
+        dump_subtype(subtype, std::integral_constant<bool, magnitude_has_at_least_64_bits> {});
+    }
+
+    void dump_subtype(std::uint64_t subtype, std::true_type /*magnitude has at least 64 bits*/)
+    {
+        dump_integer(subtype);
+    }
+
+    void dump_subtype(std::uint64_t subtype, std::false_type /*magnitude has less than 64 bits*/)
+    {
+        std::array<char, 20> digits{{}}; // 2^64 - 1 has 20 digits
+        std::size_t start = digits.size();
+        do
+        {
+            digits[--start] = static_cast<char>('0' + (subtype % 10));
+            subtype /= 10;
+        }
+        while (subtype != 0);
+        put_string(digits, start, digits.size());
+    }
+
+    /*!
     @brief dump an integer
 
     Dump a given integer, appending it to @ref write_buffer (directly: copying
@@ -39621,6 +39655,11 @@ class serializer
     /// whether every number_magnitude_t fits 64 bits
     static constexpr bool magnitude_has_at_most_64_bits = std::numeric_limits<number_magnitude_t>::is_specialized
         && std::numeric_limits<number_magnitude_t>::digits <= 64;
+
+    /// whether every std::uint64_t fits number_magnitude_t (then dump_integer
+    /// can write a binary subtype)
+    static constexpr bool magnitude_has_at_least_64_bits = std::numeric_limits<number_magnitude_t>::is_specialized
+        && std::numeric_limits<number_magnitude_t>::digits >= 64;
 
     /// whether @a x fits 64 bits: always if number_magnitude_t has at most
     /// 64 bits (selected by type, as the comparison would be reported as
