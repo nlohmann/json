@@ -589,6 +589,76 @@ TEST_CASE("json_view edits: a container that was added is replaced by a scalar")
     CHECK(d.root().materialize() == json::parse(R"({"a":[1,6,{"k":"s"}]})"));
 }
 
+TEST_CASE("json_view edits: a scalar replaces an array or object that is no longer part of the document")
+{
+    // the dropped container that the array/object is in still steps over its
+    // parsed extent: that container switches to links first, as a live one does
+    SECTION("members of an erased object")
+    {
+        json_editable_document d = json_editable_document::parse(R"({"p": {"a": [1, [2]], "b": 3, "e": []}, "q": 0})");
+        const json_editable_view p = d.root()["p"];
+        const json_editable_view a = p["a"];
+        d.erase(d.root(), "p");
+        d.set(a[1], 5);
+        CHECK(p.dump() == R"({"a":[1,5],"b":3,"e":[]})");
+        d.set(a, 5);
+        CHECK(p.size() == 3);
+        CHECK(p.dump() == R"({"a":5,"b":3,"e":[]})");
+        d.push_back(p["e"], 6);
+        CHECK(p.dump() == R"({"a":5,"b":3,"e":[6]})");
+        CHECK(d.root().dump() == R"({"q":0})");
+    }
+
+    SECTION("an array whose elements moved")
+    {
+        json_editable_document d = json_editable_document::parse(R"({"p": {"a": [1, 2], "b": 3}, "q": 0})");
+        const json_editable_view p = d.root()["p"];
+        const json_editable_view a = p["a"];
+        d.erase(d.root(), "p");
+        d.push_back(a, 4); // (the extent of a stays)
+        d.set(a, 5);
+        CHECK(p.dump() == R"({"a":5,"b":3})");
+        CHECK(d.root().dump() == R"({"q":0})");
+    }
+
+    SECTION("an element of an erased array, which grows afterwards")
+    {
+        json_editable_document d = json_editable_document::parse(R"({"p": [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], "q": 0})");
+        const json_editable_view p = d.root()["p"];
+        d.erase(d.root(), "p");
+        d.set(p[0], 5);
+        d.push_back(p, 1);
+        CHECK(p.dump() == "[5,1]");
+        CHECK(d.root().dump() == R"({"q":0})");
+    }
+
+    SECTION("values in an erased new value")
+    {
+        json_editable_document d = json_editable_document::parse("[0]");
+        const json_editable_view x = d.push_back(d.root(), json::parse("[[[1, 2]], 3]"));
+        const json_editable_view y = x[0];
+        d.erase(d.root(), 1);
+        d.set(y[0], 5);
+        CHECK(x.dump() == "[[5],3]");
+        d.set(y, 5);
+        CHECK(x.dump() == "[5,3]");
+        CHECK(d.root().dump() == "[0]");
+    }
+
+    SECTION("values in the elements that an array had before it was replaced")
+    {
+        json_editable_document d = json_editable_document::parse("[0]");
+        d.set(d.root()[0], json::parse("[[[1, 2]]]"));
+        const json_editable_view y = d.root()[0][0];
+        d.set(d.root()[0], json::array({3}));
+        d.set(y[0], 5);
+        CHECK(y.dump() == "[5]");
+        d.set(y, 5);
+        CHECK(y.dump() == "5");
+        CHECK(d.root().dump() == "[[3]]");
+    }
+}
+
 #if !defined(JSON_NOEXCEPTION)
 TEST_CASE("json_view edits: the size of a text arena")
 {
