@@ -1928,6 +1928,21 @@ class binary_reader
     }
 
     /*!
+    @brief move past a value of @a size bytes, starting with @a head, that a
+           bulk run reads, as get() and get_number() would
+
+    Called before the value is passed on, so that an error reported while
+    passing it on (see @ref emit_float) has the position and the last byte
+    that reading the value byte by byte gives.
+    */
+    void bulk_advance(const std::size_t size, const unsigned char head)
+    {
+        ia.bulk_skip(size);
+        chars_read += size;
+        current = head;
+    }
+
+    /*!
     @brief read the integers, floats, booleans, and nulls that follow in a
            definite-length array, without the per-element bookkeeping of
            @ref parse_cbor_internal
@@ -1952,71 +1967,70 @@ class binary_reader
         {
             const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
             const unsigned char head = data[0];
-            std::size_t size = 0;
             bool accepted = false;
             switch (head)
             {
                 case 0x18:
-                    size = 2;
+                    bulk_advance(2, head);
                     accepted = emit_unsigned(data[1]);
                     break;
                 case 0x19:
-                    size = 3;
+                    bulk_advance(3, head);
                     accepted = emit_unsigned(load_big_endian<std::uint16_t>(data + 1));
                     break;
                 case 0x1A:
-                    size = 5;
+                    bulk_advance(5, head);
                     accepted = emit_unsigned(load_big_endian<std::uint32_t>(data + 1));
                     break;
                 case 0x1B:
-                    size = 9;
+                    bulk_advance(9, head);
                     accepted = emit_unsigned(load_big_endian<std::uint64_t>(data + 1));
                     break;
                 case 0x38:
-                    size = 2;
+                    bulk_advance(2, head);
                     accepted = emit_cbor_negative_integer(data[1]);
                     break;
                 case 0x39:
-                    size = 3;
+                    bulk_advance(3, head);
                     accepted = emit_cbor_negative_integer(load_big_endian<std::uint16_t>(data + 1));
                     break;
                 case 0x3A:
-                    size = 5;
+                    bulk_advance(5, head);
                     accepted = emit_cbor_negative_integer(load_big_endian<std::uint32_t>(data + 1));
                     break;
                 case 0x3B:
-                    size = 9;
+                    bulk_advance(9, head);
                     accepted = emit_cbor_negative_integer(load_big_endian<std::uint64_t>(data + 1));
                     break;
                 case 0xF4:
-                    size = 1;
+                    bulk_advance(1, head);
                     accepted = sax->boolean(false);
                     break;
                 case 0xF5:
-                    size = 1;
+                    bulk_advance(1, head);
                     accepted = sax->boolean(true);
                     break;
                 case 0xF6:
-                    size = 1;
+                    bulk_advance(1, head);
                     accepted = sax->null();
                     break;
                 case 0xFA:
-                    size = 5;
+                    bulk_advance(5, head);
                     accepted = emit_float(load_big_endian<float>(data + 1));
                     break;
                 case 0xFB:
-                    size = 9;
+                    bulk_advance(9, head);
                     accepted = emit_float(load_big_endian<double>(data + 1));
                     break;
                 default:
                     if (head <= 0x17)
                     {
-                        size = 1;
+                        bulk_advance(1, head);
                         accepted = sax->number_unsigned(static_cast<number_unsigned_t>(head));
                     }
                     else if (head >= 0x20 && head <= 0x37)
                     {
-                        size = 1;
+                        bulk_advance(1, head);
                         accepted = sax->number_integer(static_cast<std::int8_t>(0x20 - 1 - head));
                     }
                     else
@@ -2026,10 +2040,6 @@ class binary_reader
                     }
                     break;
             }
-            // as if read by get() and get_number(): current is the head byte
-            ia.bulk_skip(size);
-            chars_read += size;
-            current = head;
             --remaining;
             if (JSON_HEDLEY_UNLIKELY(!accepted))
             {
@@ -2867,73 +2877,72 @@ class binary_reader
         {
             const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
             const unsigned char head = data[0];
-            std::size_t size = 0;
             bool accepted = false;
             switch (head)
             {
                 case 0xC0: // nil
-                    size = 1;
+                    bulk_advance(1, head);
                     accepted = sax->null();
                     break;
                 case 0xC2: // false
-                    size = 1;
+                    bulk_advance(1, head);
                     accepted = sax->boolean(false);
                     break;
                 case 0xC3: // true
-                    size = 1;
+                    bulk_advance(1, head);
                     accepted = sax->boolean(true);
                     break;
                 case 0xCA: // float 32
-                    size = 5;
+                    bulk_advance(5, head);
                     accepted = emit_float(load_big_endian<float>(data + 1));
                     break;
                 case 0xCB: // float 64
-                    size = 9;
+                    bulk_advance(9, head);
                     accepted = emit_float(load_big_endian<double>(data + 1));
                     break;
                 case 0xCC: // uint 8
-                    size = 2;
+                    bulk_advance(2, head);
                     accepted = emit_unsigned(data[1]);
                     break;
                 case 0xCD: // uint 16
-                    size = 3;
+                    bulk_advance(3, head);
                     accepted = emit_unsigned(load_big_endian<std::uint16_t>(data + 1));
                     break;
                 case 0xCE: // uint 32
-                    size = 5;
+                    bulk_advance(5, head);
                     accepted = emit_unsigned(load_big_endian<std::uint32_t>(data + 1));
                     break;
                 case 0xCF: // uint 64
-                    size = 9;
+                    bulk_advance(9, head);
                     accepted = emit_unsigned(load_big_endian<std::uint64_t>(data + 1));
                     break;
                 case 0xD0: // int 8
-                    size = 2;
+                    bulk_advance(2, head);
                     accepted = emit_signed(static_cast<std::int8_t>(data[1]));
                     break;
                 case 0xD1: // int 16
-                    size = 3;
+                    bulk_advance(3, head);
                     accepted = emit_signed(load_big_endian<std::int16_t>(data + 1));
                     break;
                 case 0xD2: // int 32
-                    size = 5;
+                    bulk_advance(5, head);
                     accepted = emit_signed(load_big_endian<std::int32_t>(data + 1));
                     break;
                 case 0xD3: // int 64
-                    size = 9;
+                    bulk_advance(9, head);
                     accepted = emit_signed(load_big_endian<std::int64_t>(data + 1));
                     break;
                 default:
                     if (head <= 0x7F)
                     {
                         // positive fixint
-                        size = 1;
+                        bulk_advance(1, head);
                         accepted = sax->number_unsigned(static_cast<number_unsigned_t>(head));
                     }
                     else if (head >= 0xE0)
                     {
                         // negative fixint
-                        size = 1;
+                        bulk_advance(1, head);
                         accepted = sax->number_integer(static_cast<std::int8_t>(head));
                     }
                     else
@@ -2943,10 +2952,6 @@ class binary_reader
                     }
                     break;
             }
-            // as if read by get() and get_number(): current is the last byte
-            ia.bulk_skip(size);
-            chars_read += size;
-            current = data[size - 1];
             --remaining;
             if (JSON_HEDLEY_UNLIKELY(!accepted))
             {
@@ -3850,6 +3855,7 @@ class binary_reader
         const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
         // UBJSON stores numbers big-endian, BJData little-endian
         const bool swap = is_little_endian != (input_format == input_format_t::bjdata);
+        const std::size_t start = chars_read;
         std::size_t read = 0;
         bool accepted = true;
         while (read < count && accepted)
@@ -3861,15 +3867,38 @@ class binary_reader
                 byte_swap(number);
             }
             ++read;
+            // where passing the value on can report an error (see
+            // emit_float), the position is that after the value, as if it
+            // was read by get_number()
+            set_chars_read(start + (read * size), std::integral_constant<bool, may_overflow_number_float<NumberType>()> {});
             accepted = emit_ubjson_number(number);
         }
-        // as if read by get_number(): current is the last byte read
+        // get_number() does not change current
         ia.bulk_skip(read * size);
-        chars_read += read * size;
-        current = data[(read * size) - 1];
+        chars_read = start + (read * size);
         remaining -= read;
         return accepted;
     }
+
+    /*!
+    @brief whether a value of type @a NumberType can be finite and still
+           overflow number_float_t, which @ref emit_float reports as an error
+
+    False for the default number types, so that the loop in @ref
+    parse_ubjson_typed_run need not track the position per value.
+    */
+    template<typename NumberType>
+    static constexpr bool may_overflow_number_float() noexcept
+    {
+        return static_cast<long double>((std::numeric_limits<number_float_t>::max)()) < static_cast<long double>((std::numeric_limits<NumberType>::max)());
+    }
+
+    void set_chars_read(const std::size_t position, std::true_type /*track*/) noexcept
+    {
+        chars_read = position;
+    }
+
+    void set_chars_read(const std::size_t /*position*/, std::false_type /*track*/) const noexcept {}
 
     template<typename NumberType, enable_if_t<std::is_floating_point<NumberType>::value, int> = 0>
     bool emit_ubjson_number(const NumberType number)
