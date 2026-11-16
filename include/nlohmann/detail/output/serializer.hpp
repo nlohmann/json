@@ -2033,8 +2033,9 @@ class serializer
         }
 
         // If number_float_t is an IEEE-754 single or double precision number,
-        // use the Grisu2 algorithm to produce short numbers which are
-        // guaranteed to round-trip, using strtof and strtod, resp.
+        // use to_chars() to produce short numbers which are guaranteed to
+        // round-trip, using strtof and strtod, resp. (the shortest digits of
+        // Zmij for binary64, the Grisu2 algorithm for binary32).
         //
         // NB: The test below works if <long double> == <double>.
         static constexpr bool is_ieee_single_or_double

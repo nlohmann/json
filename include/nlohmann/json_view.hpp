@@ -849,7 +849,7 @@ class basic_json_view
         return !navigation::editable() || m_doc->edits == nullptr;
     }
 
-    /// the member of this object with @a key (the last one if the key occurs more than once), or nullptr
+    /// the member of this object with @a key (the first one if the key occurs more than once), or nullptr
     NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key) const
     {
         return find_key(key, std::integral_constant<bool, is_editable> {});

@@ -48,10 +48,11 @@ namespace detail
 {
 
 /*!
-@brief implements the Grisu2 algorithm for binary to decimal floating-point
-conversion.
+@brief implements binary to decimal floating-point conversion: the shortest
+digits of Zmij (see zmij.hpp) for IEEE 754 binary64 numbers, and the Grisu2
+algorithm for all other formats.
 
-This implementation is a slightly modified version of the reference
+The Grisu2 implementation is a slightly modified version of the reference
 implementation which may be obtained from
 http://florian.loitsch.com/publications (bench.tar.gz).
 
