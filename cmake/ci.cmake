@@ -407,61 +407,6 @@ add_custom_target(ci_test_clang_sanitizer
 )
 
 ###############################################################################
-# Check if header is amalgamated and sources are properly indented.
-###############################################################################
-
-# Same file set as .github/workflows/check_amalgamation.yml, so this CMake target (which can be run locally) is held
-# to the same standard as the workflow (which runs for pull requests and for pushes to develop/master/release/*).
-file(GLOB_RECURSE INDENT_FILES
-    ${PROJECT_SOURCE_DIR}/docs/mkdocs/docs/examples/*.hpp
-    ${PROJECT_SOURCE_DIR}/docs/mkdocs/docs/examples/*.cpp
-    ${PROJECT_SOURCE_DIR}/docs/mkdocs/docs/examples/*.cu
-    ${PROJECT_SOURCE_DIR}/include/*.hpp
-    ${PROJECT_SOURCE_DIR}/include/*.cpp
-    ${PROJECT_SOURCE_DIR}/include/*.cu
-    ${PROJECT_SOURCE_DIR}/tests/*.hpp
-    ${PROJECT_SOURCE_DIR}/tests/*.cpp
-    ${PROJECT_SOURCE_DIR}/tests/*.cu
-)
-list(FILTER INDENT_FILES EXCLUDE REGEX "/tests/thirdparty/|/tests/abi/include/nlohmann/")
-
-set(include_dir ${PROJECT_SOURCE_DIR}/single_include/nlohmann)
-set(tool_dir ${PROJECT_SOURCE_DIR}/tools/amalgamate)
-add_custom_target(ci_test_amalgamation
-    COMMAND rm -fr ${include_dir}/json.hpp~ ${include_dir}/json_fwd.hpp~ ${include_dir}/json_literals.hpp~ ${include_dir}/json_view.hpp~
-    COMMAND cp ${include_dir}/json.hpp ${include_dir}/json.hpp~
-    COMMAND cp ${include_dir}/json_fwd.hpp ${include_dir}/json_fwd.hpp~
-    COMMAND cp ${include_dir}/json_literals.hpp ${include_dir}/json_literals.hpp~
-    COMMAND cp ${include_dir}/json_view.hpp ${include_dir}/json_view.hpp~
-    COMMAND cp ${PROJECT_SOURCE_DIR}/BUILD.bazel ${PROJECT_SOURCE_DIR}/BUILD.bazel~
-
-    COMMAND ${Python3_EXECUTABLE} -mvenv venv_astyle
-    COMMAND venv_astyle/bin/pip3 --quiet install -r ${CMAKE_SOURCE_DIR}/tools/astyle/requirements.txt
-    COMMAND venv_astyle/bin/astyle --version
-
-    COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json.json -s .
-    COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json_fwd.json -s .
-    COMMAND cp ${PROJECT_SOURCE_DIR}/include/nlohmann/json_literals.hpp ${include_dir}/json_literals.hpp
-    COMMAND ${Python3_EXECUTABLE} ${tool_dir}/amalgamate.py -c ${tool_dir}/config_json_view.json -s .
-    COMMAND venv_astyle/bin/astyle --project=tools/astyle/.astylerc --suffix=none ${include_dir}/json.hpp ${include_dir}/json_fwd.hpp ${include_dir}/json_literals.hpp ${include_dir}/json_view.hpp
-    COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/scripts/gen_bazel_build_file.cmake
-
-    COMMAND diff ${include_dir}/json.hpp~ ${include_dir}/json.hpp
-    COMMAND diff ${include_dir}/json_fwd.hpp~ ${include_dir}/json_fwd.hpp
-    COMMAND diff ${include_dir}/json_literals.hpp~ ${include_dir}/json_literals.hpp
-    COMMAND diff ${include_dir}/json_view.hpp~ ${include_dir}/json_view.hpp
-    COMMAND diff ${PROJECT_SOURCE_DIR}/BUILD.bazel~ ${PROJECT_SOURCE_DIR}/BUILD.bazel
-
-    COMMAND venv_astyle/bin/astyle --project=tools/astyle/.astylerc --suffix=orig ${INDENT_FILES}
-    COMMAND for FILE in `find . -name '*.orig'`\; do false \; done
-
-    COMMAND rm -f ${include_dir}/json.hpp~ ${include_dir}/json_fwd.hpp~ ${include_dir}/json_literals.hpp~ ${include_dir}/json_view.hpp~ ${PROJECT_SOURCE_DIR}/BUILD.bazel~
-
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-    COMMENT "Check amalgamation, formatting, and BUILD.bazel"
-)
-
-###############################################################################
 # Build and test using the amalgamated header
 ###############################################################################
 
@@ -691,19 +636,6 @@ else()
         COMMENT "Check if headers are self-contained"
     )
 endif()
-
-###############################################################################
-# Benchmarks
-###############################################################################
-
-add_custom_target(ci_benchmarks
-    COMMAND ${CMAKE_COMMAND}
-        -DCMAKE_BUILD_TYPE=Release -GNinja
-        -S${PROJECT_SOURCE_DIR}/tests/benchmarks -B${PROJECT_BINARY_DIR}/build_benchmarks
-    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_benchmarks --target json_benchmarks
-    COMMAND cd ${PROJECT_BINARY_DIR}/build_benchmarks && ./json_benchmarks
-    COMMENT "Run benchmarks"
-)
 
 ###############################################################################
 # CMake flags
@@ -964,13 +896,4 @@ add_custom_target(ci_test_documentation_mermaid
     COMMAND make check_mermaid
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs/mkdocs
     COMMENT "Check the Mermaid diagrams of the documentation"
-)
-
-###############################################################################
-# Clean up all generated files.
-###############################################################################
-
-add_custom_target(ci_clean
-    COMMAND rm -fr ${PROJECT_BINARY_DIR}/build_* ${PROJECT_BINARY_DIR}/cmake-3.5.0 ${PROJECT_BINARY_DIR}/cmake-3.31.6 ${PROJECT_BINARY_DIR}/cmake-4.0.0 ${JSON_CMAKE_FLAG_BUILD_DIRS} ${single_binaries}
-    COMMENT "Clean generated directories"
 )

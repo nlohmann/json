@@ -7,11 +7,17 @@ bool operator!=(const basic_json_view& lhs, const basic_json_view& rhs);
 // (2)
 bool operator!=(const basic_json_view& lhs, const BasicJsonType& rhs);
 bool operator!=(const BasicJsonType& lhs, const basic_json_view& rhs);
+
+// (3)
+template<view_mode M>
+bool operator!=(const basic_json_view& lhs, const basic_json_view<BasicJsonType, M>& rhs);
 ```
 
 1. Compares two views for inequality. Returns `#!cpp !(lhs == rhs)`, see [operator==](operator_eq.md).
 2. Compares a view and a `BasicJsonType` value for inequality, in either order. Returns `#!cpp !(lhs == rhs)` (or,
    for the reversed order, `#!cpp !(rhs == lhs)`), see [operator==](operator_eq.md).
+3. Compares a read-only and an editable view of the same `BasicJsonType` for inequality, in either order. Returns
+   `#!cpp !(lhs == rhs)`, see [operator==](operator_eq.md).
 
 Since `operator!=` is defined as the negation of [`operator==`](operator_eq.md), it follows the same rules for
 special cases: for instance, since a [discarded](is_discarded.md) view is never equal to anything by default (see

@@ -1,7 +1,7 @@
 # Recipes for Common Types
 
-The library converts the standard containers, strings, numbers, tuples, `std::optional`, and `std::filesystem::path`
-(the last two since version 3.12.0, C++17) out of the box, and your own types once you write conversion functions or use
+The library converts the standard containers, strings, numbers, tuples, `std::optional` (since version 3.12.0), and
+`std::filesystem::path` (since version 3.10.5), the last two with C++17, out of the box, and your own types once you write conversion functions or use
 the macros (see [Arbitrary type conversions](arbitrary_types.md)). It deliberately does **not** convert smart pointers,
 `std::variant`, `std::chrono` types, or class hierarchies, because there is more than one reasonable JSON
 representation for each of them. This page shows a representation for each that you can copy and adapt.

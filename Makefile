@@ -215,7 +215,7 @@ release: include.zip json.tar.xz
 
 # clean up
 clean:
-	rm -fr *.dSYM tests/*.dSYM tests/parse_*_fuzzer
+	rm -fr *.dSYM tests/*.dSYM tests/*_fuzzer
 	rm -fr cmake-build-benchmarks cmake-build-pvs-studio release_files
 	$(MAKE) clean -Cdocs
 
