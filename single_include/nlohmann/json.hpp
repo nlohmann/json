@@ -5724,16 +5724,17 @@ class exception : public std::exception
             // the length of the path; joining with std::accumulate copied
             // the whole prefix on every step, which was quadratic in the
             // nesting depth (see #6107).
-            std::string str;
+            prefix.push_back('(');
             for (auto it = tokens.rbegin(); it != tokens.rend(); ++it)
             {
-                str.push_back('/');
-                detail::escape_into(str, *it);
+                prefix.push_back('/');
+                detail::escape_into(prefix, *it);
             }
-            prefix = concat('(', str, ") ");
+            prefix += ") ";
         }
 
-        return concat(prefix, get_byte_positions(leaf_element));
+        prefix += get_byte_positions(leaf_element);
+        return prefix;
 #else
         return get_byte_positions(leaf_element);
 #endif
