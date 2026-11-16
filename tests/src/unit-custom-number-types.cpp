@@ -6,6 +6,13 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
+// cmake/test.cmake selects the C++ standard versions with which to build a
+// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
+// When using macros that are only defined for particular versions of the standard
+// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
+// version macro in a comment close by, like this:
+// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
@@ -17,6 +24,7 @@
 #include <type_traits>
 #include <vector>
 
+// JSON_HAS_CPP_20 (do not remove; see note at top of file)
 #if JSON_HAS_THREE_WAY_COMPARISON
     #include <compare>
 #endif

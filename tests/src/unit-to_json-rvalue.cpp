@@ -6,6 +6,13 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
+// cmake/test.cmake selects the C++ standard versions with which to build a
+// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
+// When using macros that are only defined for particular versions of the standard
+// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
+// version macro in a comment close by, like this:
+// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
@@ -23,6 +30,7 @@ using nlohmann::json;
 #include <valarray>
 #include <vector>
 
+// JSON_HAS_CPP_17 (do not remove; see note at top of file)
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1)
     #if __has_include(<filesystem>)
         #include <filesystem>
@@ -244,6 +252,7 @@ TEST_CASE("to_json from rvalue containers")
     SECTION("std::filesystem::path rvalue is still a string")
     {
         CHECK(json(std::filesystem::path("a/b")) == json("a/b"));
+        // JSON_HAS_CPP_20 (do not remove; see note at top of file)
 #ifdef __cpp_lib_char8_t
         CHECK(json(std::u8string(u8"a/b")) == json("a/b"));
 #endif
