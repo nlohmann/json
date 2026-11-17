@@ -1383,6 +1383,7 @@ Use your favorite [**package manager**](https://json.nlohmann.me/integration/pac
 - [**build2**](https://json.nlohmann.me/integration/package_managers/#build2) `nlohmann-json`
 - <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/CPM.png" height="20">&nbsp;[**cpm.cmake**](https://json.nlohmann.me/integration/package_managers/#cpmcmake) `gh:nlohmann/json`
 - <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/xmake.svg" height="20">&nbsp;[**xmake**](https://json.nlohmann.me/integration/package_managers/#xmake) `nlohmann_json`
+- <img src="https://raw.githubusercontent.com/nlohmann/json/refs/heads/develop/docs/mkdocs/docs/images/package_managers/nix.svg" height="20">&nbsp;[**Nix**](https://json.nlohmann.me/integration/package_managers/#nix) `nlohmann_json`
 
 The library is part of many package managers. See the [**documentation**](https://json.nlohmann.me/integration/package_managers/) for detailed descriptions and examples.
 
