@@ -1571,7 +1571,7 @@ class serializer
             {
                 return n_digits + 3;
             }
-            x = x / 10000u;
+            x = static_cast<number_magnitude_t>(x / 10000u);
             n_digits += 4;
         }
     }
@@ -2200,7 +2200,7 @@ class serializer
     number_magnitude_t remove_sign(number_integer_t x) noexcept
     {
         JSON_ASSERT(x < 0);
-        return static_cast<number_magnitude_t>(-(x + 1)) + 1;
+        return static_cast<number_magnitude_t>(static_cast<number_magnitude_t>(-(x + 1)) + 1);
     }
 
   private:
