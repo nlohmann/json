@@ -15785,11 +15785,11 @@ scan_number_done:
             // the lexer reads bytes (wide characters arrive as UTF-8), so
             // move both cuts to character boundaries to keep the message
             // valid UTF-8; this only shortens the two parts
-            const auto head_end = chars.begin() + static_cast<std::ptrdiff_t>(utf8_head_cut(chars.data(), shown));
+            const auto head_end = chars.begin() + static_cast<std::ptrdiff_t>(length_without_partial_utf8_at_end(chars.data(), shown));
             const auto tail_begin = chars.end() - static_cast<std::ptrdiff_t>(shown);
             append_escaped(result, chars.begin(), head_end);
             result += "...";
-            append_escaped(result, tail_begin + static_cast<std::ptrdiff_t>(utf8_tail_skip(&*tail_begin)), chars.end());
+            append_escaped(result, tail_begin + static_cast<std::ptrdiff_t>(partial_utf8_length_at_start(&*tail_begin)), chars.end());
         }
         else
         {
@@ -15812,7 +15812,7 @@ scan_number_done:
     Looks only at the last 4 of these characters: in valid UTF-8, at most 3
     bytes of a character can be before the cut.
     */
-    static std::size_t utf8_head_cut(const char_type* data, const std::size_t n) noexcept
+    static std::size_t length_without_partial_utf8_at_end(const char_type* data, const std::size_t n) noexcept
     {
         std::size_t lead = n - 1;
         while (lead > n - 4 && is_utf8_continuation(data[lead]))
@@ -15836,9 +15836,9 @@ scan_number_done:
         return lead + length > n ? lead : n;
     }
 
-    /// the number of UTF-8 continuation bytes (at most 3) at @a data, which
+    /// the number of UTF-8 continuation bytes (at most 3) at the start of @a data, which
     /// belong to a character that begins before it
-    static std::size_t utf8_tail_skip(const char_type* data) noexcept
+    static std::size_t partial_utf8_length_at_start(const char_type* data) noexcept
     {
         std::size_t skip = 0;
         while (skip < 3 && is_utf8_continuation(data[skip]))
