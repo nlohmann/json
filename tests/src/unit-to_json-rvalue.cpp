@@ -32,7 +32,9 @@ using nlohmann::json;
 
 // JSON_HAS_CPP_17 (do not remove; see note at top of file)
 #if (defined(__cplusplus) && __cplusplus >= 201703L) || (defined(_HAS_CXX17) && _HAS_CXX17 == 1)
-    #if __has_include(<filesystem>)
+    // libstdc++ 8 needs -lstdc++fs for std::filesystem (GCC bug 90050), which clang on such a
+    // libstdc++ does not get from the test options
+    #if __has_include(<filesystem>) && (!defined(_GLIBCXX_RELEASE) || _GLIBCXX_RELEASE >= 9)
         #include <filesystem>
         #define TO_JSON_RVALUE_HAS_FS 1
     #endif
