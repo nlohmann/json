@@ -3452,7 +3452,7 @@ TEST_CASE("parse error message of a long token")
                 CHECK(tail <= 4096);
                 CHECK(tail > 4092);
                 CHECK(text.compare(text.size() - tail, tail, shown, dots + 3, tail) == 0);
-                CHECK_NOTHROW(json(shown).dump());
+                CHECK_NOTHROW(utils::ignore_return_value(json(shown).dump()));
 
                 for (int kind = 1; kind < 4; ++kind)
                 {
