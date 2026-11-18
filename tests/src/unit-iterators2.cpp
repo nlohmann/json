@@ -890,6 +890,11 @@ TEST_CASE("iterators 2")
                     CHECK(it[0] == json(42));
                     CHECK_THROWS_WITH_AS(it[1], "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
                 }
+                CHECK(json(1).rbegin()[0] == json(1));
+                CHECK_THROWS_WITH_AS(json(1).rbegin()[1], "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
+
+                CHECK(json(1).crbegin()[0] == json(1));
+                CHECK_THROWS_WITH_AS(json(1).crbegin()[1], "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
             }
         }
     }
