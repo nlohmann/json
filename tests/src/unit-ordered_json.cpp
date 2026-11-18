@@ -577,6 +577,41 @@ TEST_CASE("object_key_index")
     }
 }
 
+TEST_CASE("ordered_json from binary formats with many keys")
+{
+    // more keys than key_index_threshold (64) of the DOM parser
+    ordered_json j = ordered_json::object();
+    for (int i = 0; i < 200; ++i)
+    {
+        j["k" + std::to_string(199 - i)] = i;
+    }
+    CHECK(ordered_json::from_cbor(ordered_json::to_cbor(j)) == j);
+    CHECK(ordered_json::from_msgpack(ordered_json::to_msgpack(j)) == j);
+    CHECK(ordered_json::from_ubjson(ordered_json::to_ubjson(j)) == j);
+    CHECK(ordered_json::from_bjdata(ordered_json::to_bjdata(j)) == j);
+    CHECK(ordered_json::from_bson(ordered_json::to_bson(j)) == j);
+    CHECK(ordered_json::from_bon8(ordered_json::to_bon8(j)) == j);
+    CHECK(ordered_json::from_cbor(ordered_json::to_cbor(j)).begin().key() == "k199");
+
+    // a map of 66 entries whose last key repeats the first
+    std::vector<std::uint8_t> cbor = {0xB8, 66};
+    for (int i = 0; i < 66; ++i)
+    {
+        const std::string key = "k" + std::to_string(i == 65 ? 0 : i);
+        cbor.push_back(static_cast<std::uint8_t>(0x60 + key.size()));
+        cbor.insert(cbor.end(), key.begin(), key.end());
+        cbor.push_back(static_cast<std::uint8_t>(i < 24 ? i : 0x17));
+    }
+    const ordered_json r = ordered_json::from_cbor(cbor);
+    CHECK(r.size() == 65);
+    CHECK(r.begin().key() == "k0");
+    CHECK(r["k0"] == 23);
+
+    // the binary readers use the DOM parser's key index for objects in a vector
+    using binary_dom = nlohmann::detail::binary_dom_parser_t<ordered_json, decltype(nlohmann::detail::input_adapter(cbor))>;
+    CHECK(binary_dom::uses_key_index());
+}
+
 TEST_CASE("JSON pointers on ordered_json")
 {
     using pointer = ordered_json::json_pointer;
