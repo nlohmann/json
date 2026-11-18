@@ -98,7 +98,7 @@ serialization fails by default. The fourth argument of `dump` selects an
 
 ## Using `std::format`, `std::print`, and `fmt`
 
-Since version 3.12.0, JSON values can be formatted directly with C++20's
+Since version 3.13.0, JSON values can be formatted directly with C++20's
 [`std::format`](https://en.cppreference.com/w/cpp/utility/format/format) whenever the standard library provides the
 `<format>` header (controlled by [`JSON_HAS_STD_FORMAT`](../api/macros/json_has_std_format.md)). This is enabled by the
 [`std::formatter<basic_json>`](../api/basic_json/std_formatter.md) specialization, which also makes JSON values work with

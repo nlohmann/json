@@ -57,7 +57,8 @@ Strong guarantee: if an exception is thrown, there are no changes in the JSON va
 ## Exceptions
 
 - Throws [`other_error.502`](../../home/exceptions.md#jsonexceptionother_error502) if `use_type` is true and `use_size`
-  is false, and `j` contains a non-empty array, object, or binary value.
+  is false, and `j` contains a non-empty array, object, or binary value. Scalars and empty arrays, objects, or binary
+  values do not throw.
 - Throws [type_error.316](../../home/exceptions.md#jsonexceptiontype_error316) if a string or object key in `j` is
   not valid UTF-8 and `error_handler` is `strict` (the default only if
   [`JSON_STRICT_BINARY_UTF8`](../macros/json_strict_binary_utf8.md) is enabled)

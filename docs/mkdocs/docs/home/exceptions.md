@@ -987,7 +987,9 @@ contains other characters (e.g., `1a`), or `-` where it cannot be used.
 
 The JSON Patch operations 'remove' and 'move' cannot be applied to the root element of the JSON value. The exception is
 also thrown when the parent or a reference token of an empty JSON Pointer is requested, for instance by
-[`back`](../api/json_pointer/back.md) or [`pop_back`](../api/json_pointer/pop_back.md).
+[`front`](../api/json_pointer/front.md), [`back`](../api/json_pointer/back.md),
+[`pop_front`](../api/json_pointer/pop_front.md), or [`pop_back`](../api/json_pointer/pop_back.md), and when
+[`basic_json_document::erase`](../api/basic_json_document/erase.md) is called with an empty JSON Pointer.
 
 !!! failure "Example message"
 
@@ -1263,9 +1265,9 @@ A JSON Patch operation 'test' failed. The unsuccessful operation is also printed
 ### json.exception.other_error.502
 
 [`to_ubjson`](../api/basic_json/to_ubjson.md) and [`to_bjdata`](../api/basic_json/to_bjdata.md) were called with
-`use_type = true` but `use_size = false`, and the value contains a non-empty array or object (or, with BJData Draft 3,
-any binary value). UBJSON requires a size marker (`#`) after a type marker (`$`); scalars and empty arrays or objects
-do not throw.
+`use_type = true` but `use_size = false`, and the value contains a non-empty array, object, or binary value (with
+BJData Draft 3, any binary value, including an empty one). UBJSON requires a size marker (`#`) after a type marker
+(`$`); scalars and empty arrays or objects do not throw.
 
 !!! failure "Example message"
 
