@@ -3388,5 +3388,108 @@ TEST_CASE("parse error message of a long token")
             CHECK(message(text, kind) == "no error");
         }
     }
+
+    SECTION("a long string of multi-byte characters")
+    {
+        // the parts of a long token are cut at character boundaries, so the
+        // message of valid UTF-8 input is valid UTF-8, also for wide strings
+        const auto last_read = [](const std::string & m) -> std::string
+        {
+            const auto pos = m.find("last read: '");
+            return pos == std::string::npos ? std::string() : m.substr(pos + 12, m.size() - pos - 13);
+        };
+        const auto utf8 = [](const char32_t c) -> std::string
+        {
+            std::string result;
+            if (c < 0x800)
+            {
+                result.push_back(static_cast<char>(0xC0 | (c >> 6)));
+            }
+            else if (c < 0x10000)
+            {
+                result.push_back(static_cast<char>(0xE0 | (c >> 12)));
+                result.push_back(static_cast<char>(0x80 | ((c >> 6) & 0x3F)));
+            }
+            else
+            {
+                result.push_back(static_cast<char>(0xF0 | (c >> 18)));
+                result.push_back(static_cast<char>(0x80 | ((c >> 12) & 0x3F)));
+                result.push_back(static_cast<char>(0x80 | ((c >> 6) & 0x3F)));
+            }
+            result.push_back(static_cast<char>(0x80 | (c & 0x3F)));
+            return result;
+        };
+        // characters of 2, 3, and 4 bytes
+        const std::vector<char32_t> characters = {0xE9, 0x20AC, 0x1F600};
+        for (const char32_t c : characters)
+        {
+            for (std::size_t offset = 0; offset < 4; ++offset)
+            {
+                CAPTURE(static_cast<std::uint32_t>(c))
+                CAPTURE(offset)
+                // an unterminated string: the token is the whole input
+                std::string text = "\"" + std::string(offset, 'a');
+                std::u32string text32 = U"\"" + std::u32string(offset, U'a');
+                while (text.size() < 9000)
+                {
+                    text += utf8(c);
+                    text32.push_back(c);
+                }
+                std::u16string text16;
+                for (const char32_t c32 : text32)
+                {
+                    if (c32 < 0x10000)
+                    {
+                        text16.push_back(static_cast<char16_t>(c32));
+                    }
+                    else
+                    {
+                        text16.push_back(static_cast<char16_t>(0xD800 + ((c32 - 0x10000) >> 10)));
+                        text16.push_back(static_cast<char16_t>(0xDC00 + ((c32 - 0x10000) & 0x3FF)));
+                    }
+                }
+
+                const std::string shown = last_read(message(text, 0));
+                const auto dots = shown.find("...");
+                REQUIRE(dots != std::string::npos);
+                // the first and the last at most 4096 bytes, without parts of characters
+                CHECK(dots <= 4096);
+                CHECK(dots > 4092);
+                CHECK(text.compare(0, dots, shown, 0, dots) == 0);
+                const std::size_t tail = shown.size() - dots - 3;
+                CHECK(tail <= 4096);
+                CHECK(tail > 4092);
+                CHECK(text.compare(text.size() - tail, tail, shown, dots + 3, tail) == 0);
+                CHECK_NOTHROW(utils::ignore_return_value(json(shown).dump()));
+
+                for (int kind = 1; kind < 4; ++kind)
+                {
+                    CAPTURE(kind)
+                    CHECK(last_read(message(text, kind)) == shown);
+                }
+                json _;
+                std::string m32;
+                std::string m16;
+                try
+                {
+                    _ = json::parse(text32);
+                }
+                catch (const json::parse_error& e)
+                {
+                    m32 = e.what();
+                }
+                try
+                {
+                    _ = json::parse(text16);
+                }
+                catch (const json::parse_error& e)
+                {
+                    m16 = e.what();
+                }
+                CHECK(last_read(m32) == shown);
+                CHECK(last_read(m16) == shown);
+            }
+        }
+    }
 }
 #endif
