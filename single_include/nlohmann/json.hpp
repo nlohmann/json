@@ -26795,7 +26795,9 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
     /// access to successor
     reference operator[](difference_type n) const
     {
-        return *(this->operator+(n));
+        // the element n positions after *this is the one n + 1 positions before base();
+        // Base::operator[] then reports invalid_iterator.208 for object iterators
+        return this->base()[-n - 1];
     }
 
     /// return the key of an object iterator
