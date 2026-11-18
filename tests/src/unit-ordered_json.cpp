@@ -608,8 +608,8 @@ TEST_CASE("ordered_json from binary formats with many keys")
     CHECK(r["k0"] == 23);
 
     // the binary readers use the DOM parser's key index for objects in a vector
-    using binary_dom = nlohmann::detail::binary_dom_parser_t<ordered_json, decltype(nlohmann::detail::input_adapter(cbor))>;
-    CHECK(binary_dom::uses_key_index());
+    using selected_dom = nlohmann::detail::selected_dom_parser_t<ordered_json, decltype(nlohmann::detail::input_adapter(cbor))>;
+    CHECK(selected_dom::uses_key_index());
 }
 
 TEST_CASE("JSON pointers on ordered_json")

@@ -16774,7 +16774,7 @@ which the size of a container is not known up front, collects the elements of
 an array and the members of an `ordered_json` object on a stack and moves them
 into a container of the exact size (with @a Collect, as basic_json's own parse
 functions use it); the binary readers use it without collecting for an object
-type that looks its keys up in an index (@ref binary_dom_parser_t), and the
+type that looks its keys up in an index (@ref selected_dom_parser_t), and the
 plain @ref json_sax_dom_binary_parser for the rest.
 
 After successful parsing, the value that is passed by reference to the
@@ -17720,13 +17720,13 @@ class json_sax_dom_parser : public json_sax_dom_error_state
 template<typename BasicJsonType, typename InputAdapterType>
 class json_sax_dom_binary_parser;
 
-/// the DOM parser for the binary readers: objects in a vector (ordered_map)
-/// need the key index of json_sax_dom_parser, the others take the plain parser
+/// the DOM parser selected for the binary readers: objects in a vector
+/// (ordered_map) need the key index of json_sax_dom_parser, the others take
+/// the plain parser
 template<typename BasicJsonType, typename InputAdapterType>
-using binary_dom_parser_t = typename std::conditional <
-                            json_sax_dom_parser<BasicJsonType, InputAdapterType>::uses_key_index(),
-                            json_sax_dom_parser<BasicJsonType, InputAdapterType, false>,
-                            json_sax_dom_binary_parser<BasicJsonType, InputAdapterType >>::type;
+using selected_dom_parser_t = typename std::conditional<json_sax_dom_parser<BasicJsonType, InputAdapterType>::uses_key_index(),
+      json_sax_dom_parser<BasicJsonType, InputAdapterType, false>,
+      json_sax_dom_binary_parser<BasicJsonType, InputAdapterType>>::type;
 
 /*!
 @brief SAX implementation to create a JSON value from the events of a binary reader
@@ -17742,7 +17742,7 @@ overhead for them. This is the plain parser the binary readers use for the
 object types that find a key in the container itself; an object type that
 keeps its members in a vector (ordered_map) is read by json_sax_dom_parser
 instead, whose key index saves scanning the members inserted so far for each
-key (@ref binary_dom_parser_t makes the choice). The structure or hierarchy of
+key (@ref selected_dom_parser_t makes the choice). The structure or hierarchy of
 the JSON value is managed by the stack `ref_stack` which contains a pointer to
 the respective array or object for each recursion depth.
 
@@ -18908,7 +18908,7 @@ JSON_INLINE_VARIABLE constexpr std::size_t valueless_elements_saturation_chars =
 /*!
 @brief deserialization of BJData, BON8, BSON, CBOR, MessagePack, and UBJSON values
 */
-template<typename BasicJsonType, typename InputAdapterType, typename SAX = binary_dom_parser_t<BasicJsonType, InputAdapterType>>
+template<typename BasicJsonType, typename InputAdapterType, typename SAX = selected_dom_parser_t<BasicJsonType, InputAdapterType>>
 class binary_reader
 {
     using number_integer_t = typename BasicJsonType::number_integer_t;
@@ -46522,7 +46522,7 @@ public:
                                        const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         basic_json result;
-        detail::binary_dom_parser_t<basic_json, InputAdapterType> sdp(result, allow_exceptions);
+        detail::selected_dom_parser_t<basic_json, InputAdapterType> sdp(result, allow_exceptions);
         binary_reader<InputAdapterType> reader(std::move(ia), format, error_handler);
         if (!reader.sax_parse(&sdp, strict, tag_handler))
         {

@@ -6368,7 +6368,7 @@ public:
                                        const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         basic_json result;
-        detail::binary_dom_parser_t<basic_json, InputAdapterType> sdp(result, allow_exceptions);
+        detail::selected_dom_parser_t<basic_json, InputAdapterType> sdp(result, allow_exceptions);
         binary_reader<InputAdapterType> reader(std::move(ia), format, error_handler);
         if (!reader.sax_parse(&sdp, strict, tag_handler))
         {
