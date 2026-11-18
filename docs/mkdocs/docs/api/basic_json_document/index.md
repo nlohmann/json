@@ -100,7 +100,8 @@ points apply to every edit:
   [`root()`](root.md). New values (and the element sequences of an edited array/object) go to storage owned by the
   document, allocated on demand.
 - **A view keeps referring to the same value.** After [`set`](set.md) replaces the value a view refers to, that view
-  sees the new value; a view of a value that a later edit replaces or drops keeps showing what it last held. An edit
+  sees the new value; a view of a value that a later edit replaces or drops keeps showing what it last held. Such a
+  view can still be edited: the edit changes only that detached value, never anything reachable from `root()`. An edit
   of an array or object, however, **invalidates the iterators taken over it** (its members may now live in a
   different sequence), and a string obtained with [`get_string()`](../basic_json_view/get_string.md) stays valid even
   as further edits happen (earlier buffers of edited text are kept alive, not overwritten).
