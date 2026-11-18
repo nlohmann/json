@@ -11642,7 +11642,7 @@ struct ieee_binary_format<53> // binary64
 
 These formats (float, double, and long double where it is binary64, e.g.
 with MSVC or on Apple arm64) are converted by parse_float_native(). The
-predicate is the one the serializer uses to choose Grisu2.
+predicate is the one the serializer uses to choose to_chars() over snprintf.
 */
 template<typename FloatType>
 struct has_native_float_format
@@ -31177,7 +31177,7 @@ class binary_writer
         JSON_THROW(out_of_range::create(exception_id::subtype_out_of_range, concat("subtype ", std::to_string(subtype), " is too large for ", what, " (max 255)"), &j));
     }
 
-    /// @throw other_error.407 always
+    /// @throw other_error.502 always
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_size_marker_required(const BasicJsonType& j)
     {
@@ -36036,10 +36036,11 @@ namespace detail
 {
 
 /*!
-@brief implements the Grisu2 algorithm for binary to decimal floating-point
-conversion.
+@brief implements binary to decimal floating-point conversion: the shortest
+digits of Zmij (see zmij.hpp) for IEEE 754 binary64 numbers, and the Grisu2
+algorithm for all other formats.
 
-This implementation is a slightly modified version of the reference
+The Grisu2 implementation is a slightly modified version of the reference
 implementation which may be obtained from
 http://florian.loitsch.com/publications (bench.tar.gz).
 
@@ -39583,8 +39584,9 @@ class serializer
         }
 
         // If number_float_t is an IEEE-754 single or double precision number,
-        // use the Grisu2 algorithm to produce short numbers which are
-        // guaranteed to round-trip, using strtof and strtod, resp.
+        // use to_chars() to produce short numbers which are guaranteed to
+        // round-trip, using strtof and strtod, resp. (the shortest digits of
+        // Zmij for binary64, the Grisu2 algorithm for binary32).
         //
         // NB: The test below works if <long double> == <double>.
         static constexpr bool is_ieee_single_or_double
