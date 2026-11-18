@@ -6,6 +6,13 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
+// cmake/test.cmake selects the C++ standard versions with which to build a
+// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
+// When using macros that are only defined for particular versions of the standard
+// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
+// version macro in a comment close by, like this:
+// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
@@ -272,6 +279,7 @@ struct generator
 TEST_CASE("json_view string_ref")
 {
     // std::string_view in C++17, a stand-in with the same members before
+    // JSON_HAS_CPP_17 (do not remove; see note at top of file)
     using nlohmann::detail::view::string_ref;
     const std::string text = "abc";
     const string_ref r(text);
@@ -945,7 +953,7 @@ TEST_CASE("json_view document_data::holds() (the debug check of read())")
 
     SECTION("current edit buffer")
     {
-        d->edits.reset(new document_data::edit_state()); // NOLINT(cppcoreguidelines-owning-memory)
+        d->edits.reset(new document_data::edit_state()); // NOLINT(cppcoreguidelines-owning-memory,modernize-make-unique)
         CHECK(!d->holds(other.data(), other.size()));
         d->edits->texts.emplace_back(new char[16]); // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays,cppcoreguidelines-owning-memory)
         d->edits->text_cap = 16;
