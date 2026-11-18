@@ -164,7 +164,9 @@ general.
 The same switch happens, for the same reason, when overload 1. replaces a multi-node array/object value with a
 scalar: the *parent's* element sequence is what has to switch to links, not `target` itself, because the parent
 originally stepped over `target`'s whole subtree by its node count, which no longer applies once `target` is a
-one-node scalar.
+one-node scalar. This also holds when `target` is no longer part of the document (an edit erased or replaced it, or
+a value that contains it): if the container that `target` was in still uses its parsed layout, it switches to links
+(otherwise nothing steps over `target` any more), and only the dropped values change.
 
 ## Examples
 

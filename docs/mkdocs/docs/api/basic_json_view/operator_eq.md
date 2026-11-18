@@ -7,6 +7,10 @@ bool operator==(const basic_json_view& lhs, const basic_json_view& rhs);
 // (2)
 bool operator==(const basic_json_view& lhs, const BasicJsonType& rhs);
 bool operator==(const BasicJsonType& lhs, const basic_json_view& rhs);
+
+// (3)
+template<view_mode M>
+bool operator==(const basic_json_view& lhs, const basic_json_view<BasicJsonType, M>& rhs);
 ```
 
 1. Compares two views for equality: whether the values [`BasicJsonType::parse()`](../basic_json/parse.md) would
@@ -14,8 +18,12 @@ bool operator==(const BasicJsonType& lhs, const basic_json_view& rhs);
 2. Compares a view and a `BasicJsonType` value for equality, in either order: whether the value `parse()` would
    produce for the view and the other operand are equal, according to `BasicJsonType`'s
    [`operator==`](../basic_json/operator_eq.md).
+3. Like overload 1, for two views of the same `BasicJsonType` but of different [view modes](../view_mode.md), in
+   either order: a view of a read-only document (such as a [`json_view`](../json_view.md)) and a view of an editable
+   document (such as a [`json_editable_view`](../json_editable_view.md)). This overload only takes part in overload
+   resolution if `M` is not the mode of `lhs`.
 
-Neither overload builds a `BasicJsonType` value for a view to do the comparison (see [Notes](#notes) below). Numbers
+No overload builds a `BasicJsonType` value for a view to do the comparison (see [Notes](#notes) below). Numbers
 compare by value across their types (`#!cpp 1 == 1.0`), and an object compares by its members, with duplicate keys
 resolved exactly as `parse()` resolves them — the last value, at the position of the first occurrence of the key.
 This is not what [`operator[]`](operator[].md) and the other lookups return for a duplicate key: they find the *first*

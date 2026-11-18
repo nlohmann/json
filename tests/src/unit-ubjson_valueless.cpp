@@ -6,6 +6,13 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
+// cmake/test.cmake selects the C++ standard versions with which to build a
+// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
+// When using macros that are only defined for particular versions of the standard
+// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
+// version macro in a comment close by, like this:
+// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+
 // The budget for the elements of the UBJSON containers of a valueless type
 // ('Z', 'T', 'F') of a whole input: 1048576 plus
 // JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE for every byte read (see
@@ -92,6 +99,7 @@ static_assert(nlohmann::detail::valueless_elements_rate_is_char_or_bool<unsigned
 static_assert(nlohmann::detail::valueless_elements_rate_is_char_or_bool<wchar_t>::value, "wchar_t is refused");
 static_assert(nlohmann::detail::valueless_elements_rate_is_char_or_bool<char16_t>::value, "char16_t is refused");
 static_assert(nlohmann::detail::valueless_elements_rate_is_char_or_bool<char32_t>::value, "char32_t is refused");
+// JSON_HAS_CPP_20 (do not remove; see note at top of file)
 #if defined(__cpp_char8_t)
     static_assert(nlohmann::detail::valueless_elements_rate_is_char_or_bool<char8_t>::value, "char8_t is refused");
 #endif

@@ -6,6 +6,13 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
+// cmake/test.cmake selects the C++ standard versions with which to build a
+// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
+// When using macros that are only defined for particular versions of the standard
+// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
+// version macro in a comment close by, like this:
+// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+
 #include "doctest_compatibility.h"
 
 #include <nlohmann/json.hpp>
@@ -17,6 +24,7 @@
 #include <type_traits>
 #include <vector>
 
+// JSON_HAS_CPP_20 (do not remove; see note at top of file)
 #if JSON_HAS_THREE_WAY_COMPARISON
     #include <compare>
 #endif
@@ -482,4 +490,26 @@ TEST_CASE("custom number types: 32-bit integers in the binary formats")
     CHECK(json32::to_cbor(values) == nlohmann::json::to_cbor(values64));
     CHECK(json32::to_msgpack(values) == nlohmann::json::to_msgpack(values64));
     CHECK(json32::to_ubjson(values) == nlohmann::json::to_ubjson(values64));
+}
+
+TEST_CASE("custom number types: binary subtypes wider than the integer types")
+{
+    // the subtype of a binary value is a std::uint64_t, whatever the number types are
+    using json8 = nlohmann::json::with_integers_t<std::int8_t, std::uint8_t>;
+    using json16 = nlohmann::json::with_integers_t<std::int16_t, std::uint16_t>;
+    using json32 = nlohmann::json::with_integers_t<std::int32_t, std::uint32_t>;
+    const std::uint64_t max_uint64 = (std::numeric_limits<std::uint64_t>::max)();
+
+    CHECK(json8::binary({1}, 300).dump() == "{\"bytes\":[1],\"subtype\":300}");
+    CHECK(json8::binary({200}, 255).dump() == "{\"bytes\":[200],\"subtype\":255}");
+    CHECK(json16::binary({1}, 65543).dump() == "{\"bytes\":[1],\"subtype\":65543}");
+    CHECK(json32::binary({1}, 4294967301u).dump() == "{\"bytes\":[1],\"subtype\":4294967301}");
+    CHECK(json32::binary({1}, max_uint64).dump() == "{\"bytes\":[1],\"subtype\":18446744073709551615}");
+    CHECK(json32::binary({1}, 0).dump() == "{\"bytes\":[1],\"subtype\":0}");
+    CHECK(json32::binary({1}, 4294967301u).dump(1) == "{\n \"bytes\": [1],\n \"subtype\": 4294967301\n}");
+    CHECK(json8::binary({1}).dump() == "{\"bytes\":[1],\"subtype\":null}");
+
+    // unchanged for the default number types
+    CHECK(nlohmann::json::binary({1}, 4294967301u).dump() == "{\"bytes\":[1],\"subtype\":4294967301}");
+    CHECK(nlohmann::json::binary({1}, max_uint64).dump(1) == "{\n \"bytes\": [1],\n \"subtype\": 18446744073709551615\n}");
 }

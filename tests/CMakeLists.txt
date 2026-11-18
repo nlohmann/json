@@ -445,8 +445,7 @@ json_test_add_test_for(src/unit-stream-bulk-scan.cpp
 # with other values of JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE: 1 (the smallest),
 # 1000000 (so large that the budget cannot be reached), and the largest value of
 # a 64-bit integer (which saturates the limit already at the first byte, and is
-# clamped to the largest std::size_t where that has 32 bits). The file does not
-# mention JSON_HAS_CPP_<n>, so only C++11 is built unless the standards are forced
+# clamped to the largest std::size_t where that has 32 bits)
 json_test_set_test_options(test-ubjson_valueless_rate_1
     COMPILE_DEFINITIONS JSON_UBJSON_VALUELESS_ELEMENTS_PER_BYTE=1
 )

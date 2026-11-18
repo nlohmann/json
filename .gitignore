@@ -20,7 +20,7 @@
 
 # fuzzers
 /tests/corpus_*
-/tests/parse_*_fuzzer
+/tests/*_fuzzer
 
 # documentation
 /docs/docset/JSON_for_Modern_C++.docset/
@@ -47,11 +47,10 @@ nlohmann_json.spdx
 # Bazel-related
 MODULE.bazel.lock
 
-# backups left by `make check-amalgamation` or the ci_test_amalgamation target if they are interrupted
+# backups left by `make check-amalgamation` if it is interrupted
 /BUILD.bazel~
 /nlohmann_json.natvis~
 /single_include/nlohmann/*.hpp~
-/venv_astyle/
 
 # release outputs of `make release`
 /include.zip

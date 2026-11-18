@@ -102,7 +102,7 @@ the result of an internet search. If you know further customers of the library, 
 
 - [**Apple iOS and macOS**](https://www.apple.com/macos), a family of operating systems developed by Apple, including iOS for mobile devices and macOS for desktop computers
 - [**Chromium**](https://chromium.googlesource.com/chromium/src/+/main/third_party/nlohmann_json/), the open-source browser project that Google Chrome, Microsoft Edge, and many other browsers are built on, where the library is used as data container for on-device model execution
-- [**Google Fuchsia**](https://fuchsia.googlesource.com/third_party/json/), an open-source operating system developed by Google, designed to be secure, updatable, and adaptable across various devices
+- [**Google Fuchsia**](https://fuchsia.googlesource.com/fuchsia/+/refs/heads/main/scripts/prebuilts/swiftshader/build_config), an open-source operating system developed by Google, designed to be secure, updatable, and adaptable across various devices, where the library is used indirectly through bundled dependencies such as SwiftShader's debugger support and cppdap
 - [**LG webOS**](https://github.com/webosose/com.webos.service.camera), a Linux-based operating system used in LG smart TVs, signage, and embedded devices
 - [**Microsoft Azure Linux**](https://github.com/microsoft/azurelinux), a Linux distribution developed by Microsoft for Azure infrastructure and edge workloads
 - [**OpenHarmony**](https://github.com/openharmony/third_party_json), an open-source operating system for smart devices and the foundation of HarmonyOS
@@ -174,7 +174,7 @@ the result of an internet search. If you know further customers of the library, 
 - [**NVIDIA Instant NGP**](https://github.com/NVlabs/instant-ngp/blob/master/src/nerf_loader.cu), an implementation of instant neural graphics primitives for rapid scene reconstruction
 - [**NVIDIA TensorRT**](https://github.com/NVIDIA/TensorRT), an SDK for high-performance deep learning inference, including its TensorRT-LLM extension for large language models
 - [**NVIDIA TensorRT-LLM**](https://github.com/NVIDIA/TensorRT-LLM/blob/main/cpp/tensorrt_llm/common/safetensors.cpp), a toolkit for optimizing and serving large language model inference on GPUs
-- [**ONNX Runtime**](https://github.com/microsoft/onnxruntime), a cross-platform inference and training accelerator for machine learning models
+- [**ONNX Runtime**](https://onnxruntime.ai), a cross-platform inference and training accelerator for machine learning models
 - [**OpenVINO**](https://github.com/openvinotoolkit/openvino), Intel's toolkit for optimizing and deploying deep learning inference across CPUs, GPUs, and NPUs
 - [**PaddleOCR**](https://github.com/PaddlePaddle/PaddleOCR/blob/main/deploy/cpp_infer/src/modules/text_detection/result.cc), an optical character recognition toolkit that turns documents and images into structured data
 - [**PaddlePaddle**](https://github.com/PaddlePaddle/Paddle/blob/develop/paddle/ap/src/axpr/anf_expr.cc), a deep learning framework for distributed training and inference
@@ -216,7 +216,7 @@ the result of an internet search. If you know further customers of the library, 
 - [**Check Point**](https://www.checkpoint.com/about-us/copyright-and-trademarks/), a cybersecurity company specializing in threat prevention and network security solutions, offering a range of products designed to protect enterprises from cyber threats and ensure data integrity
 - [**EasyEffects**](https://github.com/wwmm/easyeffects/blob/master/src/presets_manager.hpp), an audio effects processor for PipeWire offering limiting, compression and equalization
 - [**espanso**](https://github.com/espanso/espanso/blob/dev/espanso-ui/src/win32/native.cpp), a cross-platform text expander
-- [**Karabiner-Elements**](https://github.com/pqrs-org/Karabiner-Elements/blob/main/src/share/app_icon.hpp), a keyboard customizer for macOS
+- [**Karabiner-Elements**](https://github.com/pqrs-org/Karabiner-Elements/blob/main/src/share/json_utility.hpp), a keyboard customizer for macOS
 - [**MacType**](https://github.com/snowie2000/mactype/blob/directwrite/settings.h), a font rendering engine for Windows
 - [**magicplan**](https://help.magicplan.app/acknowledgments), a mobile application for creating floor plans and interior designs using augmented reality
 - [**Microsoft Office for Mac**](https://officecdnmac.microsoft.com/pr/legal/mac/OfficeforMacAttributions.html), a suite of productivity applications developed by Microsoft for macOS, including tools for word processing, spreadsheets, and presentations

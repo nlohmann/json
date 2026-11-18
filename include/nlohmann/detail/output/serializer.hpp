@@ -636,7 +636,7 @@ class serializer
             put_literal("\"subtype\": ");
             if (binary.has_subtype())
             {
-                dump_integer(binary.subtype());
+                dump_subtype(binary.subtype());
             }
             else
             {
@@ -662,7 +662,7 @@ class serializer
             put_literal("],\"subtype\":");
             if (binary.has_subtype())
             {
-                dump_integer(binary.subtype());
+                dump_subtype(binary.subtype());
                 put_char('}');
             }
             else
@@ -1571,7 +1571,7 @@ class serializer
             {
                 return n_digits + 3;
             }
-            x = x / 10000u;
+            x = static_cast<number_magnitude_t>(x / 10000u);
             n_digits += 4;
         }
     }
@@ -1884,6 +1884,40 @@ class serializer
     }
 
     /*!
+    @brief dump the subtype of a binary value
+
+    The subtype is a std::uint64_t, whatever the number types are. @ref
+    dump_integer converts its argument to the magnitude type of
+    number_unsigned_t, so it writes the subtype only if that type has at least
+    64 bits; otherwise (it would truncate the subtype) the digits are written
+    one by one.
+
+    @param[in] subtype  the subtype to dump
+    */
+    void dump_subtype(std::uint64_t subtype)
+    {
+        dump_subtype(subtype, std::integral_constant<bool, magnitude_has_at_least_64_bits> {});
+    }
+
+    void dump_subtype(std::uint64_t subtype, std::true_type /*magnitude has at least 64 bits*/)
+    {
+        dump_integer(subtype);
+    }
+
+    void dump_subtype(std::uint64_t subtype, std::false_type /*magnitude has less than 64 bits*/)
+    {
+        std::array<char, 20> digits{{}}; // 2^64 - 1 has 20 digits
+        std::size_t start = digits.size();
+        do
+        {
+            digits[--start] = static_cast<char>('0' + (subtype % 10));
+            subtype /= 10;
+        }
+        while (subtype != 0);
+        put_string(digits, start, digits.size());
+    }
+
+    /*!
     @brief dump an integer
 
     Dump a given integer, appending it to @ref write_buffer (directly: copying
@@ -2033,8 +2067,9 @@ class serializer
         }
 
         // If number_float_t is an IEEE-754 single or double precision number,
-        // use the Grisu2 algorithm to produce short numbers which are
-        // guaranteed to round-trip, using strtof and strtod, resp.
+        // use to_chars() to produce short numbers which are guaranteed to
+        // round-trip, using strtof and strtod, resp. (the shortest digits of
+        // Zmij for binary64, the Grisu2 algorithm for binary32).
         //
         // NB: The test below works if <long double> == <double>.
         static constexpr bool is_ieee_single_or_double
@@ -2136,6 +2171,11 @@ class serializer
     static constexpr bool magnitude_has_at_most_64_bits = std::numeric_limits<number_magnitude_t>::is_specialized
         && std::numeric_limits<number_magnitude_t>::digits <= 64;
 
+    /// whether every std::uint64_t fits number_magnitude_t (then dump_integer
+    /// can write a binary subtype)
+    static constexpr bool magnitude_has_at_least_64_bits = std::numeric_limits<number_magnitude_t>::is_specialized
+        && std::numeric_limits<number_magnitude_t>::digits >= 64;
+
     /// whether @a x fits 64 bits: always if number_magnitude_t has at most
     /// 64 bits (selected by type, as the comparison would be reported as
     /// always true), else compared
@@ -2161,7 +2201,7 @@ class serializer
     number_magnitude_t remove_sign(number_integer_t x) noexcept
     {
         JSON_ASSERT(x < 0);
-        return static_cast<number_magnitude_t>(-(x + 1)) + 1;
+        return static_cast<number_magnitude_t>(static_cast<number_magnitude_t>(-(x + 1)) + 1);
     }
 
   private:

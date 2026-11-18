@@ -14,6 +14,7 @@ using nlohmann::json;
 #include <cmath>
 #include <fstream>
 #include <limits>
+#include <list>
 #include <map>
 #include <string>
 #include <vector>
@@ -365,5 +366,127 @@ TEST_CASE("Binary formats with narrow number types")
         CHECK_THROWS_WITH_AS(roundtrip(json(1e300)), message.c_str(), narrow_json::out_of_range&);
         CHECK_THROWS_WITH_AS(roundtrip(json(-1e300)), message.c_str(), narrow_json::out_of_range&);
         CHECK(format.decode(format.encode(json(1e300)), false).is_discarded());
+    }
+}
+
+namespace
+{
+// records the SAX events of narrow_json, including the arguments of parse_error
+struct narrow_event_recorder
+{
+    using number_integer_t = narrow_json::number_integer_t;
+    using number_unsigned_t = narrow_json::number_unsigned_t;
+    using number_float_t = narrow_json::number_float_t;
+    using string_t = narrow_json::string_t;
+    using binary_t = narrow_json::binary_t;
+
+    bool null()
+    {
+        events.emplace_back("null");
+        return true;
+    }
+    bool boolean(bool val)
+    {
+        events.emplace_back(val ? "true" : "false");
+        return true;
+    }
+    bool number_integer(number_integer_t val)
+    {
+        events.push_back(std::to_string(val));
+        return true;
+    }
+    bool number_unsigned(number_unsigned_t val)
+    {
+        events.push_back(std::to_string(val));
+        return true;
+    }
+    bool number_float(number_float_t val, const string_t& /*unused*/)
+    {
+        events.push_back(std::to_string(val));
+        return true;
+    }
+    bool string(string_t& val)
+    {
+        events.push_back(val);
+        return true;
+    }
+    bool binary(binary_t& /*unused*/)
+    {
+        events.emplace_back("binary");
+        return true;
+    }
+    bool start_object(std::size_t /*unused*/)
+    {
+        events.emplace_back("{");
+        return true;
+    }
+    bool key(string_t& val)
+    {
+        events.push_back(val);
+        return true;
+    }
+    bool end_object()
+    {
+        events.emplace_back("}");
+        return true;
+    }
+    bool start_array(std::size_t /*unused*/)
+    {
+        events.emplace_back("[");
+        return true;
+    }
+    bool end_array()
+    {
+        events.emplace_back("]");
+        return true;
+    }
+    bool parse_error(std::size_t position, const std::string& last_token, const nlohmann::detail::exception& ex)
+    {
+        events.push_back("parse_error(" + std::to_string(position) + ", " + last_token + ", " + ex.what() + ")");
+        return false;
+    }
+
+    std::vector<std::string> events {}; // NOLINT(readability-redundant-member-init)
+};
+} // namespace
+
+TEST_CASE("Binary formats with narrow number types from contiguous and non-contiguous input")
+{
+    // contiguous input reads runs of numbers in one loop; a number that
+    // overflows number_float_t must be reported with the same position and
+    // last byte as when the input is read byte by byte
+    const json values = {1, 70000, -70000, 1.5, 2.5, 1e300, 3.5, 4.5, 5.5, 6.5, 7.5, 8.5};
+    const json doubles = {1.5, 2.5, 3.5, 1e300, 4.5, 5.5, 6.5, 7.5, 8.5};
+
+    struct binary_input
+    {
+        const char* name;
+        json::input_format_t format;
+        bytes data;
+    };
+    const std::vector<binary_input> inputs =
+    {
+        {"CBOR", json::input_format_t::cbor, json::to_cbor(values)},
+        {"CBOR doubles", json::input_format_t::cbor, json::to_cbor(doubles)},
+        {"MessagePack", json::input_format_t::msgpack, json::to_msgpack(values)},
+        {"MessagePack doubles", json::input_format_t::msgpack, json::to_msgpack(doubles)},
+        {"UBJSON", json::input_format_t::ubjson, json::to_ubjson(values, true)},
+        {"UBJSON typed doubles", json::input_format_t::ubjson, json::to_ubjson(doubles, true, true)},
+        {"BJData", json::input_format_t::bjdata, json::to_bjdata(values, true)},
+        {"BJData typed doubles", json::input_format_t::bjdata, json::to_bjdata(doubles, true, true)},
+    };
+
+    for (const auto& input : inputs)
+    {
+        const std::string name = input.name;
+        CAPTURE(name)
+        const std::list<std::uint8_t> bytewise(input.data.begin(), input.data.end());
+        narrow_event_recorder from_contiguous;
+        narrow_event_recorder from_bytewise;
+        CHECK_FALSE(narrow_json::sax_parse(input.data, &from_contiguous, input.format));
+        CHECK_FALSE(narrow_json::sax_parse(bytewise.begin(), bytewise.end(), &from_bytewise, input.format));
+        CHECK(from_contiguous.events == from_bytewise.events);
+        REQUIRE(!from_contiguous.events.empty());
+        CHECK(from_contiguous.events.back().find("out_of_range.406") != std::string::npos);
     }
 }

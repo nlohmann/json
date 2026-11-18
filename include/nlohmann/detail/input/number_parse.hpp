@@ -257,7 +257,7 @@ struct ieee_binary_format<53> // binary64
 
 These formats (float, double, and long double where it is binary64, e.g.
 with MSVC or on Apple arm64) are converted by parse_float_native(). The
-predicate is the one the serializer uses to choose Grisu2.
+predicate is the one the serializer uses to choose to_chars() over snprintf.
 */
 template<typename FloatType>
 struct has_native_float_format
