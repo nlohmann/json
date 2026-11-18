@@ -185,16 +185,19 @@ silently resolving them one way or another, see the
 ## Objects with many keys in `ordered_json`
 
 [`ordered_json`](../../api/ordered_json.md) keeps the members of an object in a vector in insertion order
-([`ordered_map`](../../api/ordered_map.md)) and finds a key by searching all members. Parsing JSON text into an
-`ordered_json` avoids that search for objects with many keys and takes linear time. The binary readers
+([`ordered_map`](../../api/ordered_map.md)) and finds a key by searching all members. The parsers avoid that search
+for objects with many keys — they find the keys in a hash table instead — so reading an object of `n` keys into an
+`ordered_json` takes linear time, from JSON text and from the binary formats
 ([`from_cbor`](../../api/basic_json/from_cbor.md), [`from_msgpack`](../../api/basic_json/from_msgpack.md),
 [`from_ubjson`](../../api/basic_json/from_ubjson.md), [`from_bjdata`](../../api/basic_json/from_bjdata.md),
-[`from_bson`](../../api/basic_json/from_bson.md), and [`from_bon8`](../../api/basic_json/from_bon8.md)) do not yet:
-reading an object of `n` keys into an `ordered_json` costs time proportional to `n²`. A flat object of 40,000 keys
-(about 300 KB of CBOR) takes about 1.3 s, against a few milliseconds as JSON text or into a `json`
-([#6104](https://github.com/nlohmann/json/issues/6104)). `json` is not affected. If you read untrusted binary input
-into `ordered_json`, bound the input size more tightly, read it into a `json`, or reject objects with many keys in a
-[SAX handler](sax_interface.md).
+[`from_bson`](../../api/basic_json/from_bson.md), and [`from_bon8`](../../api/basic_json/from_bon8.md)) alike.
+
+Versions up to and including 3.12.0 did not do this: reading an object of `n` keys into an `ordered_json` cost time
+proportional to `n²`, for JSON text as well as for the binary formats. A flat object of 40,000 keys (about 300 KB of
+CBOR) took about 1.3 s, against a few milliseconds into a `json`
+([#6104](https://github.com/nlohmann/json/issues/6104)). `json` was not affected. On those versions, if you read
+untrusted input into `ordered_json`, bound the input size more tightly, read it into a `json`, or reject objects
+with many keys in a [SAX handler](sax_interface.md).
 
 ## Numbers
 
@@ -230,8 +233,9 @@ indices (or the pointer as a whole) before using them, or use [`at`](../../api/b
 - If the input's nesting depth matters to you (for example because you pretty-print, log, or flatten it), enforce your
   own limit with a [parser callback](parser_callbacks.md#recipe-max-nesting-depth-via-a-callback) or a
   [SAX handler](sax_interface.md); the library bounds the call stack but not memory use.
-- If you read untrusted binary input into `ordered_json`, mind that objects with many keys are
-  [slow to read](#objects-with-many-keys-in-ordered_json).
+- On versions up to and including 3.12.0, untrusted input with objects of many keys is
+  [slow to read](#objects-with-many-keys-in-ordered_json) into `ordered_json`; bound the input size or read into a
+  `json` there.
 - Bound the size of the input itself before parsing, independent of the library's own bounded allocations for binary
   format lengths.
 - Decide up front how you want a string with invalid UTF-8 — from any source, not only parsing — to be serialized

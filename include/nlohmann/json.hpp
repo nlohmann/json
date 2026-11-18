@@ -6357,7 +6357,7 @@ public:
            from_ubjson/from_bjdata/from_bon8/from_bson overloads
 
     Building the @ref binary_reader as a named local, rather than as a
-    temporary that @ref detail::json_sax_dom_binary_parser::parse is called on in
+    temporary that @ref detail::binary_reader::sax_parse is called on in
     the same expression, avoids a false-positive cppcheck accessMoved
     warning in each of the 16 callers.
     */
@@ -6368,7 +6368,7 @@ public:
                                        const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         basic_json result;
-        detail::json_sax_dom_binary_parser<basic_json, InputAdapterType> sdp(result, allow_exceptions);
+        detail::selected_dom_parser_t<basic_json, InputAdapterType> sdp(result, allow_exceptions);
         binary_reader<InputAdapterType> reader(std::move(ia), format, error_handler);
         if (!reader.sax_parse(&sdp, strict, tag_handler))
         {
