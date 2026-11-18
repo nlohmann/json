@@ -44,7 +44,9 @@ using nlohmann::ordered_json;
 
 #include <cstdio>
 #include <list>
+#include <map>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 
 #ifdef JSON_HAS_CPP_17
@@ -279,6 +281,53 @@ struct Example_4740
     NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Example_4740, host, port)
 };
 #endif
+
+namespace issue_6106
+{
+// an object key type without a std::hash specialization
+class unhashable_key
+{
+  public:
+    unhashable_key() = default;
+    unhashable_key(const char* s) : m_value(s) {} // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+    unhashable_key(std::string s) : m_value(std::move(s)) {} // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+
+    operator std::string() const // NOLINT(google-explicit-constructor,hicpp-explicit-conversions)
+    {
+        return m_value;
+    }
+    const char* data() const noexcept
+    {
+        return m_value.data();
+    }
+
+    friend bool operator<(const unhashable_key& lhs, const unhashable_key& rhs) noexcept
+    {
+        return lhs.m_value < rhs.m_value;
+    }
+    friend bool operator==(const unhashable_key& lhs, const unhashable_key& rhs) noexcept
+    {
+        return lhs.m_value == rhs.m_value;
+    }
+
+  private:
+    std::string m_value{}; // NOLINT(readability-redundant-member-init): needed for GCC -Weffc++
+};
+
+// an object type that appends members without a key check, like ordered_map,
+// but whose keys cannot be hashed
+template<typename Key, typename Value, typename Compare, typename Allocator>
+struct unhashable_key_map : nlohmann::ordered_map<unhashable_key, Value, Compare,
+    typename std::allocator_traits<Allocator>::template rebind_alloc<std::pair<const unhashable_key, Value>>>
+{
+    using base_type = nlohmann::ordered_map<unhashable_key, Value, Compare,
+                                            typename std::allocator_traits<Allocator>::template rebind_alloc<std::pair<const unhashable_key, Value>>>;
+                                            using base_type::base_type;
+                                            using base_type::operator=;
+};
+
+using unhashable_key_json = nlohmann::basic_json<unhashable_key_map>;
+} // namespace issue_6106
 
 TEST_CASE("regression tests 3")
 {
@@ -521,6 +570,30 @@ TEST_CASE("regression tests 3")
         CHECK(j == json({2, 4, 6}));
     }
 #endif
+
+    SECTION("issue #6106 - ordered_json built from a std::multimap keeps duplicate keys")
+    {
+        // the first of repeated keys wins, as for json
+        const std::multimap<std::string, int> mm{{"a", 1}, {"a", 2}, {"b", 3}};
+        const ordered_json oj(mm);
+        CHECK(oj.size() == 2);
+        CHECK(oj.dump() == R"({"a":1,"b":3})");
+        CHECK(oj.dump() == json(mm).dump());
+        CHECK(oj.flatten().dump() == R"({"/a":1,"/b":3})");
+
+        // the rvalue overload moves the values
+        CHECK(ordered_json(std::multimap<std::string, std::string> {{"k", "x"}, {"k", "y"}}).dump() == R"({"k":"x"})");
+
+        const std::unordered_multimap<std::string, int> umm{{"k", 1}, {"k", 2}, {"l", 3}};
+        CHECK(ordered_json(umm).size() == 2);
+
+        // a key type without std::hash deduplicates with the object type's own
+        // (linear) key check
+        const std::multimap<issue_6106::unhashable_key, int> uhm{{"a", 1}, {"a", 2}, {"b", 3}};
+        const issue_6106::unhashable_key_json uj(uhm);
+        CHECK(uj.size() == 2);
+        CHECK(uj.at("a") == 1);
+    }
 }
 
 TEST_CASE_TEMPLATE("issue #4798 - nlohmann::json::to_msgpack() encode float NaN as double", T, double, float) // NOLINT(readability-math-missing-parentheses, bugprone-throwing-static-initialization)
