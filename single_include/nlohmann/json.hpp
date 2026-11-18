@@ -8015,12 +8015,16 @@ using detect_std_hash_t = decltype(std::hash<Key>()(std::declval<const Key&>()))
 
 // std::hash is only named once the object type appends by key: VS 2015
 // static-asserts on std::hash of a type without one instead of reporting a
-// substitution failure
+// substitution failure, so it cannot be named even in a detection idiom and
+// the primary template alone reports not hashable on that compiler
 template<typename ObjectType, bool = is_detected<detect_emplace_new_key_t, ObjectType>::value>
 struct detect_hashable_object_key : std::false_type {};
+
+#if !defined(_MSC_VER) || _MSC_VER != 1900
 template<typename ObjectType>
 struct detect_hashable_object_key<ObjectType, true>
     : is_detected<detect_std_hash_t, typename ObjectType::key_type> {};
+#endif
 
 /// how to build an object from an element range:
 /// 0: the range constructor is enough: the object type drops repeated keys
