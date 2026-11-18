@@ -14,7 +14,8 @@
 ![Conda](../images/package_managers/conda.svg){: style="height:1em"}&nbsp;[**Conda**](#conda) `nlohmann_json` &emsp;
 ![MacPorts](../images/package_managers/macports.svg){: style="height:1em"}&nbsp;[**MacPorts**](#macports) `nlohmann-json`<br>
 ![cpm.cmake](../images/package_managers/CPM.png){: style="height:1em"}&nbsp;[**CPM.cmake**](#cpmcmake) `gh:nlohmann/json` &emsp;
-![xmake](../images/package_managers/xmake.svg){: style="height:1em"}&nbsp;[**xmake**](#xmake) `nlohmann_json`
+![xmake](../images/package_managers/xmake.svg){: style="height:1em"}&nbsp;[**xmake**](#xmake) `nlohmann_json` &emsp;
+![Nix](../images/package_managers/nix.svg){: style="height:1em"}&nbsp;[**Nix**](#nix) `nlohmann_json`
 </p>
 
 ## Running example
@@ -905,6 +906,56 @@ CPMAddPackage("gh:nlohmann/json@3.12.0")
         ```
 
 * * *
+
+## Nix
+
+!!! abstract "Summary"
+
+    package: [**`nlohmann_json`**](https://search.nixos.org/packages?channel=unstable&show=nlohmann_json&query=nlohmann_json)
+
+    - :octicons-tag-24: Available versions: current version of each Nixpkgs channel (may lag behind the latest release)
+    - :octicons-rocket-24: The package is maintained by the Nixpkgs community and updated after releases.
+    - :octicons-file-24: File issues at the [Nixpkgs issue tracker](https://github.com/NixOS/nixpkgs/issues)
+    - :octicons-question-24: [Nix website](https://nixos.org)
+
+If you are using [Nix](https://nixos.org) or [NixOS](https://nixos.org/manual/nixos/stable/), the library is available
+as the [nlohmann_json](https://search.nixos.org/packages?channel=unstable&show=nlohmann_json&query=nlohmann_json)
+package in [Nixpkgs](https://github.com/NixOS/nixpkgs). To try it in a temporary shell, execute
+
+```shell
+nix-shell -p nlohmann_json
+```
+
+On NixOS, the package can be installed system-wide by adding it to `configuration.nix`:
+
+```nix
+environment.systemPackages = [ pkgs.nlohmann_json ];
+```
+
+??? example "Example: CMake"
+
+    1. Create the following files:
+
+        ```cpp title="example.cpp"
+        --8<-- "integration/nix/example.cpp"
+        ```
+
+        ```cmake title="CMakeLists.txt"
+        --8<-- "integration/nix/CMakeLists.txt"
+        ```
+
+    2. Enter a shell that provides the package, CMake, and a C++ compiler:
+
+        ```sh
+        nix-shell -p nlohmann_json cmake
+        ```
+
+    3. Compile the code:
+
+        ```sh
+        cmake -S . -B build
+        cmake --build build
+        ```
 
 ## Other package managers
 
