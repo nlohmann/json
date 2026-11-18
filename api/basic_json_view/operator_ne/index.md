@@ -7,10 +7,15 @@ bool operator!=(const basic_json_view& lhs, const basic_json_view& rhs);
 // (2)
 bool operator!=(const basic_json_view& lhs, const BasicJsonType& rhs);
 bool operator!=(const BasicJsonType& lhs, const basic_json_view& rhs);
+
+// (3)
+template<view_mode M>
+bool operator!=(const basic_json_view& lhs, const basic_json_view<BasicJsonType, M>& rhs);
 ```
 
 1. Compares two views for inequality. Returns `!(lhs == rhs)`, see [operator==](https://json.nlohmann.me/api/basic_json_view/operator_eq/index.md).
 1. Compares a view and a `BasicJsonType` value for inequality, in either order. Returns `!(lhs == rhs)` (or, for the reversed order, `!(rhs == lhs)`), see [operator==](https://json.nlohmann.me/api/basic_json_view/operator_eq/index.md).
+1. Compares a read-only and an editable view of the same `BasicJsonType` for inequality, in either order. Returns `!(lhs == rhs)`, see [operator==](https://json.nlohmann.me/api/basic_json_view/operator_eq/index.md).
 
 Since `operator!=` is defined as the negation of [`operator==`](https://json.nlohmann.me/api/basic_json_view/operator_eq/index.md), it follows the same rules for special cases: for instance, since a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view is never equal to anything by default (see [operator=='s Notes](https://json.nlohmann.me/api/basic_json_view/operator_eq/#notes)), it is never *unequal* to anything either — `discarded != discarded` is also `false`, exactly as for a discarded `BasicJsonType` value.
 

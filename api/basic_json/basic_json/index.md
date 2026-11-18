@@ -196,7 +196,7 @@ this requirement is not met.
 1. No-throw guarantee: this constructor never throws exceptions.
 1. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no `to_json()` function was provided), a strong guarantee holds: if an exception is thrown, there are no changes to any JSON value. **Exception:** when `val` is an rvalue array-like or object-like container, its elements are moved one by one; if an exception is thrown in the middle of the conversion (e.g., an allocation failure), the JSON value is unchanged, but the source container may be left partially moved-from.
 1. Depends on the called constructor. For types directly supported by the library (i.e., all types for which no `to_json()` function was provided), a strong guarantee holds: if an exception is thrown, there are no changes to any JSON value.
-1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
+1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value. Values that are moved into `init` (e.g., `a` in `json::object({std::move(a), 5})`) are moved when the initializer list is created, before the constructor runs, and stay moved-from if it throws.
 1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
 1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
 1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.

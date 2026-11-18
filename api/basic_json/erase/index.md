@@ -24,9 +24,9 @@ void erase(const size_type idx);
 
    If called on a primitive type other than `null`, the resulting JSON value will be `null`.
 
-1. Remove an element range specified by `[first; last)` from a JSON value. The iterator `first` does not need to be dereferenceable if `first == last`: erasing an empty range is a no-op.
+1. Remove an element range specified by `[first; last)` from a JSON value. For arrays and objects, the iterator `first` does not need to be dereferenceable if `first == last`: erasing an empty range is a no-op.
 
-   If called on a primitive type other than `null`, the resulting JSON value will be `null`.
+   If called on a primitive type other than `null`, the range must be `[begin(); end())`, and the resulting JSON value will be `null`. Any other range, including the empty ranges `[begin(); begin())` and `[end(); end())`, throws [`invalid_iterator.204`](https://json.nlohmann.me/home/exceptions/#jsonexceptioninvalid_iterator204).
 
 1. Removes an element from a JSON object by key.
 
@@ -71,7 +71,7 @@ Strong exception safety: if an exception occurs, the original value stays intact
 1. The function can throw the following exceptions:
    - Throws [`type_error.307`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error307) if called on a `null` value; example: `"cannot use erase() with null"`
    - Throws [`invalid_iterator.203`](https://json.nlohmann.me/home/exceptions/#jsonexceptioninvalid_iterator203) if called on iterators which does not belong to the current JSON value; example: `"iterators do not fit current value"`
-   - Throws [`invalid_iterator.204`](https://json.nlohmann.me/home/exceptions/#jsonexceptioninvalid_iterator204) if called on a primitive type with invalid iterators (i.e., if `first != begin()` and `last != end()`); example: `"iterators out of range"`
+   - Throws [`invalid_iterator.204`](https://json.nlohmann.me/home/exceptions/#jsonexceptioninvalid_iterator204) if called on a primitive type with invalid iterators (i.e., if `first != begin()` or `last != end()`, which includes the empty ranges `[begin(); begin())` and `[end(); end())`); example: `"iterators out of range"`
 1. The function can throw the following exceptions:
    - Throws [`type_error.307`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error307) when called on a type other than JSON object; example: `"cannot use erase() with null"`
 1. See 3.

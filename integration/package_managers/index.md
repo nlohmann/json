@@ -4,7 +4,7 @@
 [**Conan**](#conan) `nlohmann_json`    [**Spack**](#spack) `nlohmann-json`   [**Hunter**](#hunter) `nlohmann_json`\
 [**vcpkg**](#vcpkg) `nlohmann-json`   [**cget**](#cget) `nlohmann/json`    [**Swift Package Manager**](#swift-package-manager) `nlohmann/json`\
 [**NuGet**](#nuget) `nlohmann.json`    [**Conda**](#conda) `nlohmann_json`    [**MacPorts**](#macports) `nlohmann-json`\
-[**CPM.cmake**](#cpmcmake) `gh:nlohmann/json`    [**xmake**](#xmake) `nlohmann_json`
+[**CPM.cmake**](#cpmcmake) `gh:nlohmann/json`    [**xmake**](#xmake) `nlohmann_json`    [**Nix**](#nix) `nlohmann_json`
 
 ## Running example
 
@@ -1229,6 +1229,73 @@ Example: xmake project
    ```
 
 ______________________________________________________________________
+
+## Nix
+
+Summary
+
+package: [**`nlohmann_json`**](https://search.nixos.org/packages?channel=unstable&show=nlohmann_json&query=nlohmann_json)
+
+- Available versions: current version of each Nixpkgs channel (may lag behind the latest release)
+- The package is maintained by the Nixpkgs community and updated after releases.
+- File issues at the [Nixpkgs issue tracker](https://github.com/NixOS/nixpkgs/issues)
+- [Nix website](https://nixos.org)
+
+If you are using [Nix](https://nixos.org) or [NixOS](https://nixos.org/manual/nixos/stable/), the library is available as the [nlohmann_json](https://search.nixos.org/packages?channel=unstable&show=nlohmann_json&query=nlohmann_json) package in [Nixpkgs](https://github.com/NixOS/nixpkgs). To try it in a temporary shell, execute
+
+```
+nix-shell -p nlohmann_json
+```
+
+On NixOS, the package can be installed system-wide by adding it to `configuration.nix`:
+
+```
+environment.systemPackages = [ pkgs.nlohmann_json ];
+```
+
+Example: CMake
+
+1. Create the following files:
+
+   example.cpp
+
+   ```
+   #include <nlohmann/json.hpp>
+   #include <iostream>
+   #include <iomanip>
+
+   using nlohmann::json;
+
+   int main()
+   {
+       std::cout << std::setw(4) << json::meta() << std::endl;
+   }
+   ```
+
+   CMakeLists.txt
+
+   ```
+   cmake_minimum_required(VERSION 3.15)
+   project(json_example)
+
+   find_package(nlohmann_json CONFIG REQUIRED)
+
+   add_executable(json_example example.cpp)
+   target_link_libraries(json_example PRIVATE nlohmann_json::nlohmann_json)
+   ```
+
+1. Enter a shell that provides the package, CMake, and a C++ compiler:
+
+   ```
+   nix-shell -p nlohmann_json cmake
+   ```
+
+1. Compile the code:
+
+   ```
+   cmake -S . -B build
+   cmake --build build
+   ```
 
 ## Other package managers
 

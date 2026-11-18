@@ -55,8 +55,8 @@ void swap(typename binary_t::container_type& other);
 
 ## Exception safety
 
-1. No-throw guarantee: this function never throws exceptions.
-1. No-throw guarantee: this function never throws exceptions.
+1. No-throw guarantee if the `noexcept` condition above holds: it holds unless moving the [`json_base_class_t`](https://json.nlohmann.me/api/basic_json/json_base_class_t/index.md) can throw (moving the type tag and the stored value never throws). With the default base class, this function never throws exceptions.
+1. No-throw guarantee if the `noexcept` condition above holds: it holds unless moving the [`json_base_class_t`](https://json.nlohmann.me/api/basic_json/json_base_class_t/index.md) can throw (moving the type tag and the stored value never throws). With the default base class, this function never throws exceptions.
 1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
 1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
 1. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
@@ -65,8 +65,8 @@ void swap(typename binary_t::container_type& other);
 
 ## Exceptions
 
-1. No-throw guarantee: this function never throws exceptions.
-1. No-throw guarantee: this function never throws exceptions.
+1. Throws only what moving the [`json_base_class_t`](https://json.nlohmann.me/api/basic_json/json_base_class_t/index.md) throws; nothing with the default base class.
+1. Throws only what moving the [`json_base_class_t`](https://json.nlohmann.me/api/basic_json/json_base_class_t/index.md) throws; nothing with the default base class.
 1. Throws [`type_error.310`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error310) if called on JSON values other than arrays; example: `"cannot use swap(array_t&) with boolean"`
 1. Throws [`type_error.310`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error310) if called on JSON values other than objects; example: `"cannot use swap(object_t&) with boolean"`
 1. Throws [`type_error.310`](https://json.nlohmann.me/home/exceptions/#jsonexceptiontype_error310) if called on JSON values other than strings; example: `"cannot use swap(string_t&) with boolean"`

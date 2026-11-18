@@ -418,7 +418,7 @@ See the examples below for the concrete generated code.
 
     The macro is equivalent to:
 
-    ```cpp hl_lines="22 22 23 24 25 26 27 28"
+    ```cpp hl_lines="22 23 24 25 26 27 28"
     #include <iostream>
     #include <nlohmann/json.hpp>
     

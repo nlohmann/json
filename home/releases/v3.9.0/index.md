@@ -26,3 +26,4 @@ Feature release adding four long-requested features. All changes are backward-co
 - [`basic_json::operator ValueType`](https://json.nlohmann.me/api/basic_json/operator_ValueType/index.md): Macros `JSON_EXPLICIT`/[`JSON_USE_IMPLICIT_CONVERSIONS`](https://json.nlohmann.me/api/macros/json_use_implicit_conversions/index.md) added in version 3.9.0.
 - [`basic_json::parse`](https://json.nlohmann.me/api/basic_json/parse/index.md): Ignoring comments via `ignore_comments` added in version 3.9.0.
 - [`basic_json::sax_parse`](https://json.nlohmann.me/api/basic_json/sax_parse/index.md): Ignoring comments via `ignore_comments` added in version 3.9.0.
+- [`std::swap<basic_json>`](https://json.nlohmann.me/api/basic_json/std_swap/index.md): Not provided with C++20 since version 3.9.0.

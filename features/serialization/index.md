@@ -209,7 +209,7 @@ The best fix is to ensure that all strings are UTF-8 encoded before storing them
 
 ## Using `std::format`, `std::print`, and `fmt`
 
-Since version 3.12.0, JSON values can be formatted directly with C++20's [`std::format`](https://en.cppreference.com/w/cpp/utility/format/format) whenever the standard library provides the `<format>` header (controlled by [`JSON_HAS_STD_FORMAT`](https://json.nlohmann.me/api/macros/json_has_std_format/index.md)). This is enabled by the [`std::formatter<basic_json>`](https://json.nlohmann.me/api/basic_json/std_formatter/index.md) specialization, which also makes JSON values work with `std::format_to` and with C++23's `std::print`/`std::println`:
+Since version 3.13.0 unreleased, JSON values can be formatted directly with C++20's [`std::format`](https://en.cppreference.com/w/cpp/utility/format/format) whenever the standard library provides the `<format>` header (controlled by [`JSON_HAS_STD_FORMAT`](https://json.nlohmann.me/api/macros/json_has_std_format/index.md)). This is enabled by the [`std::formatter<basic_json>`](https://json.nlohmann.me/api/basic_json/std_formatter/index.md) specialization, which also makes JSON values work with `std::format_to` and with C++23's `std::print`/`std::println`:
 
 ```
 std::print("{}", j);      // compact, like j.dump()

@@ -15,6 +15,10 @@ materializing anything.
 - `#!cpp static_cast<std::size_t>(-1)` for a [discarded](is_discarded.md) view, and for a string that contains
   escapes — such a string was decoded once into the document's own buffer, so there is no single byte range in
   `source()` left to point at.
+- `#!cpp static_cast<std::size_t>(-1)` in an [editable document](../json_editable_document.md) for a value written
+  by an edit ([`set`](../basic_json_document/set.md), [`push_back`](../basic_json_document/push_back.md),
+  [`insert`](../basic_json_document/insert.md)), and for an array or object whose elements an edit added or removed.
+  The values an edit did not touch keep their offsets.
 
 ## Exception safety
 

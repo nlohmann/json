@@ -62,10 +62,9 @@ view.
 
 !!! info "Overload 2 never throws"
 
-    Unlike [`BasicJsonType::contains(const json_pointer&)`](../basic_json/contains.md), which can throw for certain
-    malformed pointers (for instance an empty array-index reference token), overload 2 never throws: a missing key,
-    an out-of-range or malformed array index, a `#!cpp "-"` index, or a reference token used on a primitive all
-    simply make it return `#!cpp false`.
+    Like [`BasicJsonType::contains(const json_pointer&)`](../basic_json/contains.md), overload 2 never throws: a
+    missing key, an out-of-range or malformed array index, a `#!cpp "-"` index, or a reference token used on a
+    primitive all simply make it return `#!cpp false`.
 
 ## Examples
 

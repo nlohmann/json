@@ -24,7 +24,7 @@ for (const auto [key, value] : v.items())
 }
 ```
 
-Note the `const auto` (by value), not `const auto&`: unlike `BasicJsonType::items()`, whose elements are references into an existing object, a view's `item` is produced on the fly for each step of the iteration, so there is nothing for a reference to bind to.
+Taking `item` by value (`const auto`) is recommended: unlike `BasicJsonType::items()`, whose elements are references into an existing object, a view's `item` is produced on the fly for each step of the iteration and is cheap to copy. A `const auto&` (as in the first snippet) also works, as it binds to that temporary, but a non-const `auto&` does not compile.
 
 ## Return value
 

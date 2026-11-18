@@ -12,6 +12,8 @@ The behavior of runtime assertions can be changed by defining macro [`JSON_ASSER
 
 ## Function with runtime assertions
 
+The examples below identify the failing assertion and the function containing it. The exact diagnostic format, source filename, and line number depend on the platform, library version, and whether the single-header or multi-header version is used.
+
 ### Unchecked access to a const value
 
 Function [`operator[]`](https://json.nlohmann.me/api/basic_json/operator%5B%5D/index.md) implements unchecked access for arrays and objects. Whereas a missing element is added in the case of non-const values, accessing a const value with a missing object key or an invalid array index is undefined behavior (think of a dereferenced null pointer) and yields a runtime assertion. This also applies to a [JSON pointer](https://json.nlohmann.me/features/json_pointer/index.md) that refers to a missing key or an invalid index.
@@ -36,11 +38,7 @@ int main()
 }
 ```
 
-Output:
-
-```
-Assertion failed: (it != m_data.m_value.object->end()), function operator[], file json.hpp, line 28795.
-```
+The assertion `it != m_data.m_value.object->end()` fails in `operator[]`.
 
 Example 2: Invalid array index in a JSON pointer
 
@@ -59,11 +57,7 @@ int main()
 }
 ```
 
-Output:
-
-```
-Assertion failed: (idx < m_data.m_value.array->size()), function operator[], file json.hpp, line 28758.
-```
+The assertion `idx < ptr->m_data.m_value.array->size()` fails in `get_unchecked`.
 
 ### Constructing from an uninitialized iterator range
 
@@ -85,11 +79,7 @@ int main()
 }
 ```
 
-Output:
-
-```
-Assertion failed: (m_object != nullptr), function operator++, file iter_impl.hpp, line 368.
-```
+The assertion `first.m_object != nullptr` fails in `basic_json`.
 
 ### Operations on uninitialized iterators
 
@@ -111,11 +101,7 @@ int main()
 }
 ```
 
-Output:
-
-```
-Assertion failed: (m_object != nullptr), function operator++, file iter_impl.hpp, line 368.
-```
+The assertion `m_object != nullptr` fails in `operator++`.
 
 ## Changes
 

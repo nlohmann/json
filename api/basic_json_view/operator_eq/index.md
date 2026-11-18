@@ -7,12 +7,17 @@ bool operator==(const basic_json_view& lhs, const basic_json_view& rhs);
 // (2)
 bool operator==(const basic_json_view& lhs, const BasicJsonType& rhs);
 bool operator==(const BasicJsonType& lhs, const basic_json_view& rhs);
+
+// (3)
+template<view_mode M>
+bool operator==(const basic_json_view& lhs, const basic_json_view<BasicJsonType, M>& rhs);
 ```
 
 1. Compares two views for equality: whether the values [`BasicJsonType::parse()`](https://json.nlohmann.me/api/basic_json/parse/index.md) would produce for `lhs` and `rhs` are equal, according to `BasicJsonType`'s [`operator==`](https://json.nlohmann.me/api/basic_json/operator_eq/index.md).
 1. Compares a view and a `BasicJsonType` value for equality, in either order: whether the value `parse()` would produce for the view and the other operand are equal, according to `BasicJsonType`'s [`operator==`](https://json.nlohmann.me/api/basic_json/operator_eq/index.md).
+1. Like overload 1, for two views of the same `BasicJsonType` but of different [view modes](https://json.nlohmann.me/api/view_mode/index.md), in either order: a view of a read-only document (such as a [`json_view`](https://json.nlohmann.me/api/json_view/index.md)) and a view of an editable document (such as a [`json_editable_view`](https://json.nlohmann.me/api/json_editable_view/index.md)). This overload only takes part in overload resolution if `M` is not the mode of `lhs`.
 
-Neither overload builds a `BasicJsonType` value for a view to do the comparison (see [Notes](#notes) below). Numbers compare by value across their types (`1 == 1.0`), and an object compares by its members, with duplicate keys resolved exactly as `parse()` resolves them — the last value, at the position of the first occurrence of the key. This is not what [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) and the other lookups return for a duplicate key: they find the *first* member (see [Duplicate keys](https://json.nlohmann.me/features/json_view/differences/#duplicate-keys)).
+No overload builds a `BasicJsonType` value for a view to do the comparison (see [Notes](#notes) below). Numbers compare by value across their types (`1 == 1.0`), and an object compares by its members, with duplicate keys resolved exactly as `parse()` resolves them — the last value, at the position of the first occurrence of the key. This is not what [`operator[]`](https://json.nlohmann.me/api/basic_json_view/operator%5B%5D/index.md) and the other lookups return for a duplicate key: they find the *first* member (see [Duplicate keys](https://json.nlohmann.me/features/json_view/differences/#duplicate-keys)).
 
 ## Parameters
 

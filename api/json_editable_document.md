@@ -8,8 +8,9 @@ using json_editable_document = basic_json_document<json, view_mode::editable>;
 
 This type is an **editable** [`basic_json_document`](basic_json_document/index.md) of the default
 [`json`](json.md) specialization: in addition to everything [`json_document`](json_document.md) offers,
-[`set`](basic_json_document/set.md) and [`push_back`](basic_json_document/push_back.md) change values after
-parsing, without ever rewriting the source text — see [Edits](basic_json_document/index.md#edits) and
+[`set`](basic_json_document/set.md), [`push_back`](basic_json_document/push_back.md),
+[`insert`](basic_json_document/insert.md), and [`erase`](basic_json_document/erase.md) change values after parsing,
+without ever rewriting the source text — see [Edits](basic_json_document/index.md#edits) and
 [Editing a document](../features/json_view/editing.md).
 
 ## Examples

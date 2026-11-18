@@ -44,11 +44,7 @@ int main()
 }
 ```
 
-Output:
-
-```
-Assertion failed: (m_value.object->find(key) != m_value.object->end()), function operator[], file json.hpp, line 2144.
-```
+The assertion `it != m_data.m_value.object->end()` fails in `operator[]`. The exact diagnostic format, source filename, and line number depend on the platform, library version, and whether the single-header or multi-header version is used.
 
 Example: user-defined behavior
 

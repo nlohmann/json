@@ -9,7 +9,8 @@ using json_editable_view = basic_json_view<json, view_mode::editable>;
 This type is a [`basic_json_view`](basic_json_view/index.md) of a value of a
 [`json_editable_document`](json_editable_document.md). It offers the same read-only interface as
 [`json_view`](json_view.md); what is different is what it can be a view *of* — a value that
-[`set`](basic_json_document/set.md) and [`push_back`](basic_json_document/push_back.md) can change, with every view
+[`set`](basic_json_document/set.md), [`push_back`](basic_json_document/push_back.md),
+[`insert`](basic_json_document/insert.md), and [`erase`](basic_json_document/erase.md) can change, with every view
 still referring to it seeing the change, see [Edits](basic_json_document/index.md#edits).
 
 ## Examples

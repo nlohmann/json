@@ -75,8 +75,12 @@ void swap(typename binary_t::container_type& other);
 
 ## Exception safety
 
-1. No-throw guarantee: this function never throws exceptions.
-2. No-throw guarantee: this function never throws exceptions.
+1. No-throw guarantee if the `noexcept` condition above holds: it holds unless moving the
+   [`json_base_class_t`](json_base_class_t.md) can throw (moving the type tag and the stored value never throws).
+   With the default base class, this function never throws exceptions.
+2. No-throw guarantee if the `noexcept` condition above holds: it holds unless moving the
+   [`json_base_class_t`](json_base_class_t.md) can throw (moving the type tag and the stored value never throws).
+   With the default base class, this function never throws exceptions.
 3. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
 4. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
 5. Strong guarantee: if an exception is thrown, there are no changes to any JSON value.
@@ -85,8 +89,8 @@ void swap(typename binary_t::container_type& other);
 
 ## Exceptions
 
-1. No-throw guarantee: this function never throws exceptions.
-2. No-throw guarantee: this function never throws exceptions.
+1. Throws only what moving the [`json_base_class_t`](json_base_class_t.md) throws; nothing with the default base class.
+2. Throws only what moving the [`json_base_class_t`](json_base_class_t.md) throws; nothing with the default base class.
 3. Throws [`type_error.310`](../../home/exceptions.md#jsonexceptiontype_error310) if called on JSON values other than
    arrays; example: `"cannot use swap(array_t&) with boolean"`
 4. Throws [`type_error.310`](../../home/exceptions.md#jsonexceptiontype_error310) if called on JSON values other than

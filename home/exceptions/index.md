@@ -1078,7 +1078,7 @@ Example message
 
 ### json.exception.out_of_range.405
 
-The JSON Patch operations 'remove' and 'move' cannot be applied to the root element of the JSON value. The exception is also thrown when the parent or a reference token of an empty JSON Pointer is requested, for instance by [`back`](https://json.nlohmann.me/api/json_pointer/back/index.md) or [`pop_back`](https://json.nlohmann.me/api/json_pointer/pop_back/index.md).
+The JSON Patch operations 'remove' and 'move' cannot be applied to the root element of the JSON value. The exception is also thrown when the parent or a reference token of an empty JSON Pointer is requested, for instance by [`front`](https://json.nlohmann.me/api/json_pointer/front/index.md), [`back`](https://json.nlohmann.me/api/json_pointer/back/index.md), [`pop_front`](https://json.nlohmann.me/api/json_pointer/pop_front/index.md), or [`pop_back`](https://json.nlohmann.me/api/json_pointer/pop_back/index.md), and when [`basic_json_document::erase`](https://json.nlohmann.me/api/basic_json_document/erase/index.md) is called with an empty JSON Pointer.
 
 Example message
 
@@ -1345,7 +1345,7 @@ Executing `{"op":"test", "path":"/baz", "value":"bar"}` on `{"baz": "qux"}`:
 
 ### json.exception.other_error.502
 
-[`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) and [`to_bjdata`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md) were called with `use_type = true` but `use_size = false`, and the value contains a non-empty array or object (or, with BJData Draft 3, any binary value). UBJSON requires a size marker (`#`) after a type marker (`$`); scalars and empty arrays or objects do not throw.
+[`to_ubjson`](https://json.nlohmann.me/api/basic_json/to_ubjson/index.md) and [`to_bjdata`](https://json.nlohmann.me/api/basic_json/to_bjdata/index.md) were called with `use_type = true` but `use_size = false`, and the value contains a non-empty array, object, or binary value (with BJData Draft 3, any binary value, including an empty one). UBJSON requires a size marker (`#`) after a type marker (`$`); scalars and empty arrays or objects do not throw.
 
 Example message
 

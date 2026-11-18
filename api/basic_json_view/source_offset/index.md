@@ -10,6 +10,7 @@ Returns the byte offset of this value in the document's [`source()`](https://jso
 
 - For a string with no escapes, a number, `true`/`false`/`null`, an array, or an object: the byte offset of the first byte of the value's token (for a string: the first byte after the opening quote) in [`source()`](https://json.nlohmann.me/api/basic_json_document/source/index.md).
 - `static_cast<std::size_t>(-1)` for a [discarded](https://json.nlohmann.me/api/basic_json_view/is_discarded/index.md) view, and for a string that contains escapes — such a string was decoded once into the document's own buffer, so there is no single byte range in `source()` left to point at.
+- `static_cast<std::size_t>(-1)` in an [editable document](https://json.nlohmann.me/api/json_editable_document/index.md) for a value written by an edit ([`set`](https://json.nlohmann.me/api/basic_json_document/set/index.md), [`push_back`](https://json.nlohmann.me/api/basic_json_document/push_back/index.md), [`insert`](https://json.nlohmann.me/api/basic_json_document/insert/index.md)), and for an array or object whose elements an edit added or removed. The values an edit did not touch keep their offsets.
 
 ## Exception safety
 
