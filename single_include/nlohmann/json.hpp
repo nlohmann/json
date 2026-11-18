@@ -22774,6 +22774,10 @@ class binary_reader
         auto number_lexer = detail::lexer<BasicJsonType, ia_type>(detail::input_adapter(number_vector), false);
         const auto result_number = number_lexer.scan();
         const auto number_string = number_lexer.get_token_string();
+        // the number as the lexer read it, for SAX number_float(): unlike
+        // get_token_string(), which is meant for error messages and shortens
+        // long tokens, it is complete; the next scan() replaces it
+        const string_t number_text = number_lexer.get_string();
         const auto result_remainder = number_lexer.scan();
 
         using token_type = typename detail::lexer_base<BasicJsonType>::token_type;
@@ -22800,10 +22804,7 @@ class binary_reader
                                number_string,
                                out_of_range::create(exception_id::number_overflow, concat("number overflow parsing '", number_string, '\''), nullptr));
                 }
-                // number_string is a std::string, while the SAX interface takes a
-                // string_t; convert explicitly, as the two are only implicitly
-                // convertible for some string types
-                return sax->number_float(parsed_float, string_t(number_string.data(), number_string.size()));
+                return sax->number_float(parsed_float, number_text);
             }
             case token_type::uninitialized:
             case token_type::literal_true:
