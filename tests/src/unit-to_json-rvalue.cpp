@@ -79,11 +79,11 @@ struct span_like
     T* first;
     T* last;
 
-    T* begin() const
+    T* begin() const noexcept
     {
         return first;
     }
-    T* end() const
+    T* end() const noexcept
     {
         return last;
     }
@@ -103,11 +103,11 @@ struct map_span_like
     value_type* first;
     value_type* last;
 
-    value_type* begin() const
+    value_type* begin() const noexcept
     {
         return first;
     }
-    value_type* end() const
+    value_type* end() const noexcept
     {
         return last;
     }
@@ -118,11 +118,11 @@ struct mutable_only_range
 {
     std::vector<std::string> values;
 
-    std::vector<std::string>::iterator begin()
+    std::vector<std::string>::iterator begin() noexcept
     {
         return values.begin();
     }
-    std::vector<std::string>::iterator end()
+    std::vector<std::string>::iterator end() noexcept
     {
         return values.end();
     }
