@@ -64,6 +64,19 @@ inline std::uint64_t swar_string_special(std::uint64_t v) noexcept
     return ((q - ones) | (b - ones) | (v - 0x2020202020202020ull) | v) & high;
 }
 
+// SWAR helper: return a word whose high bit is set in every byte of @a v that
+// is a string delimiter ('"', '\\', or control char < 0x20); zero if the 8 bytes
+// can be accepted as part of a string without processing. Non-ASCII bytes
+// (>= 0x80) are let through.
+inline std::uint64_t swar_string_delimiter(std::uint64_t v) noexcept
+{
+    constexpr std::uint64_t ones = 0x0101010101010101ull;
+    constexpr std::uint64_t high = 0x8080808080808080ull;
+    const std::uint64_t q = v ^ 0x2222222222222222ull; // '"'  (0x22)
+    const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull; // '\\' (0x5C)
+    return ((q - ones) | (b - ones) | (v - 0x2020202020202020ull)) & ~v & high;
+}
+
 // return the index of the first is_string_special() byte in [data, data+n), or
 // n if every byte is ordinary; scans 8 bytes at a time
 JSON_HEDLEY_ALWAYS_INLINE std::size_t find_string_special(const unsigned char* data, std::size_t n) noexcept
@@ -462,17 +475,10 @@ JSON_HEDLEY_ALWAYS_INLINE std::size_t scalar_string_bulk_run(const unsigned char
 // bytes are *not* stops here - the whole run is handed to simdutf), or n.
 inline std::size_t find_string_delimiter(const unsigned char* data, std::size_t n) noexcept
 {
-    constexpr std::uint64_t ones = 0x0101010101010101ull;
-    constexpr std::uint64_t high = 0x8080808080808080ull;
     std::size_t i = 0;
     for (; i + 8 <= n; i += 8)
     {
-        const std::uint64_t v = read_eight_bytes(data + i);
-        const std::uint64_t q = v ^ 0x2222222222222222ull;
-        const std::uint64_t b = v ^ 0x5C5C5C5C5C5C5C5Cull;
-        const std::uint64_t hit = ((q - ones) & ~q & high)
-                                  | ((b - ones) & ~b & high)
-                                  | ((v - 0x2020202020202020ull) & ~v & high);
+        const std::uint64_t hit = swar_string_delimiter(read_eight_bytes(data + i));
         if (hit != 0)
         {
             // the lowest flagged byte is the first delimiter (see find_string_special())
