@@ -6887,13 +6887,30 @@ void from_json_pair_array_to_map(const BasicJsonType& j, MapType& m)
     }
 }
 
+// an enum-keyed map is read from an object or an array of [key, value] pairs;
+// return true if j is an object, false if an array (read by caller), throw otherwise
+template<typename JsonType>
+inline bool check_enum_keyed_object_or_array(const JsonType& j)
+{
+    if (!j.is_object())
+    {
+        // an array of pairs is read by the caller; name both accepted types
+        if (JSON_HEDLEY_UNLIKELY(!j.is_array()))
+        {
+            throw_type_must_be("array or object", j);
+        }
+        return false;
+    }
+    return true;
+}
+
 // read a map with enum keys from an object, using the enum's own from_json for
 // the keys (e.g., from NLOHMANN_JSON_SERIALIZE_ENUM); this is the form written
 // with JSON_USE_OBJECTS_FOR_ENUM_KEYED_MAPS
 template<typename BasicJsonType, typename Map, enable_if_not_view_t<BasicJsonType> = 0>
 inline bool from_json_enum_keyed_object(const BasicJsonType& j, Map& m, std::true_type /*key is enum*/)
 {
-    if (!j.is_object())
+    if (!check_enum_keyed_object_or_array(j))
     {
         return false;
     }
@@ -6909,7 +6926,7 @@ template<typename View, typename Map, enable_if_t<is_json_view<View>::value, int
 inline bool from_json_enum_keyed_object(const View& v, Map& m, std::true_type /*key is enum*/)
 {
     using json_t = typename View::basic_json_type;
-    if (!v.is_object())
+    if (!check_enum_keyed_object_or_array(v))
     {
         return false;
     }

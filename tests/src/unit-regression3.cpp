@@ -874,4 +874,16 @@ TEST_CASE("issue #5317 - nested indefinite-length CBOR string chunks are rejecte
     CHECK_THROWS_WITH_AS(_ = json::from_cbor(std::vector<std::uint8_t>({0xA1, 0x7F, 0x7F, 0xFF, 0xFF, 0x01})), "[json.exception.parse_error.113] parse error at byte 3: syntax error while parsing CBOR string: indefinite-length string is not allowed inside indefinite-length string; last byte: 0x7F", json::parse_error&);
 }
 
+#ifndef SKIP_TESTS_FOR_ENUM_SERIALIZATION
+TEST_CASE("issue #6111 - Reading a map with enum keys from a wrong type says 'type must be array' although an object is accepted too")
+{
+    enum class color_t { red, green, blue };
+    std::map<color_t, int> m;
+    CHECK_THROWS_WITH_AS(nlohmann::json("invalid").get_to(m),
+                         "[json.exception.type_error.302] type must be array or object, but is string", nlohmann::json::type_error&);
+    CHECK_THROWS_WITH_AS(nlohmann::json(123).get_to(m),
+                         "[json.exception.type_error.302] type must be array or object, but is number", nlohmann::json::type_error&);
+}
+#endif
+
 DOCTEST_CLANG_SUPPRESS_WARNING_POP
