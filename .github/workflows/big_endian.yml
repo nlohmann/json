@@ -34,7 +34,7 @@ jobs:
       - name: Check that the target is big-endian
         run: echo | s390x-linux-gnu-g++ -dM -E - | grep -q '__BYTE_ORDER__ __ORDER_BIG_ENDIAN__'
       - name: Run CMake
-        run: cmake -S . -B build -DJSON_CI=On
+        run: cmake -S . -B build -G Ninja -DJSON_CI=On
       - name: Build and test
         env:
           TEST_SCOPE: ${{ github.event_name == 'pull_request' && 'focused' || 'full' }}
