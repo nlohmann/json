@@ -25,7 +25,7 @@ jobs:
       - name: Install the s390x cross compiler and qemu-user
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends g++ g++-s390x-linux-gnu qemu-user git ca-certificates
+          apt-get install -y --no-install-recommends g++ g++-s390x-linux-gnu qemu-user git ca-certificates unzip
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
