@@ -101,6 +101,37 @@ add_custom_target(ci_test_clang
 )
 
 ###############################################################################
+# Big-endian tests (cross-compiled for s390x, executed under qemu-user).
+###############################################################################
+
+foreach(S390X_TEST_SCOPE IN ITEMS focused full)
+    set(S390X_TEST_FILTER)
+    if(S390X_TEST_SCOPE STREQUAL "focused")
+        set(S390X_TEST_FILTER -R "cbor|msgpack|ubjson|bjdata|bson|bon8|binary|json_view|alt-string|serialization|class_parser")
+    endif()
+
+    add_custom_target(ci_test_big_endian_${S390X_TEST_SCOPE}
+        COMMAND ${CMAKE_COMMAND}
+            -DCMAKE_BUILD_TYPE=Debug -GNinja
+            -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=s390x
+            -DCMAKE_CXX_COMPILER=s390x-linux-gnu-g++
+            "-DCMAKE_CROSSCOMPILING_EMULATOR=qemu-s390x;-L;/usr/s390x-linux-gnu"
+            -DJSON_BuildTests=ON -DJSON_FastTests=ON
+            -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_big_endian
+        # Build every test binary, even when executing only the focused subset.
+        # Limit parallelism for memory-intensive compilation and emulated tests.
+        COMMAND ${CMAKE_COMMAND} -E echo "s390x build timing:"
+        COMMAND ${CMAKE_COMMAND} -E time ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_big_endian --parallel 2
+        COMMAND ${CMAKE_COMMAND} -E echo "s390x test timing:"
+        COMMAND ${CMAKE_COMMAND} -E time ${CMAKE_CTEST_COMMAND} --test-dir ${PROJECT_BINARY_DIR}/build_big_endian
+            --parallel 2 --output-on-failure --no-tests=error ${S390X_TEST_FILTER}
+        COMMENT "Cross-compile all tests for s390x and run the ${S390X_TEST_SCOPE} suite under qemu-user"
+        VERBATIM
+        USES_TERMINAL
+    )
+endforeach()
+
+###############################################################################
 # Different C++ Standards.
 ###############################################################################
 
