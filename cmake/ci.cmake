@@ -107,7 +107,10 @@ add_custom_target(ci_test_clang
 foreach(S390X_TEST_SCOPE IN ITEMS focused full)
     set(S390X_TEST_FILTER)
     if(S390X_TEST_SCOPE STREQUAL "focused")
-        set(S390X_TEST_FILTER -R "cbor|msgpack|ubjson|bjdata|bson|bon8|binary|json_view|alt-string|serialization|class_parser")
+        # Keep this filter in sync with new or renamed endianness-sensitive tests.
+        # "serialization" intentionally includes "deserialization"; the develop
+        # and weekly full runs cover tests outside this focused runtime subset.
+        set(S390X_TEST_FILTER -R "cbor|msgpack|ubjson|bjdata|bson|bon8|binary|json_view|alt-string|serialization|class_parser|fmt_formatter")
     endif()
 
     add_custom_target(ci_test_big_endian_${S390X_TEST_SCOPE}

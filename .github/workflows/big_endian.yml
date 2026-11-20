@@ -13,11 +13,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref || github.run_id }}
   cancel-in-progress: true
 
 jobs:
   ci_test_big_endian:
+    # Allow manual fork validation, but avoid weekly emulation runs in forks.
+    if: github.event_name != 'schedule' || github.repository == 'nlohmann/json'
     runs-on: ubuntu-26.04
     container: debian:trixie
     timeout-minutes: 90
@@ -25,6 +27,7 @@ jobs:
       - name: Install the s390x cross compiler and qemu-user
         run: |
           apt-get update
+          # get-cmake uses unzip to extract Ninja's zip; debian:trixie does not include it.
           apt-get install -y --no-install-recommends g++ g++-s390x-linux-gnu qemu-user git ca-certificates unzip
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
