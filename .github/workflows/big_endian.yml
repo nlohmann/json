@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - develop
+      - master
+      - release/*
   pull_request:
   schedule:
     - cron: '17 4 * * 1'
