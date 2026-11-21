@@ -1,0 +1,46 @@
+name: Big-endian
+
+on:
+  push:
+    branches:
+      - develop
+      - master
+      - release/*
+  pull_request:
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  ci_test_big_endian:
+    # Allow manual fork validation, but avoid weekly emulation runs in forks.
+    if: github.event_name != 'schedule' || github.repository == 'nlohmann/json'
+    runs-on: ubuntu-26.04
+    container: debian:trixie
+    timeout-minutes: 90
+    steps:
+      - name: Install the s390x cross compiler and qemu-user
+        run: |
+          apt-get update
+          # get-cmake uses unzip to extract Ninja's zip; debian:trixie does not include it.
+          apt-get install -y --no-install-recommends g++ g++-s390x-linux-gnu qemu-user git ca-certificates unzip
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Get latest CMake and ninja
+        uses: lukka/get-cmake@16e8153a8b4918849d92aad131befe67a3705daa # v4.5.0
+      - name: Check that the target is big-endian
+        run: echo | s390x-linux-gnu-g++ -dM -E - | grep -q '__BYTE_ORDER__ __ORDER_BIG_ENDIAN__'
+      - name: Run CMake
+        run: cmake -S . -B build -G Ninja -DJSON_CI=On
+      - name: Build and test
+        env:
+          TEST_SCOPE: ${{ github.event_name == 'pull_request' && 'focused' || 'full' }}
+        run: cmake --build build --target "ci_test_big_endian_${TEST_SCOPE}"
