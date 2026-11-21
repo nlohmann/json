@@ -100,6 +100,36 @@ TEST_CASE("JSON Merge Patch")
             CHECK(document == expected);
         }
 
+        SECTION("RFC 7396 section 2: empty object patch")
+        {
+            json document = R"({"keep":1,"nested":{"x":2}})"_json;
+            json const patch = R"({})"_json;
+            json expected = R"({"keep":1,"nested":{"x":2}})"_json;
+
+            document.merge_patch(patch);
+            CHECK(document == expected);
+        }
+
+        SECTION("RFC 7396 section 2: object patch over non-object target")
+        {
+            json document = R"(["discard"])"_json;
+            json const patch = R"({"a":1})"_json;
+            json expected = R"({"a":1})"_json;
+
+            document.merge_patch(patch);
+            CHECK(document == expected);
+        }
+
+        SECTION("RFC 7396 section 2: Unicode member name")
+        {
+            json document = R"({"label":"old","雪":{"city":"A"}})"_json;
+            json const patch = R"({"label":"new","雪":{"city":"東京"}})"_json;
+            json expected = R"({"label":"new","雪":{"city":"東京"}})"_json;
+
+            document.merge_patch(patch);
+            CHECK(document == expected);
+        }
+
         SECTION("Section 3")
         {
             json document = R"({
