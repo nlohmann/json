@@ -41,6 +41,7 @@ using nlohmann::json;
 #include <fstream>
 #include <iterator>
 #include <list>
+#include <random>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -2875,13 +2876,16 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
         SECTION("std::ifstream: positions are consistent, not npos")
         {
             const std::string s = R"({"a":1,"b":2})";
+            // the C++11 and C++20 builds of this test run in parallel in the same directory
+            std::random_device rd;
+            const std::string temp_name = "unit-class_parser_diagnostic_positions-" + std::to_string(rd()) + ".tmp";
             {
-                std::ofstream file("unit-class_parser_diagnostic_positions.tmp");
+                std::ofstream file(temp_name);
                 file << s;
             }
 
             {
-                std::ifstream f("unit-class_parser_diagnostic_positions.tmp");
+                std::ifstream f(temp_name);
                 const json j = json::parse(f);
 
                 CHECK(j.start_pos() == 0);
@@ -2889,7 +2893,7 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
                 CHECK(j["a"].start_pos() == 5);
             }
 
-            static_cast<void>(std::remove("unit-class_parser_diagnostic_positions.tmp"));
+            static_cast<void>(std::remove(temp_name.c_str()));
         }
 
         SECTION("iterator-pair input: positions are consistent, not npos")
