@@ -238,8 +238,8 @@ TEST_CASE("UBJSON the valueless elements of a whole input are bounded")
             std::vector<std::uint8_t> input = {'['};
             utils::append_valueless_array(input, 'Z', first_count);
             input.insert(input.end(), {'[', '$', 'U', '#', 'l',
-                                       static_cast<std::uint8_t>(payload >> 24), static_cast<std::uint8_t>(payload >> 16),
-                                       static_cast<std::uint8_t>(payload >> 8), static_cast<std::uint8_t>(payload)
+                                       static_cast<std::uint8_t>((payload >> 24) & 0xFFu), static_cast<std::uint8_t>((payload >> 16) & 0xFFu),
+                                       static_cast<std::uint8_t>((payload >> 8) & 0xFFu), static_cast<std::uint8_t>(payload & 0xFFu)
                                       });
             input.insert(input.end(), payload, 0x01);
             utils::append_valueless_array(input, 'Z', count);
