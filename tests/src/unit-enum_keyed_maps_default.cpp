@@ -137,7 +137,16 @@ TEST_CASE("maps with enum keys")
     {
         task_map tm;
         CHECK_THROWS_WITH_AS(json("stopped").get_to(tm),
-                             "[json.exception.type_error.302] type must be array, but is string", json::type_error&);
+                             "[json.exception.type_error.302] type must be array or object, but is string", json::type_error&);
+        CHECK_THROWS_WITH_AS(json(42).get_to(tm),
+                             "[json.exception.type_error.302] type must be array or object, but is number", json::type_error&);
+        CHECK_THROWS_WITH_AS(json(true).get_to(tm),
+                             "[json.exception.type_error.302] type must be array or object, but is boolean", json::type_error&);
+        CHECK_THROWS_WITH_AS(json(nullptr).get_to(tm),
+                             "[json.exception.type_error.302] type must be array or object, but is null", json::type_error&);
+        task_umap tum;
+        CHECK_THROWS_WITH_AS(json(42).get_to(tum),
+                             "[json.exception.type_error.302] type must be array or object, but is number", json::type_error&);
     }
 }
 
