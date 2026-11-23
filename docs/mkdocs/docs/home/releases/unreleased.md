@@ -7,7 +7,9 @@ These changes are part of the `develop` branch, but not of a release yet.
   2.3 ms). Two consequences: the source container is left in a valid but unspecified (moved-from) state, and if an
   exception is thrown during the conversion, the source may be partially moved-from, so the strong exception guarantee
   no longer holds for the source of an rvalue conversion (the JSON value itself is unaffected). Lvalues and `const`
-  objects are still copied. See [`basic_json`](../../api/basic_json/basic_json.md).
+  objects are still copied, and so are non-owning ranges such as spans (a range whose elements stay mutable through a
+  `const` range): converting an rvalue span leaves the referenced elements unchanged.
+  See [`basic_json`](../../api/basic_json/basic_json.md).
 - In C++20 (library support for `char8_t`, `__cpp_lib_char8_t`), a `#!cpp std::u8string` is a JSON **string**:
   `json j = std::u8string(u8"abc");` stores `"abc"`, and `#!cpp j.get<std::u8string>()` reads it back. Version 3.12.0
   stored a `#!cpp std::u8string` as an array of code units (`[97,98,99]`); on the 3.13.0 development branch it was

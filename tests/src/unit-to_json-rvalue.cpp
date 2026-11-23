@@ -77,6 +77,67 @@ void to_json(json& j, tracked&& t)
     t.moved_from = true;
 }
 
+// non-owning range over contiguous storage (like gsl::span or a pre-C++20 span
+// backport): its constness is shallow, so a const span gives mutable elements
+template<typename T>
+struct span_like
+{
+    using value_type = T;
+    using iterator = T*;
+    using const_iterator = T*;
+
+    T* first;
+    T* last;
+
+    T* begin() const noexcept
+    {
+        return first;
+    }
+    T* end() const noexcept
+    {
+        return last;
+    }
+};
+
+// non-owning view of key/value pairs with key_type and mapped_type, so it is
+// converted like an object
+template<typename K, typename V>
+struct map_span_like
+{
+    using key_type = K;
+    using mapped_type = V;
+    using value_type = std::pair<const K, V>;
+    using iterator = value_type*;
+    using const_iterator = value_type*;
+
+    value_type* first;
+    value_type* last;
+
+    value_type* begin() const noexcept
+    {
+        return first;
+    }
+    value_type* end() const noexcept
+    {
+        return last;
+    }
+};
+
+// owning container that can only be iterated when it is not const
+struct mutable_only_range
+{
+    std::vector<std::string> values;
+
+    std::vector<std::string>::iterator begin() noexcept
+    {
+        return values.begin();
+    }
+    std::vector<std::string>::iterator end() noexcept
+    {
+        return values.end();
+    }
+};
+
 // user type with its own rvalue-aware serializer
 struct udt_container
 {
@@ -154,6 +215,34 @@ TEST_CASE("to_json from rvalue containers")
         CHECK(tracked_moves == 2);
     }
 
+    SECTION("tracked elements: standard containers move")
+    {
+        tracked_copies = 0;
+        tracked_moves = 0;
+
+        std::list<tracked> l;
+        l.emplace_back("l");
+        CHECK(json(std::move(l)) == json::array({"l"}));
+
+        std::deque<tracked> d;
+        d.emplace_back("d");
+        CHECK(json(std::move(d)) == json::array({"d"}));
+
+        std::forward_list<tracked> fl;
+        fl.emplace_front("f");
+        CHECK(json(std::move(fl)) == json::array({"f"}));
+
+        std::array<tracked, 1> a{{tracked("a")}};
+        CHECK(json(std::move(a)) == json::array({"a"}));
+
+        std::unordered_map<std::string, tracked> um;
+        um.emplace("k", tracked("u"));
+        CHECK(json(std::move(um)) == json({{"k", "u"}}));
+
+        CHECK(tracked_moves == 5);
+        CHECK(tracked_copies == 0);
+    }
+
     SECTION("const rvalue is copied")
     {
         tracked_copies = 0;
@@ -229,6 +318,26 @@ TEST_CASE("to_json from rvalue containers")
 
         json::object_t obj{{"a", 1}};
         CHECK(json(std::move(obj)) == json({{"a", 1}}));
+    }
+
+    SECTION("non-owning ranges are copied")
+    {
+        std::vector<std::string> v{long_a, long_b};
+        const json j = span_like<std::string> {v.data(), v.data() + v.size()};
+        CHECK(j == json::array({long_a, long_b}));
+        CHECK(v[0] == long_a);
+        CHECK(v[1] == long_b);
+
+        std::vector<std::pair<const std::string, std::string>> m{{"a", long_a}};
+        const json jm = map_span_like<std::string, std::string> {m.data(), m.data() + m.size()};
+        CHECK(jm == json({{"a", long_a}}));
+        CHECK(m[0].second == long_a);
+
+        // without a const begin(), it cannot be told whether the range owns
+        // its elements, so they are copied
+        mutable_only_range r{{long_a}};
+        CHECK(json(std::move(r)) == json::array({long_a}));
+        CHECK(r.values[0] == long_a); // NOLINT(bugprone-use-after-move,hicpp-invalid-access-moved)
     }
 
     SECTION("user type with its own to_json overloads")
