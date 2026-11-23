@@ -151,6 +151,10 @@ Delete the deprecated functions instead of only deprecating them by defining the
 [`JSON_DELETE_DEPRECATED_FUNCTIONS`](../api/macros/json_delete_deprecated_functions.md). This option is `OFF` by
 default.
 
+### `JSON_ClangTidyPlugin`
+
+Enable building the [clang-tidy plugin](clang-tidy.md). This option is `OFF` by default.
+
 ### `JSON_Diagnostics`
 
 Enable [extended diagnostic messages](../home/exceptions.md#extended-diagnostic-messages) by defining macro [`JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md). This option is `OFF` by default.
