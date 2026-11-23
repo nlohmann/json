@@ -295,6 +295,29 @@ TEST_CASE("JSON Merge Patch")
             }
         }
     }
+
+    SECTION("derived from RFC 7396 section 2")
+    {
+        SECTION("empty object patch")
+        {
+            json document = R"({"keep":1,"nested":{"x":2}})"_json;
+            json const patch = R"({})"_json;
+            json expected = R"({"keep":1,"nested":{"x":2}})"_json;
+
+            document.merge_patch(patch);
+            CHECK(document == expected);
+        }
+
+        SECTION("object patch over null target")
+        {
+            json document = nullptr;
+            json const patch = R"({"a":1})"_json;
+            json expected = R"({"a":1})"_json;
+
+            document.merge_patch(patch);
+            CHECK(document == expected);
+        }
+    }
 }
 
 TEST_CASE("JSON Merge Patch on deeply nested values")
