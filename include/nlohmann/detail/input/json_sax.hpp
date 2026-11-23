@@ -627,8 +627,9 @@ an entry for each open array or object. The parser of the text formats, for
 which the size of a container is not known up front, collects the elements of
 an array and the members of an `ordered_json` object on a stack and moves them
 into a container of the exact size (with @a Collect, as basic_json's own parse
-functions use it); the binary readers use the plain
-@ref json_sax_dom_binary_parser instead.
+functions use it); the binary readers use it without collecting for an object
+type that looks its keys up in an index (@ref selected_dom_parser_t), and the
+plain @ref json_sax_dom_binary_parser for the rest.
 
 After successful parsing, the value that is passed by reference to the
 constructor contains the parsed value. Without @a Collect, every value is
@@ -654,6 +655,12 @@ class json_sax_dom_parser : public json_sax_dom_error_state
     using string_t = typename BasicJsonType::string_t;
     using binary_t = typename BasicJsonType::binary_t;
     using lexer_t = LexerType;
+
+    /// whether objects keep their members in a vector and look keys up in a hash table
+    static constexpr bool uses_key_index() noexcept
+    {
+        return indexed_keys;
+    }
 
     /*!
     @param[in,out] r  reference to a JSON value that is manipulated while
@@ -1564,6 +1571,17 @@ class json_sax_dom_parser : public json_sax_dom_error_state
     lexer_t* m_lexer_ref = nullptr;
 };
 
+template<typename BasicJsonType, typename InputAdapterType>
+class json_sax_dom_binary_parser;
+
+/// the DOM parser selected for the binary readers: objects in a vector
+/// (ordered_map) need the key index of json_sax_dom_parser, the others take
+/// the plain parser
+template<typename BasicJsonType, typename InputAdapterType>
+using selected_dom_parser_t = typename std::conditional<json_sax_dom_parser<BasicJsonType, InputAdapterType>::uses_key_index(),
+      json_sax_dom_parser<BasicJsonType, InputAdapterType, false>,
+      json_sax_dom_binary_parser<BasicJsonType, InputAdapterType>>::type;
+
 /*!
 @brief SAX implementation to create a JSON value from the events of a binary reader
 
@@ -1574,9 +1592,13 @@ number of elements up front. Binary formats announce the size of their
 containers (CBOR, MessagePack, BSON and BON8 do, and so do the optimized
 containers of UBJSON and BJData), so they store each value directly in its
 container, and the bookkeeping of the collecting parser would be pure
-overhead for them. This is the plain parser: the structure or hierarchy of the
-JSON value is managed by the stack `ref_stack` which contains a pointer to the
-respective array or object for each recursion depth.
+overhead for them. This is the plain parser the binary readers use for the
+object types that find a key in the container itself; an object type that
+keeps its members in a vector (ordered_map) is read by json_sax_dom_parser
+instead, whose key index saves scanning the members inserted so far for each
+key (@ref selected_dom_parser_t makes the choice). The structure or hierarchy of
+the JSON value is managed by the stack `ref_stack` which contains a pointer to
+the respective array or object for each recursion depth.
 
 After successful parsing, the value that is passed by reference to the
 constructor contains the parsed value.
