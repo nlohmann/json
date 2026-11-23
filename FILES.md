@@ -28,6 +28,7 @@ The [GitHub Actions](https://docs.github.com/en/actions) workflows that build, t
 - `publish_documentation.yml` — build and publish the documentation on pushes to the `develop` branch that touch the documentation sources (or the files it embeds).
 - `check_docs_links.yml` — check the links of the documentation weekly, as external links can break without any change in this repository.
 - `cancel_closed_pr_runs.yml` — cancel unfinished workflow runs of a pull request once it is closed or merged.
+- `json_view_benchmarks.yml` — compare the performance of `json_view` with other JSON libraries on GitHub-hosted x86-64 and AArch64 Linux runners, on demand or when a pull request gets the label "benchmark".
 
 Further documentation:
 

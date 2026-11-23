@@ -15,6 +15,7 @@ using nlohmann::json;
 #include <fstream>
 #include <random>
 #include <string>
+#include <vector>
 #include "make_test_data_available.hpp"
 #include "test_utils.hpp"
 
@@ -265,39 +266,50 @@ TEST_CASE("Unicode")
 
                 CHECK_THROWS_WITH_AS(_ = json::parse("\"\\uD800\\uE000\""), "[json.exception.parse_error.101] parse error at line 1, column 13: syntax error while parsing value - invalid string: surrogate U+D800..U+DBFF must be followed by U+DC00..U+DFFF; last read: '\"\\uD800\\uE000'", json::parse_error&);
             }
-        }
 
-#if 0 // NOLINT(readability-avoid-unconditional-preprocessor-if)
-        SECTION("incorrect sequences")
-        {
             SECTION("high surrogate without low surrogate")
             {
                 // D800..DBFF are high surrogates and must be followed by low
                 // surrogates DC00..DFFF; here, nothing follows
+                json _;
                 for (std::size_t cp = 0xD800u; cp <= 0xDBFFu; ++cp)
                 {
-                    std::string json_text = "\"" + codepoint_to_unicode(cp) + "\"";
+                    const std::string json_text = "\"" + codepoint_to_unicode(cp) + "\"";
                     CAPTURE(json_text)
-                    CHECK_THROWS_AS(json::parse(json_text), json::parse_error&);
+                    CHECK_THROWS_AS(_ = json::parse(json_text), json::parse_error&);
                 }
             }
 
             SECTION("high surrogate with wrong low surrogate")
             {
                 // D800..DBFF are high surrogates and must be followed by low
-                // surrogates DC00..DFFF; here a different sequence follows
+                // surrogates DC00..DFFF; here a different code unit follows.
+                // All pairs would be 1024 * 64512 parses, so every high
+                // surrogate is paired with the boundaries of the ranges around
+                // DC00..DFFF, and one high surrogate with every code unit
+                // (with accept(), which does not throw and is much faster)
+                const auto escaped_pair = [&](std::size_t cp1, std::size_t cp2)
+                {
+                    return "\"" + codepoint_to_unicode(cp1) + codepoint_to_unicode(cp2) + "\"";
+                };
+                const std::vector<std::size_t> boundaries = {0x0000u, 0x0041u, 0xD7FFu, 0xD800u, 0xDBFFu, 0xE000u, 0xFFFFu};
+                json _;
                 for (std::size_t cp1 = 0xD800u; cp1 <= 0xDBFFu; ++cp1)
                 {
-                    for (std::size_t cp2 = 0x0000u; cp2 <= 0xFFFFu; ++cp2)
+                    for (const std::size_t cp2 : boundaries)
                     {
-                        if (0xDC00u <= cp2 && cp2 <= 0xDFFFu)
-                        {
-                            continue;
-                        }
-
-                        std::string json_text = "\"" + codepoint_to_unicode(cp1) + codepoint_to_unicode(cp2) + "\"";
+                        const std::string json_text = escaped_pair(cp1, cp2);
                         CAPTURE(json_text)
-                        CHECK_THROWS_AS(json::parse(json_text), json::parse_error&);
+                        CHECK_THROWS_AS(_ = json::parse(json_text), json::parse_error&);
+                    }
+                }
+                for (std::size_t cp2 = 0x0000u; cp2 <= 0xFFFFu; ++cp2)
+                {
+                    if (cp2 < 0xDC00u || cp2 > 0xDFFFu)
+                    {
+                        const std::string json_text = escaped_pair(0xDA00u, cp2);
+                        CAPTURE(json_text)
+                        CHECK_FALSE(json::accept(json_text));
                     }
                 }
             }
@@ -306,16 +318,15 @@ TEST_CASE("Unicode")
             {
                 // low surrogates DC00..DFFF must follow high surrogates; here,
                 // they occur alone
+                json _;
                 for (std::size_t cp = 0xDC00u; cp <= 0xDFFFu; ++cp)
                 {
-                    std::string json_text = "\"" + codepoint_to_unicode(cp) + "\"";
+                    const std::string json_text = "\"" + codepoint_to_unicode(cp) + "\"";
                     CAPTURE(json_text)
-                    CHECK_THROWS_AS(json::parse(json_text), json::parse_error&);
+                    CHECK_THROWS_AS(_ = json::parse(json_text), json::parse_error&);
                 }
             }
-
         }
-#endif
     }
 
     SECTION("read all unicode characters")

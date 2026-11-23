@@ -915,7 +915,7 @@ class binary_writer
         JSON_THROW(out_of_range::create(exception_id::subtype_out_of_range, concat("subtype ", std::to_string(subtype), " is too large for ", what, " (max 255)"), &j));
     }
 
-    /// @throw other_error.407 always
+    /// @throw other_error.502 always
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_size_marker_required(const BasicJsonType& j)
     {

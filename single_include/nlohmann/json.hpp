@@ -7810,30 +7810,47 @@ namespace detail
  * leave j with the type of the new value, but the pointer to the destroyed old one.
  */
 
-// a move iterator over the elements of an rvalue container, unless they are
-// const (e.g., std::set): libstdc++ before GCC 5 defines the reference of a
-// std::move_iterator as value_type&&, which cannot bind to a const element
-template<typename Iterator>
-std::move_iterator<Iterator> make_move_iterator_if_mutable_impl(const Iterator& it, std::true_type /*mutable*/)
-{
-    return std::make_move_iterator(it);
-}
+// reference type of the elements of a const T
+template<typename T>
+using const_range_reference_t = decltype(*std::declval<iterator_t<const T>&>());
 
-template<typename Iterator>
-Iterator make_move_iterator_if_mutable_impl(const Iterator& it, std::false_type /*mutable*/)
-{
-    return it;
-}
+// a container that owns its elements propagates constness to them (deep
+// constness): the elements of a const std::vector<std::string> are const. A
+// non-owning range (a span, an iterator range) has shallow constness: a const
+// span still gives mutable access to the elements it refers to. Moving from an
+// rvalue of such a range would empty the storage it refers to, so the elements
+// of an rvalue range are only moved if it has deep constness.
+template<typename T>
+using owns_its_elements = std::is_const<typename std::remove_reference<detected_t<const_range_reference_t, T>>::type>;
 
 template<typename Iterator>
 using is_mutable_iterator = std::integral_constant < bool,
       !std::is_const<typename std::remove_reference<decltype(*std::declval<Iterator&>())>::type>::value >;
 
+// a move iterator over the elements of an rvalue container that owns them,
+// unless they are const (e.g., std::set): libstdc++ before GCC 5 defines the
+// reference of a std::move_iterator as value_type&&, which cannot bind to a
+// const element
 template<typename Iterator>
-auto make_move_iterator_if_mutable(const Iterator& it)
--> decltype(make_move_iterator_if_mutable_impl(it, is_mutable_iterator<Iterator> {}))
+std::move_iterator<Iterator> make_move_iterator_if_impl(const Iterator& it, std::true_type /*move*/)
 {
-    return make_move_iterator_if_mutable_impl(it, is_mutable_iterator<Iterator> {});
+    return std::make_move_iterator(it);
+}
+
+template<typename Iterator>
+Iterator make_move_iterator_if_impl(const Iterator& it, std::false_type /*move*/)
+{
+    return it;
+}
+
+template<typename Container, typename Iterator>
+using moves_elements = conjunction<owns_its_elements<Container>, is_mutable_iterator<Iterator>>;
+
+template<typename Container, typename Iterator>
+auto make_move_iterator_if_owned(const Iterator& it)
+-> decltype(make_move_iterator_if_impl(it, moves_elements<Container, Iterator> {}))
+{
+    return make_move_iterator_if_impl(it, moves_elements<Container, Iterator> {});
 }
 
 template<value_t> struct external_constructor;
@@ -7955,14 +7972,14 @@ struct external_constructor<value_t::array>
         j.replace_value(value_t::array, value);
     }
 
-    /// an rvalue container: move its elements
+    /// an rvalue container: move its elements if it owns them
     template<typename BasicJsonType, typename CompatibleArrayType>
     static void construct_moving(BasicJsonType& j, CompatibleArrayType& arr)
     {
         using std::begin;
         using std::end;
 
-        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::array_t>(make_move_iterator_if_mutable(begin(arr)), make_move_iterator_if_mutable(end(arr))));
+        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::array_t>(make_move_iterator_if_owned<CompatibleArrayType>(begin(arr)), make_move_iterator_if_owned<CompatibleArrayType>(end(arr))));
         j.replace_value(value_t::array, value);
     }
 
@@ -8016,14 +8033,14 @@ struct external_constructor<value_t::object>
         j.replace_value(value_t::object, value);
     }
 
-    /// an rvalue container: move its values
+    /// an rvalue container: move its values if it owns them
     template<typename BasicJsonType, typename CompatibleObjectType>
     static void construct_moving(BasicJsonType& j, CompatibleObjectType& obj)
     {
         using std::begin;
         using std::end;
 
-        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::object_t>(make_move_iterator_if_mutable(begin(obj)), make_move_iterator_if_mutable(end(obj))));
+        const typename BasicJsonType::json_value value(j.template create<typename BasicJsonType::object_t>(make_move_iterator_if_owned<CompatibleObjectType>(begin(obj)), make_move_iterator_if_owned<CompatibleObjectType>(end(obj))));
         j.replace_value(value_t::object, value);
     }
 
@@ -8218,7 +8235,8 @@ using is_rvalue_array_to_json = conjunction<is_movable_container_rvalue<T>,
       is_compatible_string_type<BasicJsonType, T>,
       is_compatible_binary_type<BasicJsonType, T>>>>;
 
-// rvalue containers: their elements are moved instead of copied
+// rvalue containers: their elements are moved instead of copied if the
+// container owns them (see owns_its_elements)
 template<typename BasicJsonType, typename CompatibleArrayType,
          enable_if_t<is_rvalue_array_to_json<BasicJsonType, CompatibleArrayType>::value, int> = 0>
 inline void to_json(BasicJsonType& j, CompatibleArrayType && arr) // NOLINT(cppcoreguidelines-missing-std-forward)
@@ -11642,7 +11660,7 @@ struct ieee_binary_format<53> // binary64
 
 These formats (float, double, and long double where it is binary64, e.g.
 with MSVC or on Apple arm64) are converted by parse_float_native(). The
-predicate is the one the serializer uses to choose Grisu2.
+predicate is the one the serializer uses to choose to_chars() over snprintf.
 */
 template<typename FloatType>
 struct has_native_float_format
@@ -20660,6 +20678,21 @@ class binary_reader
     }
 
     /*!
+    @brief move past a value of @a size bytes, starting with @a head, that a
+           bulk run reads, as get() and get_number() would
+
+    Called before the value is passed on, so that an error reported while
+    passing it on (see @ref emit_float) has the position and the last byte
+    that reading the value byte by byte gives.
+    */
+    void bulk_advance(const std::size_t size, const unsigned char head)
+    {
+        ia.bulk_skip(size);
+        chars_read += size;
+        current = head;
+    }
+
+    /*!
     @brief read the integers, floats, booleans, and nulls that follow in a
            definite-length array, without the per-element bookkeeping of
            @ref parse_cbor_internal
@@ -20684,71 +20717,70 @@ class binary_reader
         {
             const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
             const unsigned char head = data[0];
-            std::size_t size = 0;
             bool accepted = false;
             switch (head)
             {
                 case 0x18:
-                    size = 2;
+                    bulk_advance(2, head);
                     accepted = emit_unsigned(data[1]);
                     break;
                 case 0x19:
-                    size = 3;
+                    bulk_advance(3, head);
                     accepted = emit_unsigned(load_big_endian<std::uint16_t>(data + 1));
                     break;
                 case 0x1A:
-                    size = 5;
+                    bulk_advance(5, head);
                     accepted = emit_unsigned(load_big_endian<std::uint32_t>(data + 1));
                     break;
                 case 0x1B:
-                    size = 9;
+                    bulk_advance(9, head);
                     accepted = emit_unsigned(load_big_endian<std::uint64_t>(data + 1));
                     break;
                 case 0x38:
-                    size = 2;
+                    bulk_advance(2, head);
                     accepted = emit_cbor_negative_integer(data[1]);
                     break;
                 case 0x39:
-                    size = 3;
+                    bulk_advance(3, head);
                     accepted = emit_cbor_negative_integer(load_big_endian<std::uint16_t>(data + 1));
                     break;
                 case 0x3A:
-                    size = 5;
+                    bulk_advance(5, head);
                     accepted = emit_cbor_negative_integer(load_big_endian<std::uint32_t>(data + 1));
                     break;
                 case 0x3B:
-                    size = 9;
+                    bulk_advance(9, head);
                     accepted = emit_cbor_negative_integer(load_big_endian<std::uint64_t>(data + 1));
                     break;
                 case 0xF4:
-                    size = 1;
+                    bulk_advance(1, head);
                     accepted = sax->boolean(false);
                     break;
                 case 0xF5:
-                    size = 1;
+                    bulk_advance(1, head);
                     accepted = sax->boolean(true);
                     break;
                 case 0xF6:
-                    size = 1;
+                    bulk_advance(1, head);
                     accepted = sax->null();
                     break;
                 case 0xFA:
-                    size = 5;
+                    bulk_advance(5, head);
                     accepted = emit_float(load_big_endian<float>(data + 1));
                     break;
                 case 0xFB:
-                    size = 9;
+                    bulk_advance(9, head);
                     accepted = emit_float(load_big_endian<double>(data + 1));
                     break;
                 default:
                     if (head <= 0x17)
                     {
-                        size = 1;
+                        bulk_advance(1, head);
                         accepted = sax->number_unsigned(static_cast<number_unsigned_t>(head));
                     }
                     else if (head >= 0x20 && head <= 0x37)
                     {
-                        size = 1;
+                        bulk_advance(1, head);
                         accepted = sax->number_integer(static_cast<std::int8_t>(0x20 - 1 - head));
                     }
                     else
@@ -20758,10 +20790,6 @@ class binary_reader
                     }
                     break;
             }
-            // as if read by get() and get_number(): current is the head byte
-            ia.bulk_skip(size);
-            chars_read += size;
-            current = head;
             --remaining;
             if (JSON_HEDLEY_UNLIKELY(!accepted))
             {
@@ -21599,73 +21627,72 @@ class binary_reader
         {
             const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
             const unsigned char head = data[0];
-            std::size_t size = 0;
             bool accepted = false;
             switch (head)
             {
                 case 0xC0: // nil
-                    size = 1;
+                    bulk_advance(1, head);
                     accepted = sax->null();
                     break;
                 case 0xC2: // false
-                    size = 1;
+                    bulk_advance(1, head);
                     accepted = sax->boolean(false);
                     break;
                 case 0xC3: // true
-                    size = 1;
+                    bulk_advance(1, head);
                     accepted = sax->boolean(true);
                     break;
                 case 0xCA: // float 32
-                    size = 5;
+                    bulk_advance(5, head);
                     accepted = emit_float(load_big_endian<float>(data + 1));
                     break;
                 case 0xCB: // float 64
-                    size = 9;
+                    bulk_advance(9, head);
                     accepted = emit_float(load_big_endian<double>(data + 1));
                     break;
                 case 0xCC: // uint 8
-                    size = 2;
+                    bulk_advance(2, head);
                     accepted = emit_unsigned(data[1]);
                     break;
                 case 0xCD: // uint 16
-                    size = 3;
+                    bulk_advance(3, head);
                     accepted = emit_unsigned(load_big_endian<std::uint16_t>(data + 1));
                     break;
                 case 0xCE: // uint 32
-                    size = 5;
+                    bulk_advance(5, head);
                     accepted = emit_unsigned(load_big_endian<std::uint32_t>(data + 1));
                     break;
                 case 0xCF: // uint 64
-                    size = 9;
+                    bulk_advance(9, head);
                     accepted = emit_unsigned(load_big_endian<std::uint64_t>(data + 1));
                     break;
                 case 0xD0: // int 8
-                    size = 2;
+                    bulk_advance(2, head);
                     accepted = emit_signed(static_cast<std::int8_t>(data[1]));
                     break;
                 case 0xD1: // int 16
-                    size = 3;
+                    bulk_advance(3, head);
                     accepted = emit_signed(load_big_endian<std::int16_t>(data + 1));
                     break;
                 case 0xD2: // int 32
-                    size = 5;
+                    bulk_advance(5, head);
                     accepted = emit_signed(load_big_endian<std::int32_t>(data + 1));
                     break;
                 case 0xD3: // int 64
-                    size = 9;
+                    bulk_advance(9, head);
                     accepted = emit_signed(load_big_endian<std::int64_t>(data + 1));
                     break;
                 default:
                     if (head <= 0x7F)
                     {
                         // positive fixint
-                        size = 1;
+                        bulk_advance(1, head);
                         accepted = sax->number_unsigned(static_cast<number_unsigned_t>(head));
                     }
                     else if (head >= 0xE0)
                     {
                         // negative fixint
-                        size = 1;
+                        bulk_advance(1, head);
                         accepted = sax->number_integer(static_cast<std::int8_t>(head));
                     }
                     else
@@ -21675,10 +21702,6 @@ class binary_reader
                     }
                     break;
             }
-            // as if read by get() and get_number(): current is the last byte
-            ia.bulk_skip(size);
-            chars_read += size;
-            current = data[size - 1];
             --remaining;
             if (JSON_HEDLEY_UNLIKELY(!accepted))
             {
@@ -22582,6 +22605,7 @@ class binary_reader
         const auto* const data = reinterpret_cast<const unsigned char*>(ia.bulk_data());
         // UBJSON stores numbers big-endian, BJData little-endian
         const bool swap = is_little_endian != (input_format == input_format_t::bjdata);
+        const std::size_t start = chars_read;
         std::size_t read = 0;
         bool accepted = true;
         while (read < count && accepted)
@@ -22593,15 +22617,38 @@ class binary_reader
                 byte_swap(number);
             }
             ++read;
+            // where passing the value on can report an error (see
+            // emit_float), the position is that after the value, as if it
+            // was read by get_number()
+            set_chars_read(start + (read * size), std::integral_constant<bool, may_overflow_number_float<NumberType>()> {});
             accepted = emit_ubjson_number(number);
         }
-        // as if read by get_number(): current is the last byte read
+        // get_number() does not change current
         ia.bulk_skip(read * size);
-        chars_read += read * size;
-        current = data[(read * size) - 1];
+        chars_read = start + (read * size);
         remaining -= read;
         return accepted;
     }
+
+    /*!
+    @brief whether a value of type @a NumberType can be finite and still
+           overflow number_float_t, which @ref emit_float reports as an error
+
+    False for the default number types, so that the loop in @ref
+    parse_ubjson_typed_run need not track the position per value.
+    */
+    template<typename NumberType>
+    static constexpr bool may_overflow_number_float() noexcept
+    {
+        return static_cast<long double>((std::numeric_limits<number_float_t>::max)()) < static_cast<long double>((std::numeric_limits<NumberType>::max)());
+    }
+
+    void set_chars_read(const std::size_t position, std::true_type /*track*/) noexcept
+    {
+        chars_read = position;
+    }
+
+    void set_chars_read(const std::size_t /*position*/, std::false_type /*track*/) const noexcept {}
 
     template<typename NumberType, enable_if_t<std::is_floating_point<NumberType>::value, int> = 0>
     bool emit_ubjson_number(const NumberType number)
@@ -22828,6 +22875,10 @@ class binary_reader
         auto number_lexer = detail::lexer<BasicJsonType, ia_type>(detail::input_adapter(number_vector), false);
         const auto result_number = number_lexer.scan();
         const auto number_string = number_lexer.get_token_string();
+        // the number as the lexer read it, for SAX number_float(): unlike
+        // get_token_string(), which is meant for error messages and shortens
+        // long tokens, it is complete; the next scan() replaces it
+        const string_t number_text = number_lexer.get_string();
         const auto result_remainder = number_lexer.scan();
 
         using token_type = typename detail::lexer_base<BasicJsonType>::token_type;
@@ -22854,10 +22905,7 @@ class binary_reader
                                number_string,
                                out_of_range::create(exception_id::number_overflow, concat("number overflow parsing '", number_string, '\''), nullptr));
                 }
-                // number_string is a std::string, while the SAX interface takes a
-                // string_t; convert explicitly, as the two are only implicitly
-                // convertible for some string types
-                return sax->number_float(parsed_float, string_t(number_string.data(), number_string.size()));
+                return sax->number_float(parsed_float, number_text);
             }
             case token_type::uninitialized:
             case token_type::literal_true:
@@ -26819,7 +26867,9 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
     /// access to successor
     reference operator[](difference_type n) const
     {
-        return *(this->operator+(n));
+        // the element n positions after *this is the one n + 1 positions before base();
+        // Base::operator[] then reports invalid_iterator.208 for object iterators
+        return this->base()[-n - 1];
     }
 
     /// return the key of an object iterator
@@ -31201,7 +31251,7 @@ class binary_writer
         JSON_THROW(out_of_range::create(exception_id::subtype_out_of_range, concat("subtype ", std::to_string(subtype), " is too large for ", what, " (max 255)"), &j));
     }
 
-    /// @throw other_error.407 always
+    /// @throw other_error.502 always
     JSON_HEDLEY_NO_RETURN JSON_HEDLEY_NEVER_INLINE
     static void throw_size_marker_required(const BasicJsonType& j)
     {
@@ -36060,10 +36110,11 @@ namespace detail
 {
 
 /*!
-@brief implements the Grisu2 algorithm for binary to decimal floating-point
-conversion.
+@brief implements binary to decimal floating-point conversion: the shortest
+digits of Zmij (see zmij.hpp) for IEEE 754 binary64 numbers, and the Grisu2
+algorithm for all other formats.
 
-This implementation is a slightly modified version of the reference
+The Grisu2 implementation is a slightly modified version of the reference
 implementation which may be obtained from
 http://florian.loitsch.com/publications (bench.tar.gz).
 
@@ -38176,7 +38227,7 @@ class serializer
             put_literal("\"subtype\": ");
             if (binary.has_subtype())
             {
-                dump_integer(binary.subtype());
+                dump_subtype(binary.subtype());
             }
             else
             {
@@ -38202,7 +38253,7 @@ class serializer
             put_literal("],\"subtype\":");
             if (binary.has_subtype())
             {
-                dump_integer(binary.subtype());
+                dump_subtype(binary.subtype());
                 put_char('}');
             }
             else
@@ -39111,7 +39162,7 @@ class serializer
             {
                 return n_digits + 3;
             }
-            x = x / 10000u;
+            x = static_cast<number_magnitude_t>(x / 10000u);
             n_digits += 4;
         }
     }
@@ -39424,6 +39475,40 @@ class serializer
     }
 
     /*!
+    @brief dump the subtype of a binary value
+
+    The subtype is a std::uint64_t, whatever the number types are. @ref
+    dump_integer converts its argument to the magnitude type of
+    number_unsigned_t, so it writes the subtype only if that type has at least
+    64 bits; otherwise (it would truncate the subtype) the digits are written
+    one by one.
+
+    @param[in] subtype  the subtype to dump
+    */
+    void dump_subtype(std::uint64_t subtype)
+    {
+        dump_subtype(subtype, std::integral_constant<bool, magnitude_has_at_least_64_bits> {});
+    }
+
+    void dump_subtype(std::uint64_t subtype, std::true_type /*magnitude has at least 64 bits*/)
+    {
+        dump_integer(subtype);
+    }
+
+    void dump_subtype(std::uint64_t subtype, std::false_type /*magnitude has less than 64 bits*/)
+    {
+        std::array<char, 20> digits{{}}; // 2^64 - 1 has 20 digits
+        std::size_t start = digits.size();
+        do
+        {
+            digits[--start] = static_cast<char>('0' + (subtype % 10));
+            subtype /= 10;
+        }
+        while (subtype != 0);
+        put_string(digits, start, digits.size());
+    }
+
+    /*!
     @brief dump an integer
 
     Dump a given integer, appending it to @ref write_buffer (directly: copying
@@ -39573,8 +39658,9 @@ class serializer
         }
 
         // If number_float_t is an IEEE-754 single or double precision number,
-        // use the Grisu2 algorithm to produce short numbers which are
-        // guaranteed to round-trip, using strtof and strtod, resp.
+        // use to_chars() to produce short numbers which are guaranteed to
+        // round-trip, using strtof and strtod, resp. (the shortest digits of
+        // Zmij for binary64, the Grisu2 algorithm for binary32).
         //
         // NB: The test below works if <long double> == <double>.
         static constexpr bool is_ieee_single_or_double
@@ -39676,6 +39762,11 @@ class serializer
     static constexpr bool magnitude_has_at_most_64_bits = std::numeric_limits<number_magnitude_t>::is_specialized
         && std::numeric_limits<number_magnitude_t>::digits <= 64;
 
+    /// whether every std::uint64_t fits number_magnitude_t (then dump_integer
+    /// can write a binary subtype)
+    static constexpr bool magnitude_has_at_least_64_bits = std::numeric_limits<number_magnitude_t>::is_specialized
+        && std::numeric_limits<number_magnitude_t>::digits >= 64;
+
     /// whether @a x fits 64 bits: always if number_magnitude_t has at most
     /// 64 bits (selected by type, as the comparison would be reported as
     /// always true), else compared
@@ -39701,7 +39792,7 @@ class serializer
     number_magnitude_t remove_sign(number_integer_t x) noexcept
     {
         JSON_ASSERT(x < 0);
-        return static_cast<number_magnitude_t>(-(x + 1)) + 1;
+        return static_cast<number_magnitude_t>(static_cast<number_magnitude_t>(-(x + 1)) + 1);
     }
 
   private:
@@ -48811,6 +48902,7 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 #undef JSON_HEDLEY_EMSCRIPTEN_VERSION
 #undef JSON_HEDLEY_EMSCRIPTEN_VERSION_CHECK
 #undef JSON_HEDLEY_END_C_DECLS
+#undef JSON_HEDLEY_FALL_THROUGH
 #undef JSON_HEDLEY_FLAGS
 #undef JSON_HEDLEY_FLAGS_CAST
 #undef JSON_HEDLEY_GCC_HAS_ATTRIBUTE
@@ -48919,7 +49011,6 @@ struct formatter<nlohmann::NLOHMANN_BASIC_JSON_TPL, char> // NOLINT(cert-dcl58-c
 #undef JSON_HEDLEY_WARNING
 #undef JSON_HEDLEY_WARN_UNUSED_RESULT
 #undef JSON_HEDLEY_WARN_UNUSED_RESULT_MSG
-#undef JSON_HEDLEY_FALL_THROUGH
 
 // IWYU pragma: keep
 

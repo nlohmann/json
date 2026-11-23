@@ -4,7 +4,7 @@
   "description": "Validate the Mermaid diagrams of the documentation (see check_mermaid.mjs)",
   "type": "module",
   "dependencies": {
-    "jsdom": "31.0.0",
+    "jsdom": "31.0.1",
     "mermaid": "12.3.0"
   }
 }

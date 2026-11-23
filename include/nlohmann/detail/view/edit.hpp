@@ -384,9 +384,22 @@ class editor
                 // for the container is linear in the size of the document, so
                 // links (which are marked in the slot) avoid it.
                 node* const p = parent_known ? parent : find_parent(m_doc, slot);
-                if (p != nullptr && ((p->flags & node_flags::moved) == 0 || moved_capacity(m_doc, p) == 0))
+                if (p != nullptr)
                 {
-                    block_of(m_doc, p, 0);
+                    if ((p->flags & node_flags::moved) == 0 || moved_capacity(m_doc, p) == 0)
+                    {
+                        block_of(m_doc, p, 0);
+                    }
+                }
+                else
+                {
+                    // the slot is no longer part of the document, but the
+                    // (dropped) container it is in may still step over it
+                    node* const q = find_layout_parent(m_doc, slot);
+                    if (q != nullptr)
+                    {
+                        block_of(m_doc, q, 0);
+                    }
                 }
             }
             *slot = e.scalar;

@@ -5564,7 +5564,9 @@ inline node* block_of(document_data& d, node* n, std::size_t extra)
     h->len = n->len;
     h->next = static_cast<std::uint32_t>(used);
     node* o = h + 1;
-    for (const node* c = d.first_child_edited(n), *e = d.child_end_edited(n); c != e;)
+    // (the bound on o keeps the copy inside the block even if the elements
+    // disagreed with the element count)
+    for (const node* c = d.first_child_edited(n), *e = d.child_end_edited(n), *const full = h + used; c != e && o != full;)
     {
         if (object)
         {
@@ -5644,6 +5646,41 @@ inline node* find_parent(const document_data& d, const node* target)
         }
         c = down;
     }
+}
+
+/// The container whose contiguous layout (in the parsed index, or in a new
+/// value) steps over `target`, also when an edit dropped the container or a
+/// value that encloses it; nullptr if there is none, or if the container no
+/// longer walks that layout (its elements moved). An edit never gives a node a
+/// larger extent than it was parsed or encoded with (a scalar is one node, an
+/// assigned array/object keeps the extent of the slot), so the containers whose
+/// extent covers `target` are its original ancestors: the nearest one before it
+/// is its original parent. The root of a new value that is the element sequence
+/// of another container is walked by that container (which find_parent() finds
+/// while it still uses the sequence), not by itself.
+inline node* find_layout_parent(const document_data& d, const node* target)
+{
+    const std::less<const node*> lt{};
+    const node* lo = d.nodes;
+    if (lt(target, lo) || !lt(target, d.nodes + d.node_count))
+    {
+        auto it = d.edits->regions.upper_bound(target);
+        if (it == d.edits->regions.begin())
+        {
+            return nullptr; // LCOV_EXCL_LINE (an array/object with elements is in the index or a new value)
+        }
+        --it;
+        lo = it->second != nullptr ? it->first + 1 : it->first;
+    }
+    for (const node* c = target; c != lo;)
+    {
+        --c;
+        if (is_container(*c) && lt(target, c + c->next))
+        {
+            return (c->flags & node_flags::moved) == 0 ? const_cast<node*>(c) : nullptr; // NOLINT(cppcoreguidelines-pro-type-const-cast): the nodes belong to the document
+        }
+    }
+    return nullptr;
 }
 
 }  // namespace view
@@ -6522,9 +6559,22 @@ class editor
                 // for the container is linear in the size of the document, so
                 // links (which are marked in the slot) avoid it.
                 node* const p = parent_known ? parent : find_parent(m_doc, slot);
-                if (p != nullptr && ((p->flags & node_flags::moved) == 0 || moved_capacity(m_doc, p) == 0))
+                if (p != nullptr)
                 {
-                    block_of(m_doc, p, 0);
+                    if ((p->flags & node_flags::moved) == 0 || moved_capacity(m_doc, p) == 0)
+                    {
+                        block_of(m_doc, p, 0);
+                    }
+                }
+                else
+                {
+                    // the slot is no longer part of the document, but the
+                    // (dropped) container it is in may still step over it
+                    node* const q = find_layout_parent(m_doc, slot);
+                    if (q != nullptr)
+                    {
+                        block_of(m_doc, q, 0);
+                    }
                 }
             }
             *slot = e.scalar;
@@ -11016,7 +11066,7 @@ class basic_json_view
         return !navigation::editable() || m_doc->edits == nullptr;
     }
 
-    /// the member of this object with @a key (the last one if the key occurs more than once), or nullptr
+    /// the member of this object with @a key (the first one if the key occurs more than once), or nullptr
     NLOHMANN_VIEW_ALWAYS_INLINE const node* find_key(string_view_t key) const
     {
         return find_key(key, std::integral_constant<bool, is_editable> {});

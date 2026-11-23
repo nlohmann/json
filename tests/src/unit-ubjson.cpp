@@ -793,6 +793,25 @@ TEST_CASE("UBJSON")
                     CHECK(j.dump() == "3.141592653589793");
                 }
 
+                SECTION("long floating-point number")
+                {
+                    // the SAX parser receives the number text as it is in the
+                    // input, also when it is longer than the part of a token
+                    // that error messages show
+                    const std::vector<std::size_t> lengths = {8192, 8193, 10000};
+                    for (const auto length : lengths)
+                    {
+                        CAPTURE(length)
+                        const std::string number = "1." + std::string(length - 2, '3');
+                        std::vector<std::uint8_t> vec = {'H', 'I', static_cast<std::uint8_t>(length >> 8), static_cast<std::uint8_t>(length & 0xFF)};
+                        vec.insert(vec.end(), number.begin(), number.end());
+                        SaxEventLogger logger;
+                        CHECK(json::sax_parse(vec, &logger, json::input_format_t::ubjson));
+                        CHECK(logger.events == std::vector<std::string>({"number_float(" + number + ")"}));
+                        CHECK(json::from_ubjson(vec).is_number_float());
+                    }
+                }
+
                 SECTION("errors")
                 {
                     // error while parsing length

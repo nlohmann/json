@@ -66,7 +66,8 @@ has `erase`; calling it on a read-only `basic_json_document` fails to compile (`
    [`parse_error.106`](../../home/exceptions.md#jsonexceptionparse_error106) (a leading `#!cpp '0'`),
    [`parse_error.109`](../../home/exceptions.md#jsonexceptionparse_error109) (not a number),
    [`out_of_range.410`](../../home/exceptions.md#jsonexceptionout_of_range410) (too large for `size_type`), or
-   [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) (an empty token); otherwise (an
+   [`out_of_range.404`](../../home/exceptions.md#jsonexceptionout_of_range404) (an empty token, or the token
+   `#!cpp "-"`, which never names an existing element); otherwise (an
    object, or a primitive value the pointer's parent resolves to) throws what 1. throws.
 
 Overloads 1. and 2. also throw [`invalid_iterator.202`](../../home/exceptions.md#jsonexceptioninvalid_iterator202)

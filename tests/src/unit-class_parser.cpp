@@ -6,6 +6,13 @@
 // SPDX-FileCopyrightText: 2013-2026 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
+// cmake/test.cmake selects the C++ standard versions with which to build a
+// unit test based on the presence of JSON_HAS_CPP_<VERSION> macros.
+// When using macros that are only defined for particular versions of the standard
+// (e.g., JSON_HAS_FILESYSTEM for C++17 and up), please mention the corresponding
+// version macro in a comment close by, like this:
+// JSON_HAS_CPP_<VERSION> (do not remove; see note at top of file)
+
 #include "doctest_compatibility.h"
 
 // capture whether JSON_STRICT_NUL_HANDLING was enabled on the command line
@@ -34,6 +41,7 @@ using nlohmann::json;
 #include <fstream>
 #include <iterator>
 #include <list>
+#include <random>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -517,6 +525,7 @@ TEST_CASE("parser class")
                 CHECK(json::accept(u"[1]"));
                 CHECK(json::parse(U"[1]") == json({1}));
                 CHECK(json::accept(U"[1]"));
+                // JSON_HAS_CPP_20 (do not remove; see note at top of file)
 #if defined(__cpp_char8_t)
                 CHECK(json::parse(u8"[1]") == json({1}));
                 CHECK(json::accept(u8"[1]"));
@@ -2502,7 +2511,7 @@ TEST_CASE("text of float tokens")
         std::vector<std::string> result;
         std::copy_if(events.begin(), events.end(), std::back_inserter(result), [](const std::string & e)
         {
-            return e.compare(0, 13, "number_float(") == 0;
+            return e.compare(0, 13, "number_float(") == 0; // NOLINT(modernize-use-starts-ends-with): C++11
         });
         return result;
     };
@@ -2867,13 +2876,16 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
         SECTION("std::ifstream: positions are consistent, not npos")
         {
             const std::string s = R"({"a":1,"b":2})";
+            // the C++11 and C++20 builds of this test run in parallel in the same directory
+            std::random_device rd;
+            const std::string temp_name = "unit-class_parser_diagnostic_positions-" + std::to_string(rd()) + ".tmp";
             {
-                std::ofstream file("unit-class_parser_diagnostic_positions.tmp");
+                std::ofstream file(temp_name);
                 file << s;
             }
 
             {
-                std::ifstream f("unit-class_parser_diagnostic_positions.tmp");
+                std::ifstream f(temp_name);
                 const json j = json::parse(f);
 
                 CHECK(j.start_pos() == 0);
@@ -2881,7 +2893,7 @@ TEST_CASE("diagnostic positions: value lifetime, input adapters, and SAX")
                 CHECK(j["a"].start_pos() == 5);
             }
 
-            static_cast<void>(std::remove("unit-class_parser_diagnostic_positions.tmp"));
+            static_cast<void>(std::remove(temp_name.c_str()));
         }
 
         SECTION("iterator-pair input: positions are consistent, not npos")
@@ -3103,7 +3115,7 @@ TEST_CASE("object keys are delivered decoded and validated")
         std::vector<std::string> keys;
         for (const auto& e : l.events)
         {
-            if (e.compare(0, 4, "key(") == 0)
+            if (e.compare(0, 4, "key(") == 0) // NOLINT(modernize-use-starts-ends-with): C++11
             {
                 keys.push_back(e.substr(4, e.size() - 5));
             }

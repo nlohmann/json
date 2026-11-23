@@ -830,13 +830,13 @@ TEST_CASE("iterators 2")
             {
                 {
                     auto it = j_object.rbegin();
-                    CHECK_THROWS_WITH_AS(it[0], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(it[1], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(it[0], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(it[1], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators", json::invalid_iterator&);
                 }
                 {
                     auto it = j_object.crbegin();
-                    CHECK_THROWS_WITH_AS(it[0], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators", json::invalid_iterator&);
-                    CHECK_THROWS_WITH_AS(it[1], "[json.exception.invalid_iterator.209] cannot use offsets with object iterators", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(it[0], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators", json::invalid_iterator&);
+                    CHECK_THROWS_WITH_AS(it[1], "[json.exception.invalid_iterator.208] cannot use operator[] for object iterators", json::invalid_iterator&);
                 }
             }
 
@@ -850,6 +850,7 @@ TEST_CASE("iterators 2")
                     CHECK(it[3] == json(3));
                     CHECK(it[4] == json(2));
                     CHECK(it[5] == json(1));
+                    CHECK((j_array.rbegin() + 2)[1] == json(3));
                 }
                 {
                     auto it = j_array.crbegin();
@@ -859,6 +860,7 @@ TEST_CASE("iterators 2")
                     CHECK(it[3] == json(3));
                     CHECK(it[4] == json(2));
                     CHECK(it[5] == json(1));
+                    CHECK((j_array.crbegin() + 2)[3] == json(1));
                 }
             }
 
@@ -888,6 +890,11 @@ TEST_CASE("iterators 2")
                     CHECK(it[0] == json(42));
                     CHECK_THROWS_WITH_AS(it[1], "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
                 }
+                CHECK(json(1).rbegin()[0] == json(1));
+                CHECK_THROWS_WITH_AS(json(1).rbegin()[1], "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
+
+                CHECK(json(1).crbegin()[0] == json(1));
+                CHECK_THROWS_WITH_AS(json(1).crbegin()[1], "[json.exception.invalid_iterator.214] cannot get value", json::invalid_iterator&);
             }
         }
     }
