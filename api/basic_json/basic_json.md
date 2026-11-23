@@ -79,7 +79,14 @@ basic_json(basic_json&& other) noexcept;
         (e.g., `json j = std::move(vec);` or `json j(std::vector<std::string>{...});`), the elements are moved into
         the JSON value instead of copied. Afterwards, the elements of the source container are in a valid but
         unspecified state (**moved-from**). Keys of associative containers are `const` and therefore still copied.
-        Lvalues and `const` rvalues are copied, and the source is left unchanged.
+        Lvalues and `const` rvalues are copied, and the source is left unchanged. Only containers that own their
+        elements are moved from, that is, containers whose elements are `const` when accessed through a `const`
+        container. Non-owning ranges such as spans or iterator ranges (e.g., `gsl::span`, `std::span`) are copied, so
+        converting an rvalue span leaves the referenced elements unchanged.
+        A user-defined type whose elements are `const` through a `const` object, but which does not own them alone,
+        is treated as owning: a view, or a handle that shares its storage with other handles (e.g., a wrapper of a
+        `std::shared_ptr<std::vector<T>>`) and does not copy it before giving non-`const` access. Moving from such
+        an rvalue changes the elements seen through the other handles; pass it as an lvalue to copy the elements.
     - **numbers**: [`number_integer_t`](number_integer_t.md), [`number_unsigned_t`](number_unsigned_t.md),
      [`number_float_t`](number_float_t.md), and all convertible number types such as `int`, `size_t`, `int64_t`, `float`
      or `double` can be used.
