@@ -1,6 +1,6 @@
 <svg class="nj-fig nj-charts nj-charts--blog" viewBox="0 0 560 250" role="img" aria-labelledby="nj-blog-dist nj-blog-dist-d" xmlns="http://www.w3.org/2000/svg">
-<title id="nj-blog-dist">Speedup of 3.13.0 over 3.12.0 for all 182 benchmarks of the suite</title>
-<desc id="nj-blog-dist-d">Bars counting the benchmarks per speedup range: below 1x: 2; 1 to 1.5x: 21; 1.5 to 2x: 18; 2 to 3x: 52; 3 to 5x: 48; 5 to 10x: 31; 10x or more: 10. Median 2.9x, geometric mean 3.3x.</desc>
+<title id="nj-blog-dist">Speedup of 3.13.0 over 3.12.0 for all 184 benchmarks of the suite</title>
+<desc id="nj-blog-dist-d">Bars counting the benchmarks per speedup range: below 1x: 2; 1 to 1.5x: 20; 1.5 to 2x: 17; 2 to 3x: 56; 3 to 5x: 49; 5 to 10x: 31; 10x or more: 9. Median 3.0x, geometric mean 3.3x.</desc>
 <line class="nj-charts-grid" x1="52" y1="196" x2="548" y2="196"/>
 <text class="nj-charts-tick nj-charts-tick--r" x="46" y="200">0</text>
 <line class="nj-charts-grid" x1="52" y1="136" x2="548" y2="136"/>
@@ -12,23 +12,23 @@
 <rect class="nj-charts-c2" x="60.0" y="190.0" width="54.9" height="6.0" rx="3"><title>below 1&#215;: 2</title></rect>
 <text class="nj-charts-val" x="87.4" y="185.0" text-anchor="middle">2</text>
 <text class="nj-charts-tick" x="87.4" y="212.0">below 1&#215;</text>
-<rect class="nj-charts-c1" x="130.9" y="133.0" width="54.9" height="63.0" rx="3"><title>1 to 1.5&#215;: 21</title></rect>
-<text class="nj-charts-val" x="158.3" y="128.0" text-anchor="middle">21</text>
+<rect class="nj-charts-c1" x="130.9" y="136.0" width="54.9" height="60.0" rx="3"><title>1 to 1.5&#215;: 20</title></rect>
+<text class="nj-charts-val" x="158.3" y="131.0" text-anchor="middle">20</text>
 <text class="nj-charts-tick" x="158.3" y="212.0">1 to 1.5&#215;</text>
-<rect class="nj-charts-c1" x="201.7" y="142.0" width="54.9" height="54.0" rx="3"><title>1.5 to 2&#215;: 18</title></rect>
-<text class="nj-charts-val" x="229.1" y="137.0" text-anchor="middle">18</text>
+<rect class="nj-charts-c1" x="201.7" y="145.0" width="54.9" height="51.0" rx="3"><title>1.5 to 2&#215;: 17</title></rect>
+<text class="nj-charts-val" x="229.1" y="140.0" text-anchor="middle">17</text>
 <text class="nj-charts-tick" x="229.1" y="212.0">1.5 to 2&#215;</text>
-<rect class="nj-charts-c1" x="272.6" y="40.0" width="54.9" height="156.0" rx="3"><title>2 to 3&#215;: 52</title></rect>
-<text class="nj-charts-val" x="300.0" y="35.0" text-anchor="middle">52</text>
+<rect class="nj-charts-c1" x="272.6" y="28.0" width="54.9" height="168.0" rx="3"><title>2 to 3&#215;: 56</title></rect>
+<text class="nj-charts-val" x="300.0" y="23.0" text-anchor="middle">56</text>
 <text class="nj-charts-tick" x="300.0" y="212.0">2 to 3&#215;</text>
-<rect class="nj-charts-c1" x="343.4" y="52.0" width="54.9" height="144.0" rx="3"><title>3 to 5&#215;: 48</title></rect>
-<text class="nj-charts-val" x="370.9" y="47.0" text-anchor="middle">48</text>
+<rect class="nj-charts-c1" x="343.4" y="49.0" width="54.9" height="147.0" rx="3"><title>3 to 5&#215;: 49</title></rect>
+<text class="nj-charts-val" x="370.9" y="44.0" text-anchor="middle">49</text>
 <text class="nj-charts-tick" x="370.9" y="212.0">3 to 5&#215;</text>
 <rect class="nj-charts-c1" x="414.3" y="103.0" width="54.9" height="93.0" rx="3"><title>5 to 10&#215;: 31</title></rect>
 <text class="nj-charts-val" x="441.7" y="98.0" text-anchor="middle">31</text>
 <text class="nj-charts-tick" x="441.7" y="212.0">5 to 10&#215;</text>
-<rect class="nj-charts-c1" x="485.1" y="166.0" width="54.9" height="30.0" rx="3"><title>10&#215; or more: 10</title></rect>
-<text class="nj-charts-val" x="512.6" y="161.0" text-anchor="middle">10</text>
+<rect class="nj-charts-c1" x="485.1" y="169.0" width="54.9" height="27.0" rx="3"><title>10&#215; or more: 9</title></rect>
+<text class="nj-charts-val" x="512.6" y="164.0" text-anchor="middle">9</text>
 <text class="nj-charts-tick" x="512.6" y="212.0">10&#215; or more</text>
 <line class="nj-charts-axis" x1="52" y1="196" x2="548" y2="196"/>
 <text class="nj-charts-tick" x="300" y="240">speedup over 3.12.0, more is better</text>
