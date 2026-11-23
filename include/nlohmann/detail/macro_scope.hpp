@@ -187,6 +187,26 @@
     #endif
 #endif
 
+// C++26 static reflection and annotations. When available, basic_json::serialize
+// and basic_json::deserialize can map arbitrary structs/classes to and from JSON
+// without the NLOHMANN_DEFINE_TYPE_* macros. As of this writing only GCC 16
+// supports reflection.
+#ifndef JSON_HAS_REFLECTION
+    #if defined(__cpp_impl_reflection)
+        #define JSON_HAS_REFLECTION 1
+    #else
+        #define JSON_HAS_REFLECTION 0
+    #endif
+#endif
+
+// Reflection-based serde normally only reaches public data members; a type with
+// private state opts in per-type with [[=nlohmann::reflectable]]. Defining
+// JSON_SERDE_ALLOW_PRIVATE=1 lifts that requirement globally. This defeats the
+// encapsulation of every serialized type, so enable it deliberately.
+#ifndef JSON_SERDE_ALLOW_PRIVATE
+    #define JSON_SERDE_ALLOW_PRIVATE 0
+#endif
+
 // the byte order of the target where the compiler tells it (std::endian is
 // C++20 and cannot select code in #if): JSON_LITTLE_ENDIAN_TARGET or
 // JSON_BIG_ENDIAN_TARGET is 1, or both are 0 where it is unknown (code then

@@ -10817,6 +10817,35 @@ class basic_json_view
         return v;
     }
 
+#if JSON_HAS_REFLECTION
+    /// @brief map this view into an object using reflection
+    ///
+    /// The mirror of basic_json::deserialize, reading the members directly from
+    /// the view's flat index rather than materializing a basic_json value first
+    /// (members whose from_json() does not accept a view still materialize their
+    /// own subtree). See the Reflection feature page.
+    /// @sa https://json.nlohmann.me/api/basic_json/deserialize/
+    template<detail::serde::serde_struct T>
+    NLOHMANN_VIEW_NODISCARD
+    T deserialize() const
+    {
+        T out{};
+        detail::serde::deserialize_struct<false>(*this, out);
+        return out;
+    }
+
+    /// @brief map this view into an object using reflection, reaching private members
+    /// @sa https://json.nlohmann.me/api/basic_json/deserialize/
+    template<detail::serde::serde_struct T>
+    NLOHMANN_VIEW_NODISCARD
+    T deserialize(detail::serde::allow_private_t /*unused*/) const
+    {
+        T out{};
+        detail::serde::deserialize_struct<true>(*this, out);
+        return out;
+    }
+#endif
+
     /// the string, without a copy; valid as long as the view is. Throws
     /// type_error.302 for other types.
     string_view_t get_string() const
@@ -11354,6 +11383,30 @@ class basic_json_document
 
     /// deleted: the view of a temporary document would dangle
     view_type root() const&& = delete;
+
+#if JSON_HAS_REFLECTION
+    /// @brief map this document into an object using reflection
+    ///
+    /// Shorthand for root().deserialize<T>(); it reads the members directly from
+    /// the document's flat index. Unlike root(), this is also valid on a
+    /// temporary document, since it returns an owned T and keeps no view.
+    /// @sa https://json.nlohmann.me/api/basic_json/deserialize/
+    template<detail::serde::serde_struct T>
+    NLOHMANN_VIEW_NODISCARD
+    T deserialize() const
+    {
+        return root().template deserialize<T>();
+    }
+
+    /// @brief map this document into an object using reflection, reaching private members
+    /// @sa https://json.nlohmann.me/api/basic_json/deserialize/
+    template<detail::serde::serde_struct T>
+    NLOHMANN_VIEW_NODISCARD
+    T deserialize(detail::serde::allow_private_t tag) const
+    {
+        return root().template deserialize<T>(tag);
+    }
+#endif
 
     bool is_discarded() const noexcept
     {

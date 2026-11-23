@@ -13,7 +13,12 @@
 #include <nlohmann/detail/abi_macros.hpp>
 #include <nlohmann/detail/conversions/from_json.hpp>
 #include <nlohmann/detail/conversions/to_json.hpp>
+#include <nlohmann/detail/macro_scope.hpp> // JSON_HAS_REFLECTION
 #include <nlohmann/detail/meta/identity_tag.hpp>
+
+#if JSON_HAS_REFLECTION
+    #include <nlohmann/json_serde.hpp>
+#endif
 
 NLOHMANN_JSON_NAMESPACE_BEGIN
 
@@ -30,6 +35,17 @@ struct adl_serializer
     {
         ::nlohmann::from_json(std::forward<BasicJsonType>(j), val);
     }
+
+#if JSON_HAS_REFLECTION
+    /// @brief reflection fallback: map a JSON object into a serde struct that
+    /// has no hand-written from_json and no NLOHMANN_DEFINE_TYPE_* macro
+    template<typename BasicJsonType, detail::serde::serde_struct TargetType = ValueType>
+    requires (!detail::serde::has_adl_from_json<BasicJsonType, TargetType>)
+    static void from_json(const BasicJsonType& j, TargetType& val)
+    {
+        detail::serde::deserialize_struct(j, val);
+    }
+#endif
 
     /// @brief convert a JSON value to any value type
     /// @sa https://json.nlohmann.me/api/adl_serializer/from_json/
@@ -50,6 +66,17 @@ struct adl_serializer
     {
         ::nlohmann::to_json(j, std::forward<TargetType>(val));
     }
+
+#if JSON_HAS_REFLECTION
+    /// @brief reflection fallback: map a serde struct that has no hand-written
+    /// to_json and no NLOHMANN_DEFINE_TYPE_* macro into a JSON object
+    template<typename BasicJsonType, detail::serde::serde_struct TargetType = ValueType>
+    requires (!detail::serde::has_adl_to_json<BasicJsonType, TargetType>)
+    static void to_json(BasicJsonType& j, const TargetType& val)
+    {
+        detail::serde::serialize_struct(j, val);
+    }
+#endif
 };
 
 NLOHMANN_JSON_NAMESPACE_END

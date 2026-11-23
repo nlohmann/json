@@ -127,6 +127,8 @@ Besides JSON text, a value can also be serialized to the more compact [binary fo
 
 - [`dump`](../api/basic_json/dump.md) - serialize to a JSON-formatted string
 - [`operator<<`](../api/operator_ltlt.md) - serialize to a stream
+- [`serialize`](../api/basic_json/serialize.md) - serialize a type into a `basic_json`
+- [`deserialize`](../api/basic_json/deserialize.md) - deserialize a `basic_json` into a type
 - [`to_string`](../api/basic_json/to_string.md) - user-defined-conversion helper
 - [`std::formatter<basic_json>`](../api/basic_json/std_formatter.md) - use JSON values with `std::format` and `std::print`
 - [`format_as`](../api/basic_json/format_as.md) - use JSON values with the {fmt} library
