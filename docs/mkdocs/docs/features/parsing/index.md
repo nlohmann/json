@@ -45,7 +45,8 @@ that arrives in chunks or contains several values is covered in
 [Large, streamed, and partial input](large_and_partial_input.md).
 
 By default, the library rejects comments and trailing commas. Both can be enabled with parameters of the `parse`
-function — see [comments](../comments.md) and [trailing commas](../trailing_commas.md).
+function — see [comments](../comments.md) and [trailing commas](../trailing_commas.md). See
+[JSON variants](json_variants.md) for how much of JSONC, JSON5, and other formats related to JSON the library supports.
 
 [`basic_json_document::parse`](../../api/basic_json_document/parse.md) accepts the same inputs with the same options,
 but keeps the result in a document rather than in a `basic_json` value; see
@@ -169,6 +170,7 @@ options.
 - [`accept`](../../api/basic_json/accept.md) - check if the input is valid JSON
 - [`sax_parse`](../../api/basic_json/sax_parse.md) - generate SAX events
 - [JSON Lines](json_lines.md) - parse newline-delimited JSON
+- [JSON variants](json_variants.md) - JSONC, JSON5, JSON text sequences, I-JSON, and other formats related to JSON
 - [Large, streamed, and partial input](large_and_partial_input.md) - chunked, concatenated, and very large input
 - [parser callbacks](parser_callbacks.md) - influence the parsing by a callback function
 - [SAX interface](sax_interface.md) - implement a custom SAX handler

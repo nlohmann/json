@@ -68,5 +68,6 @@ JSON Lines input with more than one value is treated as invalid JSON by the [`pa
 
 - [Parsing](index.md) - overview of the parsing functions
 - [Large, Streamed, and Partial Input](large_and_partial_input.md) - chunked, concatenated, and very large input
+- [JSON variants](json_variants.md) - NDJSON, JSON text sequences, and other formats related to JSON
 - [`parse`](../../api/basic_json/parse.md) - deserialize from a compatible input
 - [`operator>>`](../../api/operator_gtgt.md) - deserialize from stream
