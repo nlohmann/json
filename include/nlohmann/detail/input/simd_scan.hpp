@@ -331,15 +331,23 @@ JSON_SCAN_SSSE3_TARGET JSON_HEDLEY_NEVER_INLINE inline bool vector_utf8_run(cons
 }
 
 /*!
-@brief skip 16-byte blocks of well-formed UTF-8 at p (a character boundary)
+@brief vector_utf8_valid_blocks() from the first block that is not ASCII
 
-Like vector_utf8_run, but quotes, backslashes, and control characters are
-ordinary characters. Returns the start of the first block in which the check
-found an error (which may belong to a sequence begun in the block before) or
-where fewer than 16 bytes are left; a sequence may be cut at that point, so the
-caller resumes at its start, one sequence at a time.
+@a block is that block, and @a first is where the check began (only ASCII up
+to @a block). Returns where fewer than 16 bytes are left, or @a first if the
+check found an error in any block.
+
+From a block that is not ASCII on, eight blocks are checked without testing
+for ASCII again: in text with a few non-ASCII characters (accented letters),
+every other block has one, and the test would be a mispredicted branch for
+most blocks. After them, ASCII blocks are skipped with one test again.
+
+The errors of all blocks are collected and tested once at the end. A test
+after each block lets the compiler advance the position with a conditional
+select on its result (Apple Clang 17 does), and each block then waits for the
+check of the block before: 28 cycles for 16 bytes instead of 4 on Apple M1.
 */
-JSON_SCAN_SSSE3_TARGET JSON_HEDLEY_NEVER_INLINE inline const unsigned char* vector_utf8_valid_blocks(const unsigned char* block, const unsigned char* e) noexcept
+JSON_SCAN_SSSE3_TARGET JSON_HEDLEY_NEVER_INLINE inline const unsigned char* vector_utf8_check_blocks(const unsigned char* first, const unsigned char* block, const unsigned char* e) noexcept
 {
     using lookup = utf8_lookup4<>;
 #if JSON_SCAN_NEON
@@ -347,27 +355,29 @@ JSON_SCAN_SSSE3_TARGET JSON_HEDLEY_NEVER_INLINE inline const unsigned char* vect
     const uint8x16_t t1l = vld1q_u8(lookup::byte_1_low.data());
     const uint8x16_t t2h = vld1q_u8(lookup::byte_2_high.data());
     uint8x16_t prev = vdupq_n_u8(0);
+    uint8x16_t error = vdupq_n_u8(0);
     while (e - block >= 16)
     {
-        const uint8x16_t in = vld1q_u8(block);
-        if (vmaxvq_u8(vorrq_u8(in, prev)) < 0x80)
+        const uint8x16_t ahead = vld1q_u8(block);
+        if (vmaxvq_u8(vorrq_u8(ahead, prev)) < 0x80)
         {
             // ASCII here, and no sequence from the block before to finish
-            prev = in;
+            prev = ahead;
             block += 16;
             continue;
         }
-        const uint8x16_t prev1 = vextq_u8(prev, in, 15);
-        const uint8x16_t sc = vandq_u8(vandq_u8(vqtbl1q_u8(t1h, vshrq_n_u8(prev1, 4)), vqtbl1q_u8(t1l, vandq_u8(prev1, vdupq_n_u8(0x0F)))), vqtbl1q_u8(t2h, vshrq_n_u8(in, 4)));
-        const uint8x16_t must23 = vorrq_u8(vqsubq_u8(vextq_u8(prev, in, 14), vdupq_n_u8(0xE0 - 0x80)), vqsubq_u8(vextq_u8(prev, in, 13), vdupq_n_u8(0xF0 - 0x80)));
-        const uint8x16_t err = veorq_u8(vandq_u8(must23, vdupq_n_u8(0x80)), sc);
-        if (vmaxvq_u8(err) != 0)
+        for (int blocks = 8; blocks != 0 && e - block >= 16; --blocks)
         {
-            break;
+            const uint8x16_t in = vld1q_u8(block);
+            const uint8x16_t prev1 = vextq_u8(prev, in, 15);
+            const uint8x16_t sc = vandq_u8(vandq_u8(vqtbl1q_u8(t1h, vshrq_n_u8(prev1, 4)), vqtbl1q_u8(t1l, vandq_u8(prev1, vdupq_n_u8(0x0F)))), vqtbl1q_u8(t2h, vshrq_n_u8(in, 4)));
+            const uint8x16_t must23 = vorrq_u8(vqsubq_u8(vextq_u8(prev, in, 14), vdupq_n_u8(0xE0 - 0x80)), vqsubq_u8(vextq_u8(prev, in, 13), vdupq_n_u8(0xF0 - 0x80)));
+            error = vorrq_u8(error, veorq_u8(vandq_u8(must23, vdupq_n_u8(0x80)), sc));
+            prev = in;
+            block += 16;
         }
-        prev = in;
-        block += 16;
     }
+    return vmaxvq_u8(error) != 0 ? first : block;
 #else
     const __m128i t1h = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_high.data()))); // NOLINT(bugprone-casting-through-void)
     const __m128i t1l = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_low.data()))); // NOLINT(bugprone-casting-through-void)
@@ -375,30 +385,62 @@ JSON_SCAN_SSSE3_TARGET JSON_HEDLEY_NEVER_INLINE inline const unsigned char* vect
     const __m128i nibble = _mm_set1_epi8(0x0F);
     const __m128i zero = _mm_setzero_si128();
     __m128i prev = zero;
+    __m128i error = zero;
     while (e - block >= 16)
     {
-        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block))); // NOLINT(bugprone-casting-through-void)
-        if (_mm_movemask_epi8(_mm_or_si128(in, prev)) == 0)
+        const __m128i ahead = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block))); // NOLINT(bugprone-casting-through-void)
+        if (_mm_movemask_epi8(_mm_or_si128(ahead, prev)) == 0)
         {
-            prev = in;
+            prev = ahead;
             block += 16;
             continue;
         }
-        const __m128i prev1 = _mm_alignr_epi8(in, prev, 15);
-        const __m128i sc = _mm_and_si128(_mm_and_si128(_mm_shuffle_epi8(t1h, _mm_and_si128(_mm_srli_epi16(prev1, 4), nibble)),
-                                         _mm_shuffle_epi8(t1l, _mm_and_si128(prev1, nibble))),
-                                         _mm_shuffle_epi8(t2h, _mm_and_si128(_mm_srli_epi16(in, 4), nibble)));
-        const __m128i must23 = _mm_or_si128(_mm_subs_epu8(_mm_alignr_epi8(in, prev, 14), _mm_set1_epi8(0xE0 - 0x80)),
-                                            _mm_subs_epu8(_mm_alignr_epi8(in, prev, 13), _mm_set1_epi8(0xF0 - 0x80)));
-        const __m128i err = _mm_xor_si128(_mm_and_si128(must23, _mm_set1_epi8(static_cast<char>(-128))), sc);
-        if (_mm_movemask_epi8(_mm_cmpeq_epi8(err, zero)) != 0xFFFF)
+        for (int blocks = 8; blocks != 0 && e - block >= 16; --blocks)
         {
-            break;
+            const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block))); // NOLINT(bugprone-casting-through-void)
+            const __m128i prev1 = _mm_alignr_epi8(in, prev, 15);
+            const __m128i sc = _mm_and_si128(_mm_and_si128(_mm_shuffle_epi8(t1h, _mm_and_si128(_mm_srli_epi16(prev1, 4), nibble)),
+                                             _mm_shuffle_epi8(t1l, _mm_and_si128(prev1, nibble))),
+                                             _mm_shuffle_epi8(t2h, _mm_and_si128(_mm_srli_epi16(in, 4), nibble)));
+            const __m128i must23 = _mm_or_si128(_mm_subs_epu8(_mm_alignr_epi8(in, prev, 14), _mm_set1_epi8(0xE0 - 0x80)),
+                                                _mm_subs_epu8(_mm_alignr_epi8(in, prev, 13), _mm_set1_epi8(0xF0 - 0x80)));
+            error = _mm_or_si128(error, _mm_xor_si128(_mm_and_si128(must23, _mm_set1_epi8(static_cast<char>(-128))), sc));
+            prev = in;
+            block += 16;
         }
-        prev = in;
+    }
+    return _mm_movemask_epi8(_mm_cmpeq_epi8(error, zero)) != 0xFFFF ? first : block;
+#endif
+}
+
+/*!
+@brief skip 16-byte blocks of well-formed UTF-8 at p (a character boundary)
+
+Like vector_utf8_run, but quotes, backslashes, and control characters are
+ordinary characters. Returns where fewer than 16 bytes are left; a sequence may
+be cut at that point, so the caller resumes at its start, one sequence at a
+time. If the check found an error in any block, @a block itself is returned,
+for the caller to find the error one sequence at a time.
+
+ASCII blocks need one test each and none of the tables of the UTF-8 check,
+which starts at the first block that is not ASCII (see
+vector_utf8_check_blocks()). Out of line, like the check.
+*/
+JSON_HEDLEY_NEVER_INLINE inline const unsigned char* vector_utf8_valid_blocks(const unsigned char* block, const unsigned char* e) noexcept
+{
+    const unsigned char* const first = block;
+    while (e - block >= 16)
+    {
+#if JSON_SCAN_NEON
+        if (JSON_HEDLEY_UNLIKELY(vmaxvq_u8(vld1q_u8(block)) >= 0x80))
+#else
+        if (JSON_HEDLEY_UNLIKELY(_mm_movemask_epi8(_mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block)))) != 0)) // NOLINT(bugprone-casting-through-void)
+#endif
+        {
+            return vector_utf8_check_blocks(first, block, e);
+        }
         block += 16;
     }
-#endif
     return block;
 }
 #endif
