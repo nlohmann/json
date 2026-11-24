@@ -10,9 +10,6 @@
 
 #include <cstddef> // nullptr_t
 #include <exception> // exception
-#if JSON_DIAGNOSTICS
-    #include <numeric> // accumulate
-#endif
 #include <stdexcept> // runtime_error
 #include <string> // to_string
 #include <vector> // vector
@@ -202,15 +199,22 @@ class exception : public std::exception
         std::string prefix;
         if (!tokens.empty())
         {
-            const auto str = std::accumulate(tokens.rbegin(), tokens.rend(), std::string{},
-                                             [](const std::string & a, const std::string & b)
+            // Build the path in a single pass over the tokens. Appending
+            // each token to the string built so far keeps this linear in
+            // the length of the path; joining with std::accumulate copied
+            // the whole prefix on every step, which was quadratic in the
+            // nesting depth (see #6107).
+            prefix.push_back('(');
+            for (auto it = tokens.rbegin(); it != tokens.rend(); ++it)
             {
-                return concat(a, '/', detail::escape(b));
-            });
-            prefix = concat('(', str, ") ");
+                prefix.push_back('/');
+                detail::escape_into(prefix, *it);
+            }
+            prefix += ") ";
         }
 
-        return concat(prefix, get_byte_positions(leaf_element));
+        prefix += get_byte_positions(leaf_element);
+        return prefix;
 #else
         return get_byte_positions(leaf_element);
 #endif
