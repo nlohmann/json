@@ -8,21 +8,21 @@ ones and how much of each the library supports.
 
 ## Overview
 
-| Variant                                                        | Kind                       | Support                                                                                         |
-|----------------------------------------------------------------|----------------------------|-------------------------------------------------------------------------------------------------|
-| [JSON](https://tools.ietf.org/html/rfc8259) (RFC 8259, ECMA-404) | the standard             | :white_check_mark: default                                                                      |
-| [JSONC](https://jsonc.org)                                     | relaxed syntax             | :white_check_mark: with `ignore_comments` (and `ignore_trailing_commas` where trailing commas are wanted) |
-| [JWCC](https://nigeltao.github.io/blog/2021/json-with-commas-comments.html) / [HuJSON](https://github.com/tailscale/hujson) | relaxed syntax | :white_check_mark: with `ignore_comments` and `ignore_trailing_commas`         |
-| [JSON5](https://spec.json5.org)                                | relaxed syntax             | :warning: comments and trailing commas only                                                     |
-| [Hjson](https://hjson.github.io), [HOCON](https://github.com/lightbend/config/blob/main/HOCON.md), [UCL](https://github.com/vstakhov/libucl), SJSON | configuration languages | :x: only input that is JSON plus `//`/`/* */` comments and trailing commas |
-| [YAML](https://yaml.org), [Amazon Ion](https://amazon-ion.github.io/ion-docs/) | other languages    | :x: see [converters](#other-languages-and-converters)                                           |
-| [JSON Lines](https://jsonlines.org), [NDJSON](https://github.com/ndjson/ndjson-spec) | several values | :white_check_mark: line by line, see [JSON Lines](json_lines.md)                              |
-| concatenated JSON                                              | several values             | :white_check_mark: with `operator>>`, see [Large, streamed, and partial input](large_and_partial_input.md#several-values-in-one-stream) |
-| [JSON text sequences](https://www.rfc-editor.org/rfc/rfc7464) (RFC 7464) | several values   | :warning: split the input yourself, see [below](#json-text-sequences-rfc-7464)                  |
-| [I-JSON](https://www.rfc-editor.org/rfc/rfc7493) (RFC 7493)    | restricted profile         | :warning: most rules are enforced, see [below](#i-json-rfc-7493)                                |
-| [JSON Canonicalization Scheme](https://www.rfc-editor.org/rfc/rfc8785) (RFC 8785) | restricted output | :x: `dump()` output is close, but not canonical                                          |
-| `NaN`, `Infinity` (JavaScript, Python)                         | number extension           | :x: rejected by the parser, written as `null`                                                   |
-| [JSON Schema](https://json-schema.org), [JSON-LD](https://json-ld.org), [GeoJSON](https://www.rfc-editor.org/rfc/rfc7946), [MongoDB Extended JSON](https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/) | conventions on top of JSON | :white_check_mark: parsed as plain JSON; interpreting them is up to you |
+| Variant                                                          | Kind                       | Support                                                                                                   |
+|------------------------------------------------------------------|----------------------------|-----------------------------------------------------------------------------------------------------------|
+| [JSON](https://tools.ietf.org/html/rfc8259) (RFC 8259, ECMA-404) | the standard               | :white_check_mark: default                                                                                |
+| [JSONC](https://jsonc.org)                                       | relaxed syntax             | :white_check_mark: with `ignore_comments` (and `ignore_trailing_commas` where trailing commas are wanted) |
+| [JWCC](https://nigeltao.github.io/blog/2021/json-with-commas-comments.html) / [HuJSON](https://github.com/tailscale/hujson) | relaxed syntax             | :white_check_mark: with `ignore_comments` and `ignore_trailing_commas`                                    |
+| [JSON5](https://spec.json5.org)                                  | relaxed syntax             | :warning: comments and trailing commas only                                                               |
+| [Hjson](https://hjson.github.io), [HOCON](https://github.com/lightbend/config/blob/main/HOCON.md), [UCL](https://github.com/vstakhov/libucl), SJSON | configuration languages    | :x: only input that is JSON plus `//`/`/* */` comments and trailing commas                                |
+| [YAML](https://yaml.org), [Amazon Ion](https://amazon-ion.github.io/ion-docs/) | other languages            | :x: see [converters](#other-languages-and-converters)                                                     |
+| [JSON Lines](https://jsonlines.org), [NDJSON](https://github.com/ndjson/ndjson-spec) | several values             | :white_check_mark: line by line, see [JSON Lines](json_lines.md)                                          |
+| concatenated JSON                                                | several values             | :white_check_mark: with `operator>>`, see [Large, streamed, and partial input](large_and_partial_input.md#several-values-in-one-stream) |
+| [JSON text sequences](https://www.rfc-editor.org/rfc/rfc7464) (RFC 7464) | several values             | :warning: split the input yourself, see [below](#json-text-sequences-rfc-7464)                            |
+| [I-JSON](https://www.rfc-editor.org/rfc/rfc7493) (RFC 7493)      | restricted profile         | :warning: most rules are enforced, see [below](#i-json-rfc-7493)                                          |
+| [JSON Canonicalization Scheme](https://www.rfc-editor.org/rfc/rfc8785) (RFC 8785) | restricted output          | :x: `dump()` output is close, but not canonical                                                           |
+| `NaN`, `Infinity` (JavaScript, Python)                           | number extension           | :x: rejected by the parser, written as `null`                                                             |
+| [JSON Schema](https://json-schema.org), [JSON-LD](https://json-ld.org), [GeoJSON](https://www.rfc-editor.org/rfc/rfc7946), [MongoDB Extended JSON](https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/) | conventions on top of JSON | :white_check_mark: parsed as plain JSON; interpreting them is up to you                                   |
 
 Whatever was parsed, [`dump`](../../api/basic_json/dump.md) always writes standard JSON: no comments, no trailing
 commas, and no `NaN` or `Infinity`.
@@ -53,7 +53,10 @@ json j = json::parse(input,
                      /* ignore_trailing_commas */ true);
 ```
 
-Comments are treated as whitespace and are not kept, so they are lost when the value is written again. See
+Comments are treated as whitespace and are not kept, so they are lost when the value is written again. This also holds
+for a [`json_document`](../../api/basic_json_document/index.md): [`dump()`](../../api/basic_json_view/dump.md) of its
+root view writes the same text as `dump()` of the parsed `json` value, even though the document keeps the source text
+with the comments. See
 [Comments](../comments.md) and [Trailing commas](../trailing_commas.md) for the details. The .NET options
 `JsonCommentHandling.Skip` and `AllowTrailingCommas` accept the same syntax.
 
@@ -63,7 +66,7 @@ Comments are treated as whitespace and are not kept, so they are lost when the v
 comments and trailing commas, it allows unquoted keys, single-quoted strings, line continuations in strings, more
 escape sequences (`\v`, `\0`, `\xHH`, ...), hexadecimal numbers, a leading `+`, a leading or trailing decimal point, and
 `Infinity` and `NaN`. With the two options above, the library accepts JSON5 documents that only use comments and
-trailing commas; any of the other extensions is a parse error.
+trailing commas; using any of the other extensions is a parse error.
 
 ### Configuration languages
 
@@ -77,7 +80,7 @@ support these extensions. A `#` comment in particular is always a parse error, e
 
 [YAML](https://yaml.org) and the text format of [Amazon Ion](https://amazon-ion.github.io/ion-docs/) are separate
 languages with their own data models, and the library does not read them. The [Ecosystem](../../community/ecosystem.md)
-page lists projects that convert between them and `nlohmann::json`, for example YAML and XML converters.
+page lists projects that convert YAML or XML to and from `nlohmann::json`.
 
 ## Several values in one input
 
@@ -128,14 +131,14 @@ To write a sequence, write `'\x1e'`, then `j.dump()`, then `'\n'` for every valu
 [I-JSON](https://www.rfc-editor.org/rfc/rfc7493) ("Internet JSON") is a subset of JSON meant for interoperable
 protocols. The table shows how the library handles each of its rules:
 
-| I-JSON rule                                                   | Library behavior                                                                            |
-|---------------------------------------------------------------|---------------------------------------------------------------------------------------------|
-| text must be UTF-8                                            | enforced: invalid UTF-8 is a parse error                                                    |
-| no surrogate code points in strings, also not as `\u` escapes | enforced: a lone surrogate such as `"\ud800"` is a parse error                              |
-| no noncharacters (such as U+FFFF) in strings                  | not enforced: they are accepted                                                             |
-| no duplicate object keys                                      | not enforced: they are accepted, and which value is kept is unspecified; see the [recipe for rejecting duplicate keys](parser_callbacks.md#recipe-rejecting-duplicate-object-keys) |
-| numbers should fit into an IEEE 754 double                    | numbers that overflow a double, such as `1E400`, throw [`out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406); integers are kept exactly up to 64 bits, larger ones are stored as doubles, see [number handling](../types/number_handling.md) |
-| top-level values should be objects or arrays                  | not enforced: any value is accepted at the top level                                        |
+| I-JSON rule                                                     | Library behavior                                                                              |
+|-----------------------------------------------------------------|-----------------------------------------------------------------------------------------------|
+| text must be UTF-8                                              | enforced: invalid UTF-8 is a parse error                                                      |
+| no surrogate code points in strings, also not as `\u` escapes   | enforced: a lone surrogate such as `"\ud800"` is a parse error                                |
+| no noncharacters (such as U+FFFF) in strings                    | not enforced: they are accepted                                                               |
+| no duplicate object keys                                        | not enforced: they are accepted; `parse` keeps the last value, while lookups in a [`json_view`](../json_view/differences.md#duplicate-keys) return the first; see the [recipe for rejecting duplicate keys](parser_callbacks.md#recipe-rejecting-duplicate-object-keys) |
+| numbers should fit into an IEEE 754 double                      | numbers that overflow a double, such as `1E400`, throw [`out_of_range.406`](../../home/exceptions.md#jsonexceptionout_of_range406); integers are kept exactly up to 64 bits, larger ones are stored as doubles, see [number handling](../types/number_handling.md) |
+| top-level values should be objects or arrays                    | not enforced: any value is accepted at the top level                                          |
 
 ### JSON Canonicalization Scheme (RFC 8785)
 
@@ -162,8 +165,10 @@ Formats such as [JSON Schema](https://json-schema.org), [JSON-LD](https://json-l
 [MongoDB Extended JSON](https://www.mongodb.com/docs/manual/reference/mongodb-extended-json/) are standard JSON with
 agreed meanings for certain keys or values, such as `{"$numberLong": "42"}` or a `"$comment"` key. The library parses
 and writes them like any other JSON; what the values mean is up to your code. For schema validation, see the
-[Ecosystem](../../community/ecosystem.md#schema-validation) page. Other standards built on JSON are supported directly:
-[JSON Pointer](../json_pointer.md), [JSON Patch](../json_patch.md), and [JSON Merge Patch](../merge_patch.md).
+[Ecosystem](../../community/ecosystem.md#schema-validation) page.
+
+A few other standards built on JSON are supported directly: [JSON Pointer](../json_pointer.md),
+[JSON Patch](../json_patch.md), and [JSON Merge Patch](../merge_patch.md).
 
 For compact binary encodings of the JSON data model, such as CBOR or MessagePack, see
 [Binary formats](../binary_formats/index.md).
