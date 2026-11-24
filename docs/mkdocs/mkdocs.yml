@@ -146,6 +146,7 @@ nav:
       - Parsing:
           - features/parsing/index.md
           - features/parsing/json_lines.md
+          - features/parsing/json_variants.md
           - features/parsing/large_and_partial_input.md
           - features/parsing/parse_exceptions.md
           - features/parsing/parser_callbacks.md

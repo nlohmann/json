@@ -42,5 +42,6 @@ For more information, see [JSON With Commas and Comments (JWCC)](https://nigelta
 
 - [`parse`](../api/basic_json/parse.md) - deserialize from a compatible input
 - [Comments](comments.md) - ignore `//` and `/* */` comments while parsing
+- [JSON variants](parsing/json_variants.md) - JSONC, JWCC, JSON5, and other formats related to JSON
 - [Parsing](parsing/index.md) - overview of the parsing functions
 - [Parsing Untrusted Input](parsing/untrusted_input.md) - limits and checks for input you do not control

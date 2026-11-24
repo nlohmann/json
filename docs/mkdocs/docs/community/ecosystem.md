@@ -34,6 +34,9 @@ For products, applications, and organizations that use the library, see [Custome
 
 ## Format converters
 
+For the formats related to JSON that the library reads itself, such as JSONC or JSON Lines, see
+[JSON variants](../features/parsing/json_variants.md).
+
 - [**tojson**](https://github.com/mircodz/tojson), a header-only converter between YAML/XML documents and
   `nlohmann::json`
 - [**json2xml**](https://github.com/testillano/json2xml), a header-only converter from `nlohmann::json` to XML for

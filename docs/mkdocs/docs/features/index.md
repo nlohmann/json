@@ -18,6 +18,8 @@ C++ types, and finally serialize it again.
 - [Editable documents](json_view/editing.md) — modify a parsed document without building a `json` tree.
 - [Images](json_view/images.md) — save a parsed document and load it again without parsing it.
 - [Comments](comments.md) and [trailing commas](trailing_commas.md) — opt-in relaxations of the JSON grammar.
+- [JSON variants](parsing/json_variants.md) — which of JSONC, JSON5, JSON Lines, I-JSON, and other formats related to
+  JSON the library supports.
 
 ## Accessing and modifying values
 
