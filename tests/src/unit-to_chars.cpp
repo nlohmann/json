@@ -22,6 +22,7 @@ using nlohmann::detail::bit_cast;
 #include <cstdio>
 #include <cstdlib>
 #include <limits>
+#include <map>
 #include <random>
 #include <string>
 #include <utility>
@@ -711,7 +712,121 @@ void check_shortest(double v)
     CHECK(digits_and_exponent(std::string(std_text.data(), r.ptr)) == de);
 #endif
 }
+/// a basic_json whose floating-point numbers are floats
+using json_with_float = nlohmann::basic_json<std::map, std::vector, std::string, bool, std::int64_t, std::uint64_t, float>;
+
+/// the correctly rounded float of a decimal text (as parse_double())
+float parse_float(const std::string& text)
+{
+    const json_with_float j = json_with_float::parse(text, nullptr, false);
+    return j.is_discarded() ? std::numeric_limits<float>::infinity() : j.get<float>();
+}
+
+/// Check the representation of a positive finite float as check_shortest():
+/// it reads back as the same value, and no representation with fewer digits
+/// does.
+void check_shortest_float(float v)
+{
+    std::array<char, 33> buf{};
+    char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, v);
+    const std::string text(buf.data(), end);
+    CAPTURE(text)
+    CHECK(bit_cast<std::uint32_t>(parse_float(text)) == bit_cast<std::uint32_t>(v));
+    const auto de = digits_and_exponent(text);
+    const std::string& digits = de.first;
+    if (digits.size() > 1)
+    {
+        const std::uint64_t mid = std::stoull(digits.substr(0, digits.size() - 1));
+        for (const std::uint64_t candidate :
+                {
+                    mid - 1, mid, mid + 1
+                })
+        {
+            CAPTURE(candidate)
+            const std::string shorter = std::to_string(candidate) + "e" + std::to_string(de.second + 1);
+            CHECK(bit_cast<std::uint32_t>(parse_float(shorter)) != bit_cast<std::uint32_t>(v));
+        }
+    }
+#if defined(JSON_HAS_CPP_17) && defined(__cpp_lib_to_chars) && !defined(__INTEL_COMPILER)
+    std::array<char, 64> std_text {};
+    const auto r = std::to_chars(std_text.data(), std_text.data() + std_text.size(), v, std::chars_format::scientific);
+    CHECK(digits_and_exponent(std::string(std_text.data(), r.ptr)) == de);
+#endif
+}
 } // namespace
+
+TEST_CASE("shortest digits of floats")
+{
+    // (all 2^31 - 2^23 - 1 positive finite floats were checked against
+    // std::to_chars when this was written; these are the edge cases)
+    SECTION("boundary values")
+    {
+        for (const float v :
+                {
+                    std::numeric_limits<float>::min(), std::numeric_limits<float>::max(), std::numeric_limits<float>::denorm_min(),
+                    std::nextafter(std::numeric_limits<float>::min(), 0.0f), std::nextafter(std::numeric_limits<float>::max(), 0.0f),
+                    1.0f, 2.0f, 0.1f, 0.3f, 1e7f, 1e-5f, 123456.7f, 16777216.0f, 16777217.0f, 7.0385307e-26f
+                })
+        {
+            check_shortest_float(v);
+        }
+        // all powers of two (their rounding interval is narrower below)
+        for (int e = -149; e <= 127; ++e)
+        {
+            check_shortest_float(std::ldexp(1.0f, e));
+        }
+        // powers of ten and their neighbors (from 1e-44: 1e-45 reads as the
+        // smallest float, which is in the list above, and the float below it is 0)
+        for (int e = -44; e <= 38; ++e)
+        {
+            const float p = parse_float("1e" + std::to_string(e));
+            check_shortest_float(p);
+            check_shortest_float(std::nextafter(p, 0.0f));
+            check_shortest_float(std::nextafter(p, std::numeric_limits<float>::infinity()));
+        }
+    }
+
+    SECTION("where Grisu2 wrote other digits")
+    {
+        // Grisu2 leaves out the decimals on the boundary of the rounding
+        // interval and may take the other one of two equally close decimals;
+        // both read back as the same float either way
+        const auto text = [](float v) -> std::string
+        {
+            std::array<char, 33> buf{};
+            char* end = nlohmann::detail::to_chars(buf.data(), buf.data() + 32, v);
+            return {buf.data(), end};
+        };
+        const auto grisu2_text = [](float v) -> std::string
+        {
+            std::array<char, 33> buf{};
+            char* end = nlohmann::detail::dtoa_impl::write_positive_grisu2(buf.data(), buf.data() + 32, v);
+            return {buf.data(), end};
+        };
+        // 134218208 = 2^27 + 32: 1.342182e+08 is the upper end of its rounding interval
+        CHECK(text(134218208.0f) == "1.342182e+08");
+        CHECK(grisu2_text(134218208.0f) == "1.3421821e+08");
+        check_shortest_float(134218208.0f);
+        // 2097156.25 = 2^21 + 4.25: 2097156.2 and 2097156.3 are equally close; the even digit
+        CHECK(text(2097156.25f) == "2.0971562e+06");
+        CHECK(grisu2_text(2097156.25f) == "2.0971563e+06");
+        check_shortest_float(2097156.25f);
+    }
+
+    SECTION("random floats")
+    {
+        std::mt19937 rng(5295); // NOLINT(cert-msc32-c,cert-msc51-cpp,bugprone-random-generator-seed): reproducible
+        for (int i = 0; i < 100000; ++i)
+        {
+            const std::uint32_t bits = static_cast<std::uint32_t>(rng()) & 0x7FFFFFFFu;
+            const auto v = bit_cast<float>(bits);
+            if (std::isfinite(v) && bits != 0)
+            {
+                check_shortest_float(v);
+            }
+        }
+    }
+}
 
 TEST_CASE("shortest digits of doubles")
 {
@@ -791,11 +906,16 @@ TEST_CASE("shortest digits of doubles")
 TEST_CASE("choice of the conversion")
 {
     using nlohmann::detail::dtoa_impl::is_binary64;
+    using nlohmann::detail::dtoa_impl::float_conversion;
 
     SECTION("by the format of the type")
     {
-        // Zmij needs binary64 numbers; everything else uses Grisu2
+        // Zmij needs binary64 or binary32 numbers; everything else uses Grisu2
         static_assert(!is_binary64<float>::value, "float is not binary64");
+        static_assert(float_conversion<float>::value == (std::numeric_limits<float>::is_iec559 && std::numeric_limits<float>::digits == 24 ? 2 : 0),
+                      "float is binary32 where it is IEEE 754 with 24 digits");
+        static_assert(float_conversion<double>::value == (is_binary64<double>::value ? 1 : 0), "double is binary64 or uses Grisu2");
+        static_assert(float_conversion<int>::value == 0, "integers use Grisu2");
         static_assert(is_binary64<double>::value == (std::numeric_limits<double>::is_iec559 && std::numeric_limits<double>::digits == 53),
                       "double is binary64 where it is IEEE 754 with 53 digits");
         static_assert(!is_binary64<int>::value, "integers are not binary64");
@@ -805,7 +925,7 @@ TEST_CASE("choice of the conversion")
         CHECK(is_binary64<double>::value);
     }
 
-    SECTION("float: Grisu2, double: Zmij")
+    SECTION("float and double: Zmij")
     {
         // 5.3165205877497296e+16 is one of the doubles for which Grisu2 does not find the shortest digits
         constexpr double value = 5.3165205877497296e+16;
@@ -817,11 +937,12 @@ TEST_CASE("choice of the conversion")
         end = nlohmann::detail::dtoa_impl::write_positive_grisu2(buf.data(), last, value);
         CHECK(std::string(buf.data(), end) == "5.3165205877497296e+16");
 
-        constexpr float f = 1.1754944e-38f;
+        // 134218208.0f is one of the floats for which Grisu2 does not find the shortest digits
+        constexpr float f = 134218208.0f;
         end = nlohmann::detail::dtoa_impl::write_positive(buf.data(), last, f);
-        const std::string dispatched(buf.data(), end);
+        CHECK(std::string(buf.data(), end) == "1.342182e+08");
         end = nlohmann::detail::dtoa_impl::write_positive_grisu2(buf.data(), last, f);
-        CHECK(dispatched == std::string(buf.data(), end));
+        CHECK(std::string(buf.data(), end) == "1.3421821e+08");
     }
 
     SECTION("long double with the format of a double: Zmij")
