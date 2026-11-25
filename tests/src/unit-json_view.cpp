@@ -535,6 +535,33 @@ TEST_CASE("json_view")
             CHECK_THROWS_AS(from_null = json_document::parse(static_cast<std::FILE*>(nullptr)), json::parse_error&);
         }
 
+        // a regular file is read in one block, from its position to its end
+        std::FILE* tail_file = std::tmpfile(); // NOLINT(cppcoreguidelines-owning-memory)
+        if (tail_file != nullptr)
+        {
+            const std::string prefix = "garbage ";
+            CHECK(std::fwrite(prefix.data(), 1, prefix.size(), tail_file) == prefix.size());
+            CHECK(std::fwrite(text.data(), 1, text.size(), tail_file) == text.size());
+            CHECK(std::fseek(tail_file, static_cast<long>(prefix.size()), SEEK_SET) == 0);
+#if defined(_WIN32) || defined(__unix__) || defined(__APPLE__)
+            CHECK(nlohmann::detail::view::file_rest(tail_file) == text.size());
+#endif
+            const json_document from_tail = json_document::parse(tail_file);
+            CHECK(from_tail.source() == text);
+            CHECK(from_tail.root().materialize() == json::parse(text));
+            CHECK(nlohmann::detail::view::file_rest(tail_file) == 0);
+            CHECK(std::fclose(tail_file) == 0); // NOLINT(cppcoreguidelines-owning-memory)
+        }
+
+        // a stream is read from its position to its end as well, in one block
+        // when its buffer knows how much is left
+        std::istringstream tail_stream("garbage " + text);
+        tail_stream.seekg(8);
+        const json_document from_tail_stream = json_document::parse(tail_stream);
+        CHECK(from_tail_stream.source() == text);
+        CHECK(from_tail_stream.root().materialize() == json::parse(text));
+        CHECK(tail_stream.eof());
+
         // a stream without a buffer is an empty input
         std::istream no_buffer(nullptr);
         CHECK(json_document::parse(no_buffer, false).is_discarded());
