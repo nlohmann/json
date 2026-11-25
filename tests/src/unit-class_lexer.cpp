@@ -2044,6 +2044,95 @@ TEST_CASE("string scanning kernels")
     CHECK(nlohmann::detail::read_eight_bytes(reinterpret_cast<const char*>(bytes.data()) + 3) == 0x0B0A090807060504u);
 }
 
+TEST_CASE("vector UTF-8 check with and without AVX2")
+{
+    // on x86-64 CPUs with AVX2, the UTF-8 check takes 32 bytes per step; it
+    // must stop where the 16-byte check (and the byte-wise check) stops, for
+    // every piece at every position of every block, and both are tested there
+    const auto reference_bulk_run = [](const unsigned char* data, std::size_t n)
+    {
+        std::size_t i = 0;
+        while (i < n)
+        {
+            if (data[i] < 0x80u)
+            {
+                if (nlohmann::detail::is_string_special(data[i]))
+                {
+                    break;
+                }
+                ++i;
+                continue;
+            }
+            const std::size_t seq = nlohmann::detail::validate_one_utf8(data + i, n - i);
+            if (seq == 0)
+            {
+                break;
+            }
+            i += seq;
+        }
+        return i;
+    };
+    const std::vector<std::string> backgrounds = {"x", "\xC3\xA9", "\xE6\x97\xA5", "\xF0\x9F\x98\x80"};
+    const std::vector<std::string> pieces =
+    {
+        "", "\"", "\\", "\n", "\xC3\xA4", "\xE2\x82\xAC", "\xF0\x9F\x98\x80", "\xED\x9F\xBF",
+        "\x80", "\xC0\x80", "\xC3", "\xE2\x82", "\xED\xA0\x80", "\xF4\x90\x80\x80", "\xFF", "\"\xFF", "\xFF\"",
+    };
+
+    const auto check_all = [&]()
+    {
+        std::size_t checked = 0;
+        for (const auto& background : backgrounds)
+        {
+            std::string filler;
+            while (filler.size() < 100)
+            {
+                filler += background;
+            }
+            for (std::size_t length = 0; length <= 80; ++length)
+            {
+                for (std::size_t pos = 0; pos <= length; ++pos)
+                {
+                    for (const auto& piece : pieces)
+                    {
+                        const std::string text = filler.substr(0, pos) + piece + filler.substr(pos, length - pos);
+                        const auto* data = reinterpret_cast<const unsigned char*>(text.data()); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                        const std::size_t run = nlohmann::detail::scalar_string_bulk_run(data, text.size());
+                        const bool valid = nlohmann::detail::valid_utf8_string(data, text.size());
+                        if (run != reference_bulk_run(data, text.size()) || valid != (nlohmann::detail::valid_utf8_prefix(data, text.size()) == text.size()))
+                        {
+                            CAPTURE(text)
+                            CHECK(run == reference_bulk_run(data, text.size()));
+                            CHECK(valid == (nlohmann::detail::valid_utf8_prefix(data, text.size()) == text.size()));
+                        }
+                        ++checked;
+                    }
+                }
+            }
+        }
+        // (one CHECK per string would make the test ten times slower)
+        CHECK(checked == backgrounds.size() * pieces.size() * 81 * 82 / 2);
+    };
+
+    // the answer of the CPU check is kept (always "no" where the library has
+    // no AVX2 code)
+    nlohmann::detail::cpu_avx2_state().store(0);
+    CHECK(nlohmann::detail::cpu_has_avx2() == nlohmann::detail::cpu_avx2());
+    CHECK(nlohmann::detail::cpu_avx2_state().load() == (nlohmann::detail::cpu_avx2() ? 2 : 1));
+
+    SECTION("16 bytes per step")
+    {
+        nlohmann::detail::cpu_avx2_state().store(1);
+        check_all();
+        nlohmann::detail::cpu_avx2_state().store(0);
+    }
+
+    SECTION("the widest vectors of the CPU")
+    {
+        check_all();
+    }
+}
+
 TEST_CASE("find_ascii_copyable_run agrees with is_ascii_copyable for every byte")
 {
     // the SWAR mask in find_ascii_copyable_run() encodes the predicate a

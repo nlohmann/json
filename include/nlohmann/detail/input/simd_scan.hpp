@@ -79,6 +79,24 @@
     #define JSON_SCAN_SSSE3_DISPATCH 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
     #define JSON_SCAN_SSSE3_TARGET
 #endif
+// The UTF-8 check of string runs (vector_utf8_run) also has a 32-byte variant
+// for CPUs with AVX2 (most x86-64 CPUs since about 2015), compiled with a
+// function attribute and chosen at run time inside the out-of-line 16-byte
+// check, whatever the flags of the translation unit: the CPU check adds no code
+// to the lexer's string loop, and every translation unit has the same
+// definitions. Not with MSVC (not measured), and not with GCC for Windows,
+// which does not align the stack for spilled AVX registers (GCC bug 54412).
+#if JSON_SCAN_SSE2 && !defined(NLOHMANN_JSON_NO_TARGET_ATTRIBUTE) && !(defined(_WIN32) && !defined(__clang__)) && ((defined(__clang__) && __clang_major__ >= 4) || (defined(__GNUC__) && !defined(__clang__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9)) && !defined(__cpp_modules)))
+    #ifndef NLOHMANN_JSON_CPUID_INCLUDED
+        #define NLOHMANN_JSON_CPUID_INCLUDED
+        #include <cpuid.h>
+    #endif
+    #include <immintrin.h>
+    #define JSON_SCAN_AVX2_DISPATCH 1 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+    #define JSON_SCAN_AVX2_TARGET __attribute__((target("avx2")))
+#else
+    #define JSON_SCAN_AVX2_DISPATCH 0 // NOLINT(cppcoreguidelines-macro-to-enum,modernize-macro-to-enum)
+#endif
 #define JSON_SCAN_VECTOR (JSON_SCAN_NEON || JSON_SCAN_SSE2)
 #define JSON_SCAN_VECTOR_UTF8 (JSON_SCAN_NEON || JSON_SCAN_SSSE3 || JSON_SCAN_SSSE3_DISPATCH)
 
@@ -179,6 +197,55 @@ JSON_HEDLEY_ALWAYS_INLINE bool cpu_has_ssse3() noexcept
 }
 #endif
 
+/// whether the CPU has AVX2 (CPUID leaf 7, EBX bit 5) and the OS saves the
+/// YMM registers (CPUID leaf 1, ECX bits 27 and 28; XCR0 bits 1 and 2); false
+/// where the library has no AVX2 code
+inline bool cpu_avx2() noexcept
+{
+#if JSON_SCAN_AVX2_DISPATCH
+    unsigned eax = 0;
+    unsigned ebx = 0;
+    unsigned ecx = 0;
+    unsigned edx = 0;
+    if (__get_cpuid_max(0, nullptr) < 7 || __get_cpuid(1, &eax, &ebx, &ecx, &edx) == 0 || (ecx & (3u << 27u)) != (3u << 27u))
+    {
+        return false;
+    }
+    unsigned xcr0 = 0; // NOLINT(misc-const-correctness): written by the assembly
+    unsigned xcr0_high = 0; // NOLINT(misc-const-correctness)
+    __asm__ __volatile__("xgetbv" : "=a"(xcr0), "=d"(xcr0_high) : "c"(0)); // NOLINT(hicpp-no-assembler)
+    if ((xcr0 & 6u) != 6u)
+    {
+        return false;
+    }
+    __cpuid_count(7, 0, eax, ebx, ecx, edx);
+    return (ebx & (1u << 5u)) != 0;
+#else
+    return false;
+#endif
+}
+
+/// the answer of cpu_avx2(), asked once (0: not asked yet, 1: no, 2: yes; see
+/// cpu_has_ssse3()); the tests store 1 to check the 16-byte code on CPUs with
+/// AVX2, and 0 to ask again
+inline std::atomic<int>& cpu_avx2_state() noexcept
+{
+    static std::atomic<int> known{0};
+    return known;
+}
+
+/// whether the CPU has AVX2
+JSON_HEDLEY_ALWAYS_INLINE bool cpu_has_avx2() noexcept
+{
+    int state = cpu_avx2_state().load(std::memory_order_relaxed);
+    if (JSON_HEDLEY_UNLIKELY(state == 0))
+    {
+        state = cpu_avx2() ? 2 : 1;
+        cpu_avx2_state().store(state, std::memory_order_relaxed);
+    }
+    return state == 2;
+}
+
 #if JSON_SCAN_VECTOR_UTF8
 /// Tables of the UTF-8 check of J. Keiser and D. Lemire, "Validating UTF-8 In
 /// Less Than One Instruction Per Byte" (2021), as in simdjson ("lookup4"): each
@@ -230,6 +297,112 @@ const std::array<std::uint8_t, 16> utf8_lookup4<Dummy>::byte_2_high =
     }
 };
 
+#if JSON_SCAN_AVX2_DISPATCH
+/// the errors of the UTF-8 check in 16 bytes @a in after @a prev (see
+/// vector_utf8_run()), for the 32-byte functions
+JSON_SCAN_AVX2_TARGET JSON_HEDLEY_ALWAYS_INLINE __m128i utf8_errors_avx2_16(const __m128i in, const __m128i prev, const __m128i t1h, const __m128i t1l, const __m128i t2h) noexcept
+{
+    const __m128i nibble = _mm_set1_epi8(0x0F);
+    const __m128i prev1 = _mm_alignr_epi8(in, prev, 15);
+    const __m128i sc = _mm_and_si128(_mm_and_si128(_mm_shuffle_epi8(t1h, _mm_and_si128(_mm_srli_epi16(prev1, 4), nibble)),
+                                     _mm_shuffle_epi8(t1l, _mm_and_si128(prev1, nibble))),
+                                     _mm_shuffle_epi8(t2h, _mm_and_si128(_mm_srli_epi16(in, 4), nibble)));
+    const __m128i must23 = _mm_or_si128(_mm_subs_epu8(_mm_alignr_epi8(in, prev, 14), _mm_set1_epi8(0xE0 - 0x80)),
+                                        _mm_subs_epu8(_mm_alignr_epi8(in, prev, 13), _mm_set1_epi8(0xF0 - 0x80)));
+    return _mm_xor_si128(_mm_and_si128(must23, _mm_set1_epi8(static_cast<char>(-128))), sc);
+}
+
+/// the errors of the UTF-8 check in 32 bytes @a in after @a prev: as with 16
+/// bytes, but the byte shifts work within each 16-byte lane, so the bytes
+/// before each lane are put together first
+JSON_SCAN_AVX2_TARGET JSON_HEDLEY_ALWAYS_INLINE __m256i utf8_errors_avx2_32(const __m256i in, const __m256i prev, const __m256i t1h, const __m256i t1l, const __m256i t2h) noexcept
+{
+    const __m256i nibble = _mm256_set1_epi8(0x0F);
+    const __m256i before = _mm256_permute2x128_si256(prev, in, 0x21); // the upper half of prev, the lower half of in
+    const __m256i prev1 = _mm256_alignr_epi8(in, before, 15);
+    const __m256i sc = _mm256_and_si256(_mm256_and_si256(_mm256_shuffle_epi8(t1h, _mm256_and_si256(_mm256_srli_epi16(prev1, 4), nibble)),
+                                        _mm256_shuffle_epi8(t1l, _mm256_and_si256(prev1, nibble))),
+                                        _mm256_shuffle_epi8(t2h, _mm256_and_si256(_mm256_srli_epi16(in, 4), nibble)));
+    const __m256i must23 = _mm256_or_si256(_mm256_subs_epu8(_mm256_alignr_epi8(in, before, 14), _mm256_set1_epi8(0xE0 - 0x80)),
+                                           _mm256_subs_epu8(_mm256_alignr_epi8(in, before, 13), _mm256_set1_epi8(0xF0 - 0x80)));
+    return _mm256_xor_si256(_mm256_and_si256(must23, _mm256_set1_epi8(static_cast<char>(-128))), sc);
+}
+
+/// the quotes, backslashes, and control characters in 16 bytes (see vector_utf8_run())
+JSON_SCAN_AVX2_TARGET JSON_HEDLEY_ALWAYS_INLINE __m128i string_specials_avx2_16(const __m128i in) noexcept
+{
+    return _mm_or_si128(_mm_cmpeq_epi8(in, _mm_set1_epi8('\\')),
+                        _mm_cmpeq_epi8(_mm_subs_epu8(_mm_xor_si128(in, _mm_set1_epi8(2)), _mm_set1_epi8(32)), _mm_setzero_si128()));
+}
+
+/// vector_utf8_run() with AVX2: 32 bytes per step, then one 16-byte step
+JSON_SCAN_AVX2_TARGET JSON_HEDLEY_NEVER_INLINE inline bool vector_utf8_run_avx2(const unsigned char* p, const unsigned char* e, const unsigned char*& block_out) noexcept
+{
+    using lookup = utf8_lookup4<>;
+    const unsigned char* block = p;
+    const __m128i t1h_16 = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_high.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t1l_16 = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_1_low.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m128i t2h_16 = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(lookup::byte_2_high.data()))); // NOLINT(bugprone-casting-through-void)
+    const __m256i t1h = _mm256_broadcastsi128_si256(t1h_16);
+    const __m256i t1l = _mm256_broadcastsi128_si256(t1l_16);
+    const __m256i t2h = _mm256_broadcastsi128_si256(t2h_16);
+    const __m256i zero = _mm256_setzero_si256();
+    __m256i prev = zero;
+    while (e - block >= 32)
+    {
+        const __m256i in = _mm256_loadu_si256(static_cast<const __m256i*>(static_cast<const void*>(block))); // NOLINT(bugprone-casting-through-void)
+        const __m256i special = _mm256_or_si256(_mm256_cmpeq_epi8(in, _mm256_set1_epi8('\\')),
+                                                _mm256_cmpeq_epi8(_mm256_subs_epu8(_mm256_xor_si256(in, _mm256_set1_epi8(2)), _mm256_set1_epi8(32)), zero));
+        const __m256i err = utf8_errors_avx2_32(in, prev, t1h, t1l, t2h);
+        const auto special_bits = static_cast<unsigned>(_mm256_movemask_epi8(special));
+        const auto err_bits = ~static_cast<unsigned>(_mm256_movemask_epi8(_mm256_cmpeq_epi8(err, zero)));
+        if (special_bits != 0)
+        {
+            // errors up to the special byte count (see vector_utf8_run()); for
+            // k = 31, 2u << k is 0 and the mask has all bits set
+            const auto k = static_cast<unsigned>(count_trailing_zeros(static_cast<std::uint64_t>(special_bits)));
+            if ((err_bits & ((2u << k) - 1u)) == 0)
+            {
+                block_out = block + k;
+                return true;
+            }
+            block_out = block;
+            return false;
+        }
+        if (err_bits != 0)
+        {
+            block_out = block;
+            return false;
+        }
+        prev = in;
+        block += 32;
+    }
+    if (e - block >= 16)
+    {
+        const __m128i in = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(block))); // NOLINT(bugprone-casting-through-void)
+        const __m128i err = utf8_errors_avx2_16(in, _mm256_extracti128_si256(prev, 1), t1h_16, t1l_16, t2h_16);
+        const auto special_bits = static_cast<unsigned>(_mm_movemask_epi8(string_specials_avx2_16(in)));
+        const auto err_bits = ~static_cast<unsigned>(_mm_movemask_epi8(_mm_cmpeq_epi8(err, _mm_setzero_si128()))) & 0xFFFFu;
+        if (special_bits != 0)
+        {
+            const auto k = static_cast<unsigned>(count_trailing_zeros(static_cast<std::uint64_t>(special_bits)));
+            if ((err_bits & ((2u << k) - 1u)) == 0)
+            {
+                block_out = block + k;
+                return true;
+            }
+        }
+        else if (err_bits == 0)
+        {
+            block += 16;
+        }
+    }
+    block_out = block;
+    return false;
+}
+
+#endif
+
 /*!
 @brief the run of plain string bytes and well-formed UTF-8 at p (a character
        boundary), 16 bytes per step
@@ -240,10 +413,17 @@ to it. Returns true with @a block at that byte; returns false with @a block at
 the start of the 16 bytes where the check found ill-formed UTF-8 or where
 fewer than 16 bytes are left, for the caller to finish one sequence at a time.
 Out of line, so that no constants of the check occupy registers in the
-caller's loop. On x86-64, it is compiled for SSSE3 (see cpu_has_ssse3()).
+caller's loop. On x86-64, it is compiled for SSSE3 (see cpu_has_ssse3()), and
+hands runs of 32 bytes or more to vector_utf8_run_avx2() where the CPU has AVX2.
 */
 JSON_SCAN_SSSE3_TARGET JSON_HEDLEY_NEVER_INLINE inline bool vector_utf8_run(const unsigned char* p, const unsigned char* e, const unsigned char*& block_out) noexcept
 {
+#if JSON_SCAN_AVX2_DISPATCH
+    if (e - p >= 32 && cpu_has_avx2())
+    {
+        return vector_utf8_run_avx2(p, e, block_out);
+    }
+#endif
     using lookup = utf8_lookup4<>;
     const unsigned char* block = p;
 #if JSON_SCAN_NEON
