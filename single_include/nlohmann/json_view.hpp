@@ -7957,7 +7957,15 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <algorithm> // max
 #include <cstddef> // size_t
 #ifndef JSON_NO_IO
-    #include <cstdio> // FILE, fread
+    #include <cstdio> // FILE, fread, ftell
+    #if defined(_WIN32)
+        #include <stdio.h> // _fileno, _ftelli64 // NOLINT(hicpp-deprecated-headers,modernize-deprecated-headers)
+        #include <sys/types.h> // (for sys/stat.h)
+        #include <sys/stat.h> // _fstat64, _S_IFMT, _S_IFREG
+    #elif defined(__unix__) || defined(__APPLE__)
+        #include <stdio.h> // fileno // NOLINT(hicpp-deprecated-headers,modernize-deprecated-headers)
+        #include <sys/stat.h> // fstat, S_ISREG
+    #endif
 #endif
 #include <istream> // istream, streambuf
 #include <string> // basic_string, char_traits, string
@@ -8078,6 +8086,15 @@ adapter_input<typename std::decay<Adapter>::type> make_adapter_input(Adapter&& i
     return {std::forward<Adapter>(ia)};
 }
 
+/// the size of a read block, and the least room offered to a read: one page,
+/// the usual size of a filesystem block. It is a conventional size, not a tuned
+/// one: it only has to be large enough that a read is never tiny and that the
+/// read which finds the end of the input needs no regrowth of the string
+constexpr std::size_t read_block_size() noexcept
+{
+    return 4096;
+}
+
 /// append the rest of a stream: its characters need no conversion, so they are
 /// read in blocks from the stream buffer, straight into buf (reusing its
 /// capacity). As the library's stream adapter, this reads the stream buffer
@@ -8089,10 +8106,20 @@ inline void append_stream(std::string& buf, std::istream& is)
     {
         return;
     }
+    // room for the rest when the stream buffer knows how much is left (for a
+    // file with libstdc++, the rest of the file), and for the read that finds
+    // the end: the input is then read in one block, without a reallocation and
+    // copy at each doubling of the string (only a hint: the loop below reads
+    // what is there)
+    const std::streamsize rest = sb->in_avail();
+    if (rest > 0 && static_cast<std::size_t>(rest) < buf.max_size() - buf.size() - read_block_size())
+    {
+        buf.reserve(buf.size() + static_cast<std::size_t>(rest) + read_block_size());
+    }
     for (;;)
     {
         const std::size_t used = buf.size();
-        const std::size_t room = (std::max)(buf.capacity() - used, std::size_t{4096});
+        const std::size_t room = (std::max)(buf.capacity() - used, read_block_size());
         buf.resize(used + room);
         const std::streamsize got = sb->sgetn(&buf[used], static_cast<std::streamsize>(room));
         buf.resize(used + static_cast<std::size_t>((std::max)(got, std::streamsize{0})));
@@ -8115,15 +8142,55 @@ struct is_c_stream
 {};
 
 #ifndef JSON_NO_IO
+/// the number of bytes left in a C stream that is a regular file (from its
+/// size and position), 0 for anything else and on other systems: a hint for
+/// the room to reserve; f is not null
+inline unsigned long long file_rest(std::FILE* f) noexcept
+{
+#if defined(_WIN32)
+    struct _stat64 st {};
+    if (::_fstat64(_fileno(f), &st) == 0 && (st.st_mode & _S_IFMT) == _S_IFREG)
+    {
+        const long long here = ::_ftelli64(f);
+        if (here >= 0 && st.st_size > here)
+        {
+            return static_cast<unsigned long long>(st.st_size - here);
+        }
+    }
+#elif defined(__unix__) || defined(__APPLE__)
+    struct stat st {};
+    if (::fstat(fileno(f), &st) == 0 && S_ISREG(st.st_mode))
+    {
+        const long here = std::ftell(f);
+        if (here >= 0 && st.st_size > here)
+        {
+            return static_cast<unsigned long long>(st.st_size - here);
+        }
+    }
+#else
+    static_cast<void>(f);
+#endif
+    return 0;
+}
+
 /// append the rest of a C stream: in blocks with fread, not character by
-/// character (the library's file adapter reads with fgetc);
-/// f is not null
+/// character (the library's file adapter reads with fgetc), and in one block
+/// when it is a regular file of known size; f is not null
 inline void append_file(std::string& buf, std::FILE* f)
 {
+    // room for the rest of a regular file and the byte that shows its end:
+    // the file is then read in one block, without a reallocation and copy at
+    // each doubling of the string (only a hint: the loop below reads what is
+    // there)
+    const unsigned long long rest = file_rest(f);
+    if (rest > 0 && rest < buf.max_size() - buf.size() - 1)
+    {
+        buf.reserve(buf.size() + static_cast<std::size_t>(rest) + 1);
+    }
     for (;;)
     {
         const std::size_t used = buf.size();
-        const std::size_t room = (std::max)(buf.capacity() - used, std::size_t{4096});
+        const std::size_t room = (std::max)(buf.capacity() - used, read_block_size());
         buf.resize(used + room);
         const std::size_t got = std::fread(&buf[used], 1, room, f);
         buf.resize(used + got);
