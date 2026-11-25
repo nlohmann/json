@@ -168,8 +168,7 @@ library; pick one or type it to see the row):
 - Integer numbers are serialized as is; that is, no scientific notation is used.
 - Floating-point numbers are serialized with the fewest digits that read back as the same value (the closest such
   digits if there are several), in the layout of the `#!c %g` printf modifier: `#!c 1.5`, `#!c 100.0`, `#!c 1e+100`.
-  Doubles are converted with the algorithm of [Żmij](https://github.com/vitaut/zmij), floats with Grisu2, which
-  can write more digits than necessary.
+  Doubles and floats are converted with the algorithm of [Żmij](https://github.com/vitaut/zmij).
 
 !!! hint "Notes regarding precision of floating-point numbers"
 

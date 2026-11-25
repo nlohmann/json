@@ -160,22 +160,37 @@ struct shortest_decimal
     bool has_digit;          ///< whether the shortest decimal is integral * 10 + digit
 };
 
-/// The shortest decimal in the rounding interval of a positive finite double
-/// given by its bits, the closest one if there are several (to_decimal of
-/// Zmij, which keeps the last digit apart: the 15 or 16 digits before it can be
-/// converted without a multiplication by 10 first). Always inlined: GCC
-/// otherwise calls it, and its result goes through memory.
-JSON_HEDLEY_ALWAYS_INLINE shortest_decimal to_shortest(std::uint64_t bits) noexcept
+/// the bit layout of an IEEE 754 binary format: SigBits significand bits
+/// (without the implicit bit) below ExpBits exponent bits
+template<int SigBits, int ExpBits>
+struct binary_format
+{
+    static constexpr unsigned sig_bits = SigBits;
+    static constexpr unsigned exp_mask = (1u << static_cast<unsigned>(ExpBits)) - 1u;
+    static constexpr int exp_offset = (1 << (ExpBits - 1)) - 1 + SigBits; // the bias plus the significand bits
+};
+using binary64_format = binary_format<52, 11>;
+using binary32_format = binary_format<23, 8>;
+
+/// The shortest decimal in the rounding interval of a positive finite number of
+/// the format Format given by its bits, the closest one if there are several
+/// (to_decimal of Zmij, which keeps the last digit apart: the 15 or 16 digits
+/// of a normal double before it, 6 or 7 of a float, can be converted without a
+/// multiplication by 10 first). As in Zmij, the same computation serves both
+/// formats; only the bit layout differs. Always inlined: GCC otherwise calls
+/// it, and its result goes through memory.
+template<typename Format>
+JSON_HEDLEY_ALWAYS_INLINE shortest_decimal to_shortest_of(std::uint64_t bits) noexcept
 {
     constexpr int extra_shift = 9;
-    const auto raw_exp = static_cast<int>((bits >> 52u) & 0x7FFu);
-    std::uint64_t bin_sig = bits & ((std::uint64_t{1} << 52u) - 1);
+    const auto raw_exp = static_cast<int>((bits >> Format::sig_bits) & Format::exp_mask);
+    std::uint64_t bin_sig = bits & ((std::uint64_t{1} << Format::sig_bits) - 1);
     // a power of two has a narrower interval below (except the smallest normal)
     const bool regular = bin_sig != 0 || raw_exp <= 1;
-    const int bin_exp = (raw_exp == 0 ? 1 : raw_exp) - 1075;
+    const int bin_exp = (raw_exp == 0 ? 1 : raw_exp) - Format::exp_offset;
     if (raw_exp != 0)
     {
-        bin_sig |= std::uint64_t{1} << 52u;
+        bin_sig |= std::uint64_t{1} << Format::sig_bits;
     }
     // floor(log10(2^bin_exp)), or floor(log10(3/4 * 2^bin_exp)) for the irregular case
     const int dec_exp = ((bin_exp * 315653) - (regular ? 0 : 131072)) >> 20;
@@ -215,6 +230,12 @@ JSON_HEDLEY_ALWAYS_INLINE shortest_decimal to_shortest(std::uint64_t bits) noexc
     integral += round_up ? 1u : 0u;
     // if the shorter candidate is outside the rounding interval: one digit more
     return shortest_decimal{integral, dec_exp, static_cast<unsigned char>(digit), !round_up && !round_down};
+}
+
+/// to_shortest_of() for a double given by its bits
+JSON_HEDLEY_ALWAYS_INLINE shortest_decimal to_shortest(std::uint64_t bits) noexcept
+{
+    return to_shortest_of<binary64_format>(bits);
 }
 
 }  // namespace zmij
