@@ -102,6 +102,9 @@
 
 
 
+#if defined(__linux__)
+    #include <sys/mman.h>
+#endif
 #include <array> // array
 #include <cstddef> // size_t
 #include <cstdint> // uint8_t, uint32_t
@@ -521,6 +524,52 @@ struct document_data
     [[noreturn]] NLOHMANN_VIEW_NOINLINE static void throw_bad_alloc()
     {
         NLOHMANN_VIEW_THROW(std::bad_alloc());
+    }
+
+    /// a large block: transparent huge pages for its 2 MiB-aligned interior, so that writing it takes one page
+    /// fault per 2 MiB instead of one per 4 KiB (Linux with THP in "madvise" mode, the default of many
+    /// distributions; a no-op otherwise)
+    static NLOHMANN_VIEW_NOINLINE void advise_huge_now(const void* p, std::size_t size) noexcept
+    {
+#if defined(__linux__) && defined(MADV_HUGEPAGE)
+        const std::uintptr_t huge = std::uintptr_t {2} << 20u;
+        const auto first = (reinterpret_cast<std::uintptr_t>(p) + huge - 1) & ~(huge - 1); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        const auto last = (reinterpret_cast<std::uintptr_t>(p) + size) & ~(huge - 1); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+        if (last > first)
+        {
+            static_cast<void>(::madvise(reinterpret_cast<void*>(first), last - first, MADV_HUGEPAGE)); // NOLINT(cppcoreguidelines-pro-type-reinterpret-cast,performance-no-int-to-ptr)
+        }
+#else
+        static_cast<void>(p);
+        static_cast<void>(size);
+#endif
+    }
+
+    /// the size from which advise_huge() asks for huge pages
+    static constexpr std::size_t huge_min_bytes() noexcept
+    {
+        return std::size_t{4} << 20u;
+    }
+
+    static NLOHMANN_VIEW_ALWAYS_INLINE void advise_huge(const void* p, std::size_t size) noexcept
+    {
+        if (NLOHMANN_VIEW_UNLIKELY(size >= huge_min_bytes()))
+        {
+            advise_huge_now(p, size);
+        }
+    }
+
+    /// reserve() for a large index, before the parse loop starts (which then finds the room it asks for): with
+    /// huge pages where advise_huge() gets them. Out of line and outside the parse loop, so that the loop's code
+    /// stays as it is.
+    NLOHMANN_VIEW_NOINLINE void reserve_huge(std::size_t n)
+    {
+        const node* const before = nodes;
+        reserve(n);
+        if (nodes != before)
+        {
+            advise_huge_now(nodes, node_capacity * sizeof(node));
+        }
     }
 
     /// make room for n nodes; keeps the first node_count nodes (throws
@@ -1964,7 +2013,11 @@ run_found:
             // covers the escapes of a typical document without regrowing it
             wanted = (std::max)(wanted, (std::min)((static_cast<std::size_t>(m_end - m_begin) / 4) + 16, std::size_t{4096}));
         }
-        m_doc.arena.resize((std::max)(m_doc.arena.size() * 2, wanted));
+        const std::size_t size = (std::max)(m_doc.arena.size() * 2, wanted);
+        // (reserved before the resize writes it, so that a large arena gets huge pages)
+        m_doc.arena.reserve(size);
+        document_data::advise_huge(m_doc.arena.data(), m_doc.arena.capacity());
+        m_doc.arena.resize(size);
         m_arena_write = m_doc.arena.data() + used;
         m_arena_end = m_doc.arena.data() + m_doc.arena.size();
     }
@@ -2659,6 +2712,17 @@ template<typename FloatType, bool NulIsEnd>
 inline bool build(document_data& d, const char* src, std::size_t size, bool comments, bool trailing_commas, bool sentinel, bool validate_only,
                   parse_failure& failure)
 {
+#if defined(__linux__) && defined(MADV_HUGEPAGE)
+    if (!(validate_only && !comments && !trailing_commas))
+    {
+        // a large index is reserved here, with huge pages (see document_data::reserve_huge())
+        const std::size_t n = estimate_nodes(src, size);
+        if (NLOHMANN_VIEW_UNLIKELY(n >= document_data::huge_min_bytes() / sizeof(node)))
+        {
+            d.reserve_huge(n);
+        }
+    }
+#endif
     if (validate_only && !comments && !trailing_commas)
     {
         // accept() of plain JSON: nothing is stored. The other option sets

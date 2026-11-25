@@ -628,7 +628,11 @@ run_found:
             // covers the escapes of a typical document without regrowing it
             wanted = (std::max)(wanted, (std::min)((static_cast<std::size_t>(m_end - m_begin) / 4) + 16, std::size_t{4096}));
         }
-        m_doc.arena.resize((std::max)(m_doc.arena.size() * 2, wanted));
+        const std::size_t size = (std::max)(m_doc.arena.size() * 2, wanted);
+        // (reserved before the resize writes it, so that a large arena gets huge pages)
+        m_doc.arena.reserve(size);
+        document_data::advise_huge(m_doc.arena.data(), m_doc.arena.capacity());
+        m_doc.arena.resize(size);
         m_arena_write = m_doc.arena.data() + used;
         m_arena_end = m_doc.arena.data() + m_doc.arena.size();
     }
@@ -1323,6 +1327,17 @@ template<typename FloatType, bool NulIsEnd>
 inline bool build(document_data& d, const char* src, std::size_t size, bool comments, bool trailing_commas, bool sentinel, bool validate_only,
                   parse_failure& failure)
 {
+#if defined(__linux__) && defined(MADV_HUGEPAGE)
+    if (!(validate_only && !comments && !trailing_commas))
+    {
+        // a large index is reserved here, with huge pages (see document_data::reserve_huge())
+        const std::size_t n = estimate_nodes(src, size);
+        if (NLOHMANN_VIEW_UNLIKELY(n >= document_data::huge_min_bytes() / sizeof(node)))
+        {
+            d.reserve_huge(n);
+        }
+    }
+#endif
     if (validate_only && !comments && !trailing_commas)
     {
         // accept() of plain JSON: nothing is stored. The other option sets

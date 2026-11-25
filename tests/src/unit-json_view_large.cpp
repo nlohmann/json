@@ -598,3 +598,54 @@ TEST_CASE("json_view large objects")
         CHECK(d.memory_usage() >= with_index / 2);
     }
 }
+
+TEST_CASE("json_view large indexes and arenas")
+{
+    // inputs whose index (and decoded strings) take several MiB: on Linux, these blocks are reserved before the
+    // parse loop and get transparent huge pages (document_data::reserve_huge(), advise_huge())
+    SECTION("an index of more than 4 MiB")
+    {
+        std::string text = "[";
+        for (int i = 0; i < 400000; ++i)
+        {
+            text += (i != 0 ? "," : "") + std::to_string(i);
+        }
+        text += ']';
+        json_document d = json_document::parse(text);
+        CHECK(d.node_count() == 400001);
+        CHECK(d.root().size() == 400000);
+        CHECK(d.root()[0].get<int>() == 0);
+        CHECK(d.root()[399999].get<int>() == 399999);
+        CHECK(json_document::accept(text));
+
+        // a reused document: a small input, then the large one again
+        d.read(std::string("[1,2]"));
+        CHECK(d.root().size() == 2);
+        d.read(text);
+        CHECK(d.root()[123456].get<int>() == 123456);
+        CHECK(d.root() == json::parse(text));
+    }
+
+    SECTION("decoded strings of more than 4 MiB")
+    {
+        // 2,000 strings of 3,000 bytes, each with escapes, so that every one is decoded into the arena
+        std::string s;
+        for (int i = 0; i < 1000; ++i)
+        {
+            s += "ab\\n";
+        }
+        std::string text = "[";
+        for (int i = 0; i < 2000; ++i)
+        {
+            text += (i != 0 ? ",\"" : "\"") + std::to_string(i) + s + "\"";
+        }
+        text += ']';
+        const json_document d = json_document::parse(text);
+        REQUIRE(d.root().size() == 2000);
+        const json expected = json::parse(text);
+        CHECK(d.root()[0].get<std::string>() == expected[0].get<std::string>());
+        CHECK(d.root()[1999].get<std::string>() == expected[1999].get<std::string>());
+        CHECK(d.root()[1999].get<std::string>().size() == 4 + 3000);
+        CHECK(d.root() == expected);
+    }
+}
