@@ -28,7 +28,9 @@ By default, `#!cpp JSON_NO_SIMD` is not defined, and vector instructions are use
       and writes the digits of floating-point numbers. The UTF-8 check of non-ASCII text needs SSSE3, which is not part
       of x86-64: it is compiled for SSSE3 with a function attribute and used when the CPU has SSSE3 (every x86-64 CPU
       since about 2011), else the portable check. Code compiled for SSSE3 anyway (e.g., with `-mssse3` or `-march=native`)
-      skips this check of the CPU. 32-bit x86 uses SSE2 for strings when the compiler targets it.
+      skips this check of the CPU. Where the CPU has AVX2, the UTF-8 check of strings takes 32 bytes at a time
+      (compiled with a function attribute as well; not with MSVC or GCC for Windows). 32-bit x86 uses SSE2 for strings
+      when the compiler targets it.
     - **AArch64:** NEON, which every 64-bit Arm CPU has, checks UTF-8 text and long runs of plain string characters 16
       bytes at a time, and writes the digits of floating-point numbers. With MSVC, only the floating-point digits use
       NEON.
