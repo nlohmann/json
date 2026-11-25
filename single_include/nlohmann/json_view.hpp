@@ -8086,6 +8086,15 @@ adapter_input<typename std::decay<Adapter>::type> make_adapter_input(Adapter&& i
     return {std::forward<Adapter>(ia)};
 }
 
+/// the size of a read block, and the least room offered to a read: one page,
+/// the usual size of a filesystem block. It is a conventional size, not a tuned
+/// one: it only has to be large enough that a read is never tiny and that the
+/// read which finds the end of the input needs no regrowth of the string
+constexpr std::size_t read_block_size() noexcept
+{
+    return 4096;
+}
+
 /// append the rest of a stream: its characters need no conversion, so they are
 /// read in blocks from the stream buffer, straight into buf (reusing its
 /// capacity). As the library's stream adapter, this reads the stream buffer
@@ -8103,14 +8112,14 @@ inline void append_stream(std::string& buf, std::istream& is)
     // copy at each doubling of the string (only a hint: the loop below reads
     // what is there)
     const std::streamsize rest = sb->in_avail();
-    if (rest > 0 && static_cast<std::size_t>(rest) < buf.max_size() - buf.size() - 4096)
+    if (rest > 0 && static_cast<std::size_t>(rest) < buf.max_size() - buf.size() - read_block_size())
     {
-        buf.reserve(buf.size() + static_cast<std::size_t>(rest) + 4096);
+        buf.reserve(buf.size() + static_cast<std::size_t>(rest) + read_block_size());
     }
     for (;;)
     {
         const std::size_t used = buf.size();
-        const std::size_t room = (std::max)(buf.capacity() - used, std::size_t{4096});
+        const std::size_t room = (std::max)(buf.capacity() - used, read_block_size());
         buf.resize(used + room);
         const std::streamsize got = sb->sgetn(&buf[used], static_cast<std::streamsize>(room));
         buf.resize(used + static_cast<std::size_t>((std::max)(got, std::streamsize{0})));
@@ -8181,7 +8190,7 @@ inline void append_file(std::string& buf, std::FILE* f)
     for (;;)
     {
         const std::size_t used = buf.size();
-        const std::size_t room = (std::max)(buf.capacity() - used, std::size_t{4096});
+        const std::size_t room = (std::max)(buf.capacity() - used, read_block_size());
         buf.resize(used + room);
         const std::size_t got = std::fread(&buf[used], 1, room, f);
         buf.resize(used + got);
