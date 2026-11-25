@@ -1,183 +1,185 @@
 benchmark,unit,3.12.0,3.13.0,speedup
-Accept/canada,ns,1.27789e+07,1.34304e+06,9.515
-Accept/citm_catalog,ns,6.47666e+06,474064,13.662
-Accept/floats,ns,1.14227e+08,1.72173e+07,6.634
-Accept/jeopardy,ns,2.18081e+08,2.79002e+07,7.816
-Accept/signed_ints,ns,1.15981e+08,2.33778e+07,4.961
-Accept/small_signed_ints,ns,5.64996e+07,1.31818e+07,4.286
-Accept/twitter,ns,2.48725e+06,234277,10.617
-Accept/unsigned_ints,ns,1.14729e+08,2.28147e+07,5.029
-BinaryToCbor/1024,ns,315.368,108.041,2.919
-BinaryToCbor/128,ns,266.074,114.105,2.332
-BinaryToCbor/16,ns,246.212,49.912,4.933
-BinaryToCbor/16384,ns,950.054,418.045,2.273
-BinaryToCbor/2048,ns,340.213,126.796,2.683
-BinaryToCbor/256,ns,279.79,91.7512,3.049
-BinaryToCbor/32,ns,262.471,50.3433,5.214
-BinaryToCbor/32768,ns,1578.4,837.8,1.884
-BinaryToCbor/4096,ns,431.963,174.276,2.479
-BinaryToCbor/512,ns,296.768,102.073,2.907
-BinaryToCbor/64,ns,259.159,84.2641,3.076
-BinaryToCbor/8,ns,250.574,49.9122,5.020
-BinaryToCbor/8192,ns,527.418,253.616,2.080
-Copy/canada,ns,3.68841e+06,2.9017e+06,1.271
-Copy/citm_catalog,ns,1.64706e+06,1.48507e+06,1.109
-Copy/twitter,ns,810558,728698,1.112
-CopyAssign/canada,ns,3.73912e+06,2.94393e+06,1.270
-CopyAssign/citm_catalog,ns,1.6545e+06,1.53713e+06,1.076
-CopyAssign/twitter,ns,817997,752415,1.087
-CopyOnly/canada,ns,1.53602e+06,1.52075e+06,1.010
-CopyOnly/citm_catalog,ns,754817,794741,0.950
-CopyOnly/twitter,ns,406966,410330,0.992
-CopyRing/canada,ns,3.74734e+06,2.92592e+06,1.281
-CopyRing/citm_catalog,ns,1.7477e+06,1.54757e+06,1.129
-CopyRing/twitter,ns,876191,784261,1.117
-DestroyOnly/canada,ns,2.16216e+06,1.38217e+06,1.564
-DestroyOnly/citm_catalog,ns,895535,681877,1.313
-DestroyOnly/twitter,ns,406450,326620,1.244
-Diff/canada,ns,3.91782e+07,3.75209e+06,10.442
-Diff/citm_catalog,ns,6.91552e+06,1.09211e+06,6.332
-Diff/twitter,ns,4.92965e+06,639734,7.706
-Dump/canada / -,ns,6.70617e+06,2.31399e+06,2.898
-Dump/canada / 4,ns,8.81664e+06,3.03083e+06,2.909
-Dump/citm_catalog / -,ns,1.39132e+06,295525,4.708
-Dump/citm_catalog / 4,ns,1.94729e+06,421536,4.620
-Dump/floats / -,ns,6.35321e+07,2.37757e+07,2.672
-Dump/floats / 4,ns,7.19879e+07,2.4663e+07,2.919
-Dump/jeopardy / -,ns,2.0176e+08,3.0624e+07,6.588
-Dump/jeopardy / 4,ns,2.20493e+08,3.43504e+07,6.419
-Dump/signed_ints / -,ns,2.36853e+07,1.07405e+07,2.205
-Dump/signed_ints / 4,ns,3.2029e+07,1.13731e+07,2.816
-Dump/small_signed_ints / -,ns,1.78623e+07,7.93339e+06,2.252
-Dump/small_signed_ints / 4,ns,2.50508e+07,8.80939e+06,2.844
-Dump/twitter / -,ns,1.40813e+06,213513,6.595
-Dump/twitter / 4,ns,1.59095e+06,249353,6.380
-Dump/unsigned_ints / -,ns,2.35653e+07,8.07378e+06,2.919
-Dump/unsigned_ints / 4,ns,3.17269e+07,8.50708e+06,3.729
-Equal/canada,ns,463162,336269,1.377
-Equal/citm_catalog,ns,264124,260967,1.012
-Equal/twitter,ns,138843,128906,1.077
-Flatten/canada,ns,2.86941e+07,1.1214e+07,2.559
-Flatten/citm_catalog,ns,6.4406e+06,3.00538e+06,2.143
-Flatten/twitter,ns,3.53051e+06,2.05449e+06,1.718
-FlattenOrdered/citm_catalog,ns,2.56371e+08,1.40896e+06,181.958
-FlattenOrdered/twitter,ns,5.00313e+07,863594,57.934
-FromBinaryBuffer/bjdata / canada,ns,8.15141e+06,4.17154e+06,1.954
-FromBinaryBuffer/bjdata / twitter,ns,3.18297e+06,893076,3.564
-FromBinaryBuffer/bjdata_optimized / canada,ns,8.73882e+06,2.42167e+06,3.609
-FromBinaryBuffer/bjdata_optimized / twitter,ns,3.15905e+06,884856,3.570
-FromBinaryBuffer/bson / canada,ns,9.33283e+06,4.27358e+06,2.184
-FromBinaryBuffer/bson / citm_catalog,ns,3.91854e+06,1.61073e+06,2.433
-FromBinaryBuffer/bson / twitter,ns,3.176e+06,910290,3.489
-FromBinaryBuffer/cbor / canada,ns,8.39002e+06,2.08256e+06,4.029
-FromBinaryBuffer/cbor / citm_catalog,ns,3.71495e+06,1.31999e+06,2.814
-FromBinaryBuffer/cbor / floats,ns,2.91606e+07,5.48446e+06,5.317
-FromBinaryBuffer/cbor / jeopardy,ns,3.52964e+08,1.00739e+08,3.504
-FromBinaryBuffer/cbor / signed_ints,ns,3.59874e+07,9.77712e+06,3.681
-FromBinaryBuffer/cbor / twitter,ns,3.08997e+06,878827,3.516
-FromBinaryBuffer/msgpack / canada,ns,8.25869e+06,2.09779e+06,3.937
-FromBinaryBuffer/msgpack / citm_catalog,ns,3.71825e+06,1.28675e+06,2.890
-FromBinaryBuffer/msgpack / jeopardy,ns,3.56624e+08,9.69017e+07,3.680
-FromBinaryBuffer/msgpack / twitter,ns,3.06392e+06,850067,3.604
-FromBinaryBuffer/ubjson / canada,ns,8.12649e+06,4.14411e+06,1.961
-FromBinaryBuffer/ubjson / citm_catalog,ns,3.82184e+06,1.65659e+06,2.307
-FromBinaryBuffer/ubjson / jeopardy,ns,3.65507e+08,1.01303e+08,3.608
-FromBinaryBuffer/ubjson / twitter,ns,3.15221e+06,895746,3.519
-FromBinaryBuffer/ubjson_optimized / canada,ns,8.5126e+06,2.38858e+06,3.564
-FromBinaryBuffer/ubjson_optimized / twitter,ns,3.12199e+06,882166,3.539
-FromBinaryFile/bjdata / twitter,ns,1.04222e+07,1.45214e+06,7.177
-FromBinaryFile/bson / twitter,ns,1.02874e+07,1.23514e+06,8.329
-FromBinaryFile/cbor / canada,ns,1.43434e+07,2.4071e+06,5.959
-FromBinaryFile/cbor / twitter,ns,9.92359e+06,1.075e+06,9.231
-FromBinaryFile/ubjson / canada,ns,1.35516e+07,6.2336e+06,2.174
-FromBinaryFile/ubjson / twitter,ns,1.05159e+07,1.46077e+06,7.199
-FromBinaryShape/containers / bjdata,ns,1.43175e+07,7.24204e+06,1.977
-FromBinaryShape/containers / bson,ns,1.74215e+07,7.97531e+06,2.184
-FromBinaryShape/containers / cbor,ns,1.3898e+07,3.93021e+06,3.536
-FromBinaryShape/containers / msgpack,ns,1.378e+07,3.88449e+06,3.547
-FromBinaryShape/containers / ubjson,ns,1.44223e+07,7.2737e+06,1.983
-FromBinaryShape/containers / ubjson_optimized,ns,1.49736e+07,4.48674e+06,3.337
-FromBinaryShape/nested / bjdata,ns,96363.9,38197.9,2.523
-FromBinaryShape/nested / bson,ns,102515,42496.1,2.412
-FromBinaryShape/nested / cbor,ns,93842.1,35385.5,2.652
-FromBinaryShape/nested / msgpack,ns,92033,34888.5,2.638
-FromBinaryShape/nested / ubjson,ns,96455.9,37922.6,2.543
-FromBinaryShape/scalars / bjdata,ns,2.48048e+07,1.1476e+07,2.161
-FromBinaryShape/scalars / cbor,ns,2.56641e+07,5.68711e+06,4.513
-FromBinaryShape/scalars / msgpack,ns,2.44254e+07,5.56716e+06,4.387
-FromBinaryShape/scalars / ubjson,ns,2.49328e+07,1.15997e+07,2.149
-FromCborChunkedString/10000 chunks,ns,90902.3,61512.6,1.478
-FromMsgpack/canada,ns,1.43596e+07,2.40425e+06,5.973
-FromMsgpack/citm_catalog,ns,9.03526e+06,1.66705e+06,5.420
-FromMsgpack/floats,ns,5.97879e+07,2.82314e+07,2.118
-FromMsgpack/jeopardy,ns,1.14023e+09,1.1207e+08,10.174
-FromMsgpack/signed_ints,ns,6.30943e+07,3.27435e+07,1.927
-FromMsgpack/small_signed_ints,ns,6.34225e+07,3.52538e+07,1.799
-FromMsgpack/twitter,ns,9.99383e+06,1.01241e+06,9.871
-FromMsgpack/unsigned_ints,ns,5.61151e+07,2.82024e+07,1.990
-"GetArray<std::array<int, 1000>>",ns,2242.43,641.094,3.498
-GetArray<std::deque<int>>,ns,8157.44,1172.81,6.955
-GetArray<std::set<int>>,ns,58833.4,41553,1.416
-GetArray<std::vector<int>>,ns,6725.67,670.816,10.026
-GetMap/citm_catalog,ns,3.44193e+06,2.43771e+06,1.412
-GetVectorDouble/floats,ns,6.7017e+06,650766,10.298
-GetVectorInt/signed_ints,ns,8.06579e+06,3.40643e+06,2.368
-Iterate/canada,ns,873618,445143,1.963
-Iterate/citm_catalog,ns,301801,157823,1.912
-Iterate/twitter,ns,87345,58936.4,1.482
-JsonPointerAt/citm_catalog,ns,1.85369e+06,1.1599e+06,1.598
-JsonPointerAt/twitter,ns,791487,599585,1.320
-JsonPointerContains/citm_catalog,ns,2.73824e+06,1.25465e+06,2.182
-JsonPointerContains/twitter,ns,1.32403e+06,620312,2.134
-JsonPointerParse/citm_catalog,ns,5.72778e+06,2.21453e+06,2.586
-JsonPointerParse/twitter,ns,2.4672e+06,1.00864e+06,2.446
-JsonPointerToString/citm_catalog,ns,6.65484e+06,1.89788e+06,3.506
-JsonPointerToString/twitter,ns,2.13903e+06,811916,2.635
-ParseFILE/canada,ns,5.29148e+07,6.01689e+06,8.794
-ParseFILE/citm_catalog,ns,3.49593e+07,2.34075e+06,14.935
-ParseFILE/twitter,ns,1.38263e+07,1.34963e+06,10.245
-ParseFile/canada,ns,1.76922e+07,6.22534e+06,2.842
-ParseFile/citm_catalog,ns,7.85962e+06,2.47244e+06,3.179
-ParseFile/floats,ns,1.29413e+08,4.83839e+07,2.675
-ParseFile/jeopardy,ns,3.30328e+08,1.56161e+08,2.115
-ParseFile/signed_ints,ns,1.27675e+08,4.65862e+07,2.741
-ParseFile/small_signed_ints,ns,6.44651e+07,3.33577e+07,1.933
-ParseFile/twitter,ns,3.39729e+06,1.37932e+06,2.463
-ParseFile/unsigned_ints,ns,1.23326e+08,4.73146e+07,2.607
-ParseIndented/canada / 4,ns,3.41603e+07,4.60976e+06,7.410
-ParseIndented/citm_catalog / 4,ns,7.45491e+06,1.45798e+06,5.113
-ParseIndented/jeopardy / 4,ns,3.38801e+08,1.14349e+08,2.963
-ParseIndented/twitter / 4,ns,3.61322e+06,975391,3.704
-ParseStreamValues/ndjson,ns,7.07974e+06,3.7154e+06,1.906
-ParseStreamValues/numbers,ns,1.92884e+06,388042,4.971
-ParseString/canada,ns,1.52389e+07,3.73427e+06,4.081
-ParseString/citm_catalog,ns,7.40128e+06,1.44821e+06,5.111
-ParseString/floats,ns,1.19856e+08,2.49654e+07,4.801
-ParseString/jeopardy,ns,3.03449e+08,1.13053e+08,2.684
-ParseString/signed_ints,ns,1.21175e+08,2.86805e+07,4.225
-ParseString/small_signed_ints,ns,6.07636e+07,1.77037e+07,3.432
-ParseString/twitter,ns,3.21074e+06,920551,3.488
-ParseString/unsigned_ints,ns,1.20011e+08,2.85056e+07,4.210
-ParseStringOrdered/canada,ns,1.52544e+07,3.77964e+06,4.036
-ParseStringOrdered/citm_catalog,ns,1.09927e+07,1.34339e+06,8.183
-ParseStringOrdered/jeopardy,ns,3.60435e+08,9.81296e+07,3.673
-ParseStringOrdered/twitter,ns,4.41151e+06,803859,5.488
-Patch/canada,ns,1.01249e+07,3.41425e+06,2.965
-Patch/citm_catalog,ns,2.54415e+06,1.65413e+06,1.538
-Patch/twitter,ns,1.4932e+06,870217,1.716
-SaxParse/canada,ns,1.28611e+07,2.49889e+06,5.147
-SaxParse/citm_catalog,ns,6.43798e+06,655372,9.823
-SaxParse/twitter,ns,2.48859e+06,334038,7.450
-ToCbor/canada,ns,1.39101e+06,554952,2.507
-ToCbor/citm_catalog,ns,1.0334e+06,260397,3.969
-ToCbor/floats,ns,8.93763e+06,1.84589e+06,4.842
-ToCbor/jeopardy,ns,7.14785e+07,2.10551e+07,3.395
-ToCbor/signed_ints,ns,1.13863e+07,2.74211e+06,4.152
-ToCbor/small_signed_ints,ns,1.02822e+07,2.37622e+06,4.327
-ToCbor/twitter,ns,636979,144369,4.412
-ToCbor/unsigned_ints,ns,8.04576e+06,2.74066e+06,2.936
-ToJsonStrings/copy,ns,5.85988e+06,5.60056e+06,1.046
-ToJsonStrings/move,ns,5.92335e+06,3.04643e+06,1.944
-Unflatten/canada,ns,4.17811e+07,1.08132e+07,3.864
-Unflatten/citm_catalog,ns,9.80315e+06,3.53672e+06,2.772
-Unflatten/twitter,ns,4.56968e+06,2.16566e+06,2.110
+FromBinaryBuffer/msgpack / jeopardy,ns,3.56376e+08,9.37052e+07,3.803
+GetVectorInt/signed_ints,ns,8.00368e+06,3.38526e+06,2.364
+FromBinaryFile/bson / twitter,ns,1.01661e+07,1.22525e+06,8.297
+Unflatten/citm_catalog,ns,9.79429e+06,3.6099e+06,2.713
+FromBinaryShape/containers / cbor,ns,1.38062e+07,3.95491e+06,3.491
+Diff/twitter,ns,4.8593e+06,640238,7.590
+FromBinaryBuffer/cbor / floats,ns,2.89316e+07,5.38972e+06,5.368
+Patch/canada,ns,1.00183e+07,3.40486e+06,2.942
+JsonPointerToString/twitter,ns,2.13885e+06,811648,2.635
+ParseFILE/canada,ns,5.23339e+07,5.94603e+06,8.801
+Copy/citm_catalog,ns,1.62473e+06,1.47096e+06,1.105
+ToCbor/twitter,ns,637711,140404,4.542
+CopyAssign/twitter,ns,809718,768280,1.054
+Equal/twitter,ns,137425,128272,1.071
+FromBinaryShape/singles / msgpack,ns,9.79667e+06,3.84137e+06,2.550
+Flatten/citm_catalog,ns,6.39977e+06,2.99034e+06,2.140
+Equal/citm_catalog,ns,257648,254695,1.012
+Accept/floats,ns,1.13431e+08,1.71844e+07,6.601
+Unflatten/twitter,ns,4.63581e+06,2.18616e+06,2.121
+BinaryToCbor/8,ns,246.515,48.6634,5.066
+Dump/unsigned_ints / 4,ns,3.16753e+07,8.41946e+06,3.762
+Dump/small_signed_ints / 4,ns,2.48696e+07,8.72941e+06,2.849
+Accept/canada,ns,1.26794e+07,1.32204e+06,9.591
+CopyAssign/citm_catalog,ns,1.658e+06,1.50401e+06,1.102
+Diff/canada,ns,3.81491e+07,3.73659e+06,10.210
+FromBinaryBuffer/bjdata / canada,ns,8.09969e+06,4.07622e+06,1.987
+FromBinaryShape/containers / msgpack,ns,1.37529e+07,3.94846e+06,3.483
+FromBinaryBuffer/ubjson_optimized / twitter,ns,3.105e+06,860260,3.609
+FromBinaryBuffer/ubjson / canada,ns,8.10092e+06,4.13921e+06,1.957
+FromBinaryBuffer/bjdata_optimized / canada,ns,8.57969e+06,2.40635e+06,3.565
+Iterate/citm_catalog,ns,298875,146683,2.038
+Dump/signed_ints / -,ns,2.35657e+07,1.06527e+07,2.212
+Iterate/twitter,ns,87819.6,57086.7,1.538
+ParseFile/unsigned_ints,ns,1.21976e+08,4.74314e+07,2.572
+ToCbor/unsigned_ints,ns,8.02163e+06,2.73539e+06,2.933
+FromBinaryBuffer/msgpack / canada,ns,8.2439e+06,2.09919e+06,3.927
+ToCbor/small_signed_ints,ns,1.02153e+07,2.37758e+06,4.297
+CopyRing/twitter,ns,859173,798950,1.075
+FromBinaryFile/cbor / twitter,ns,9.83918e+06,1.05639e+06,9.314
+ParseIndented/jeopardy / 4,ns,3.36775e+08,1.13321e+08,2.972
+Iterate/canada,ns,871453,427207,2.040
+BinaryToCbor/128,ns,255.325,113.969,2.240
+Dump/unsigned_ints / -,ns,2.347e+07,8.05437e+06,2.914
+Dump/citm_catalog / -,ns,1.3828e+06,292068,4.735
+FromMsgpack/small_signed_ints,ns,6.28886e+07,3.37245e+07,1.865
+ToCbor/signed_ints,ns,1.13369e+07,2.73327e+06,4.148
+Dump/citm_catalog / 4,ns,1.92706e+06,415294,4.640
+Accept/signed_ints,ns,1.15108e+08,2.32984e+07,4.941
+Accept/unsigned_ints,ns,1.13981e+08,2.2856e+07,4.987
+ToCbor/floats,ns,8.90101e+06,1.8411e+06,4.835
+Dump/twitter / 4,ns,1.58163e+06,248861,6.355
+Flatten/twitter,ns,3.47975e+06,2.04214e+06,1.704
+ParseFILE/citm_catalog,ns,3.47528e+07,2.33647e+06,14.874
+CopyRing/citm_catalog,ns,1.71026e+06,1.54721e+06,1.105
+DestroyOnly/canada,ns,2.1373e+06,1.37986e+06,1.549
+ParseIndented/canada / 4,ns,3.36975e+07,4.55234e+06,7.402
+FromBinaryShape/nested / msgpack,ns,92164.1,34825.9,2.646
+Copy/canada,ns,3.66531e+06,2.91548e+06,1.257
+ParseFile/small_signed_ints,ns,6.36556e+07,3.32302e+07,1.916
+SaxParse/citm_catalog,ns,6.40417e+06,651648,9.828
+BinaryToCbor/1024,ns,310.054,103.516,2.995
+FromBinaryBuffer/cbor / citm_catalog,ns,3.68791e+06,1.33699e+06,2.758
+ParseString/small_signed_ints,ns,6.06983e+07,1.76778e+07,3.434
+"GetArray<std::array<int, 1000>>",ns,2232.07,639.577,3.490
+Dump/jeopardy / 4,ns,2.19387e+08,3.45399e+07,6.352
+FromBinaryBuffer/ubjson / twitter,ns,3.12176e+06,872419,3.578
+Dump/signed_ints / 4,ns,3.18414e+07,1.12445e+07,2.832
+JsonPointerContains/citm_catalog,ns,2.70305e+06,1.24338e+06,2.174
+Dump/twitter / -,ns,1.39545e+06,212169,6.577
+ParseStringOrdered/canada,ns,1.50466e+07,3.77243e+06,3.989
+Accept/jeopardy,ns,2.16678e+08,2.77477e+07,7.809
+FromBinaryFile/cbor / canada,ns,1.42295e+07,2.4159e+06,5.890
+Dump/jeopardy / -,ns,2.0084e+08,3.11939e+07,6.438
+ToJsonStrings/copy,ns,5.86291e+06,5.5919e+06,1.048
+BinaryToCbor/16,ns,244.867,48.2527,5.075
+FromBinaryBuffer/cbor / canada,ns,8.25796e+06,2.10045e+06,3.932
+Accept/small_signed_ints,ns,5.6282e+07,1.32434e+07,4.250
+Patch/citm_catalog,ns,2.54655e+06,1.6363e+06,1.556
+Unflatten/canada,ns,4.11873e+07,1.10494e+07,3.728
+JsonPointerContains/twitter,ns,1.29206e+06,609759,2.119
+Dump/floats / -,ns,6.31208e+07,2.36329e+07,2.671
+CopyRing/canada,ns,3.73092e+06,2.94199e+06,1.268
+ParseString/unsigned_ints,ns,1.18699e+08,2.83952e+07,4.180
+ParseString/canada,ns,1.50831e+07,3.72801e+06,4.046
+FromMsgpack/twitter,ns,9.91629e+06,999651,9.920
+ParseFile/floats,ns,1.28428e+08,4.82106e+07,2.664
+ParseStreamValues/ndjson,ns,7.12846e+06,3.74839e+06,1.902
+FromMsgpack/citm_catalog,ns,8.9175e+06,1.6513e+06,5.400
+FromBinaryBuffer/cbor / jeopardy,ns,3.54251e+08,1.00932e+08,3.510
+CopyOnly/twitter,ns,398464,411184,0.969
+BinaryToCbor/16384,ns,981.9,410.592,2.391
+JsonPointerAt/twitter,ns,791229,593059,1.334
+ParseFILE/twitter,ns,1.36013e+07,1.31018e+06,10.381
+FromMsgpack/signed_ints,ns,6.22982e+07,3.26718e+07,1.907
+FromCborChunkedString/10000 chunks,ns,90088.7,61202,1.472
+FromBinaryShape/containers / bjdata,ns,1.40505e+07,7.07234e+06,1.987
+JsonPointerToString/citm_catalog,ns,6.5753e+06,1.90833e+06,3.446
+FlattenOrdered/twitter,ns,4.96493e+07,862665,57.553
+DestroyOnly/citm_catalog,ns,879499,679164,1.295
+FromBinaryFile/bjdata / twitter,ns,1.04027e+07,1.46032e+06,7.124
+ToCbor/canada,ns,1.37306e+06,559412,2.454
+GetMap/citm_catalog,ns,3.40323e+06,2.42997e+06,1.401
+FromBinaryBuffer/bson / citm_catalog,ns,3.87408e+06,1.58607e+06,2.443
+FromBinaryShape/nested / bson,ns,101814,42220.7,2.411
+BinaryToCbor/4096,ns,407.896,168.978,2.414
+CopyOnly/canada,ns,1.52999e+06,1.53061e+06,1.000
+Dump/canada / 4,ns,8.85726e+06,3.02915e+06,2.924
+JsonPointerAt/citm_catalog,ns,1.83519e+06,1.14559e+06,1.602
+BinaryToCbor/32,ns,255.202,49.7487,5.130
+ParseFile/citm_catalog,ns,7.73392e+06,2.43664e+06,3.174
+FromBinaryShape/scalars / ubjson,ns,2.4621e+07,1.11449e+07,2.209
+FromBinaryShape/scalars / cbor,ns,2.55544e+07,5.55805e+06,4.598
+ParseStringOrdered/jeopardy,ns,3.6028e+08,9.79505e+07,3.678
+FromBinaryFile/ubjson / canada,ns,1.35226e+07,6.34861e+06,2.130
+FromBinaryBuffer/ubjson / jeopardy,ns,3.661e+08,9.93732e+07,3.684
+BinaryToCbor/2048,ns,330.184,122.318,2.699
+FromBinaryShape/nested / cbor,ns,93712.6,35235.7,2.660
+ParseIndented/citm_catalog / 4,ns,7.2551e+06,1.46145e+06,4.964
+BinaryToCbor/64,ns,257.867,83.3886,3.092
+ParseFile/signed_ints,ns,1.26092e+08,4.60109e+07,2.740
+CopyAssign/canada,ns,3.72953e+06,2.94923e+06,1.265
+FromBinaryBuffer/bjdata / twitter,ns,3.1287e+06,873093,3.583
+Dump/floats / 4,ns,7.1031e+07,2.45563e+07,2.893
+FromBinaryBuffer/msgpack / twitter,ns,3.03481e+06,831338,3.651
+FromBinaryShape/nested / bjdata,ns,95576.6,37944.7,2.519
+ToJsonStrings/move,ns,5.84459e+06,3.0561e+06,1.912
+FromMsgpack/jeopardy,ns,1.13918e+09,1.12093e+08,10.163
+ParseString/signed_ints,ns,1.20325e+08,2.89864e+07,4.151
+FromBinaryBuffer/bson / canada,ns,9.28095e+06,4.34519e+06,2.136
+FromBinaryShape/containers / bson,ns,1.65723e+07,7.72033e+06,2.147
+FromBinaryBuffer/cbor / signed_ints,ns,3.55593e+07,9.76349e+06,3.642
+FromBinaryBuffer/ubjson / citm_catalog,ns,3.83988e+06,1.62757e+06,2.359
+FromBinaryFile/ubjson / twitter,ns,1.03741e+07,1.44004e+06,7.204
+Accept/citm_catalog,ns,6.37657e+06,473623,13.463
+FromBinaryShape/singles / cbor,ns,9.80279e+06,3.85097e+06,2.546
+Equal/canada,ns,455750,332820,1.369
+JsonPointerParse/citm_catalog,ns,5.70466e+06,2.22344e+06,2.566
+Flatten/canada,ns,2.84742e+07,1.1313e+07,2.517
+ToCbor/jeopardy,ns,7.15663e+07,2.05264e+07,3.487
+Copy/twitter,ns,800349,726319,1.102
+FromBinaryShape/scalars / bjdata,ns,2.45145e+07,1.12069e+07,2.187
+FromBinaryShape/containers / ubjson,ns,1.40347e+07,7.03944e+06,1.994
+GetVectorDouble/floats,ns,6.68308e+06,658764,10.145
+ParseFile/twitter,ns,3.35391e+06,1.35767e+06,2.470
+CopyOnly/citm_catalog,ns,745442,794860,0.938
+FromBinaryBuffer/cbor / twitter,ns,3.04874e+06,865468,3.523
+FromBinaryBuffer/ubjson_optimized / canada,ns,8.44636e+06,2.38005e+06,3.549
+ParseFile/canada,ns,1.7446e+07,6.23937e+06,2.796
+FromBinaryBuffer/bson / twitter,ns,3.07555e+06,892243,3.447
+SaxParse/twitter,ns,2.47779e+06,333102,7.439
+BinaryToCbor/512,ns,292.983,98.3304,2.980
+ToCbor/citm_catalog,ns,1.02844e+06,253313,4.060
+FromMsgpack/floats,ns,5.95208e+07,2.78865e+07,2.134
+FromBinaryBuffer/bjdata_optimized / twitter,ns,3.12712e+06,865993,3.611
+Patch/twitter,ns,1.47408e+06,870268,1.694
+ParseStreamValues/numbers,ns,1.92083e+06,385096,4.988
+ParseIndented/twitter / 4,ns,3.58975e+06,955860,3.756
+SaxParse/canada,ns,1.27866e+07,2.51963e+06,5.075
+FromBinaryShape/scalars / msgpack,ns,2.43314e+07,5.38279e+06,4.520
+BinaryToCbor/8192,ns,513.598,247.942,2.071
+JsonPointerParse/twitter,ns,2.45095e+06,1.00205e+06,2.446
+ParseFile/jeopardy,ns,3.30464e+08,1.58395e+08,2.086
+FromBinaryBuffer/msgpack / citm_catalog,ns,3.70592e+06,1.2882e+06,2.877
+ParseStringOrdered/citm_catalog,ns,1.08745e+07,1.3409e+06,8.110
+FromMsgpack/canada,ns,1.44132e+07,2.40718e+06,5.988
+ParseString/citm_catalog,ns,7.31279e+06,1.44898e+06,5.047
+Dump/small_signed_ints / -,ns,1.78234e+07,7.93107e+06,2.247
+Dump/canada / -,ns,6.69249e+06,2.30011e+06,2.910
+FlattenOrdered/citm_catalog,ns,2.5462e+08,1.40264e+06,181.529
+FromBinaryShape/containers / ubjson_optimized,ns,1.47327e+07,4.43609e+06,3.321
+ParseString/jeopardy,ns,3.04442e+08,1.11899e+08,2.721
+GetArray<std::set<int>>,ns,58151.3,41496.7,1.401
+GetArray<std::vector<int>>,ns,6666.04,667.858,9.981
+ParseString/floats,ns,1.18914e+08,2.45271e+07,4.848
+BinaryToCbor/32768,ns,1576.97,800.59,1.970
+Diff/citm_catalog,ns,6.81411e+06,1.0862e+06,6.273
+ParseString/twitter,ns,3.18533e+06,901779,3.532
+FromBinaryShape/nested / ubjson,ns,96073.3,37939.8,2.532
+BinaryToCbor/256,ns,275.64,89.4743,3.081
+FromMsgpack/unsigned_ints,ns,5.56157e+07,2.81137e+07,1.978
+Accept/twitter,ns,2.46679e+06,233126,10.581
+GetArray<std::deque<int>>,ns,8115.04,1164.68,6.968
+ParseStringOrdered/twitter,ns,4.35839e+06,792369,5.500
+DestroyOnly/twitter,ns,401329,325985,1.231

@@ -201,23 +201,23 @@ def digits():
 # ---------- overview: speedup per workload (Google Benchmark rows, 3.12.0 time / 3.13.0 time) ----------
 # (group, label, speedup), copied from the table "The short version"
 OVERVIEW = [
-    ("Parsing", "twitter.json", 3.49),
-    ("Parsing", "citm_catalog.json", 5.11),
-    ("Parsing", "canada.json", 4.08),
-    ("Parsing", "canada.json, indented", 7.41),
-    ("Parsing", "citm, ordered_json", 8.18),
-    ("Parsing", "twitter, std::ifstream", 2.46),
-    ("Parsing", "citm, FILE*", 14.94),
-    ("Parsing", "citm, accept()", 13.66),
-    ("Writing", "dump() twitter", 6.60),
-    ("Writing", "dump() canada", 2.90),
-    ("Writing", "dump(4) citm", 4.62),
-    ("Writing", "to_cbor() twitter", 4.41),
+    ("Parsing", "twitter.json", 3.53),
+    ("Parsing", "citm_catalog.json", 5.05),
+    ("Parsing", "canada.json", 4.05),
+    ("Parsing", "canada.json, indented", 7.40),
+    ("Parsing", "citm, ordered_json", 8.11),
+    ("Parsing", "twitter, std::ifstream", 2.47),
+    ("Parsing", "citm, FILE*", 14.87),
+    ("Parsing", "citm, accept()", 13.46),
+    ("Writing", "dump() twitter", 6.58),
+    ("Writing", "dump() canada", 2.91),
+    ("Writing", "dump(4) citm", 4.64),
+    ("Writing", "to_cbor() twitter", 4.54),
     ("Reading CBOR", "twitter, memory", 3.52),
-    ("Reading CBOR", "twitter, FILE*", 9.23),
-    ("Values", "diff() canada", 10.44),
-    ("Values", "iterate canada", 1.96),
-    ("Values", "copy + destroy citm", 1.11),
+    ("Reading CBOR", "twitter, FILE*", 9.31),
+    ("Values", "diff() canada", 10.21),
+    ("Values", "iterate canada", 2.04),
+    ("Values", "copy + destroy citm", 1.10),
     ("Values", "== citm", 1.01),
 ]
 
@@ -313,9 +313,6 @@ TIMELINE = [
     ("from_cbor_twitter", "from_cbor() twitter", [(5233, "1"), (5501, "4"), (5185, "U"), (5746, "U"), (6028, "4")]),
     ("to_cbor_twitter", "to_cbor() twitter", [(5328, "4"), (5824, "6"), (5885, "6")]),
 ]
-# pull requests that were not merged yet when the timeline was measured: their step is the last point, the candidate
-# (develop with the open pull requests merged); drop a number here once its pull request is on develop
-PENDING = {6031}
 MONTHS = [("2025-04", "3.12.0"), ("2026-09", "Sep 2026"), ("2026-10", "Oct"), ("2026-11", "Nov")]
 
 
@@ -362,8 +359,6 @@ def timeline():
         groups = []
         for pr, lab in labels:
             i = next((k for k, r in enumerate(rows) if r["pr"] == str(pr)), None)
-            if i is None and pr in PENDING and rows[-1]["commit"] == "candidate":
-                i = n - 1
             assert i is not None, "no commit of #%d in the timeline" % pr
             if groups and X(i) - X(groups[-1][-1][1]) < 6:
                 groups[-1].append((pr, i, lab))
@@ -402,15 +397,15 @@ def timeline():
 # ---------- cliffs: 3.12.0 and 3.13.0 times on a log axis ----------
 # (operation, 3.12.0 ms, 3.13.0 ms), copied from the table in "Fix the algorithm first"
 CLIFFS = [
-    ("diff() 64k numbers vs []", 4237, 10.8),
-    ("diff() 20k objects vs half", 122, 4.13),
-    ("parse() callback, 32k objects", 1398, 12.1),
-    ("operator< nested 24 deep", 64.4, 0.002),
-    ("operator< citm, 10x", 284, 3.94),
-    ("flatten() citm, ordered_json", 271, 1.45),
-    ("to_bson() 200 deep, 100x", 20.3, 0.352),
-    ("push_back() 100k, diagnostics", 1589, 5.32),
-    ("at(i) 10k, diagnostics", 45.9, 0.088),
+    ("diff() 64k numbers vs []", 4131, 11.2),
+    ("diff() 20k objects vs half", 134, 7.16),
+    ("parse() callback, 32k objects", 826, 7.67),
+    ("operator< nested 24 deep", 53.8, 0.004),
+    ("operator< citm, 10x", 270, 3.78),
+    ("flatten() citm, ordered_json", 261, 1.59),
+    ("to_bson() 200 deep, 100x", 19.6, 0.392),
+    ("push_back() 100k, diagnostics", 1515, 0.936),
+    ("at(i) 10k, diagnostics", 30.4, 0.0095),
 ]
 
 
@@ -505,10 +500,10 @@ def heldout():
 # CPU time of the compiler in ms, median of 5 interleaved rounds, C++20, M1 Max (the post's appendix G)
 # (3.12.0, 3.13.0, 3.13.0 with a precompiled header, 3.13.0 as a module)
 PRICE = [
-    ("Apple clang 21, -O0 (debug)", [("count_numbers", 830.8, 1131.1, 639.0, 790.3), ("server_config", 962.8, 1312.5, 774.2, 1036.5)]),
-    ("Apple clang 21, -O2", [("count_numbers", 1328.4, 1898.4, 1311.8, 1491.2), ("server_config", 1584.1, 2251.0, 1778.7, 1925.9)]),
-    ("GCC 16, -O0 (debug)", [("count_numbers", 1416.5, 2385.4, 1592.9, 1603.7), ("server_config", 1877.6, 2819.8, 2152.1, 2180.2)]),
-    ("GCC 16, -O2", [("count_numbers", 2159.0, 3464.5, 2765.0, 2739.8), ("server_config", 2877.9, 4388.2, 3722.4, 3773.8)]),
+    ("Apple clang 21, -O0 (debug)", [("count_numbers", 886.0, 1245.0, 664.0, 871.0), ("server_config", 1037.0, 1472.0, 809.0, 1072.0)]),
+    ("Apple clang 21, -O2", [("count_numbers", 1348.0, 1992.0, 1391.0, 1637.0), ("server_config", 1647.0, 2412.0, 1854.0, 2047.0)]),
+    ("GCC 16, -O0 (debug)", [("count_numbers", 1514.0, 2490.0, 1667.0, 1652.0), ("server_config", 1948.0, 2926.0, 2192.0, 2208.0)]),
+    ("GCC 16, -O2", [("count_numbers", 2254.0, 3653.0, 2863.0, 2854.0), ("server_config", 2984.0, 4589.0, 3913.0, 3897.0)]),
 ]
 PRICE_SERIES = [("3.13.0", "nj-charts-c2"), ("3.13.0, precompiled header", "nj-charts-c1"), ("3.13.0, module", "nj-charts-c3")]
 
