@@ -387,7 +387,7 @@ struct external_constructor<value_t::object>
         for (; first != last; ++first)
         {
             auto&& member = *first;
-            members.emplace_new_key(member.first, std::forward<decltype(member)>(member).second);
+            members.emplace_new_key(member.first, static_cast < decltype(member) && > (member).second);
             if (!positions.insert(members.size() - 1).second)
             {
                 members.pop_back(); // a repeated key: keep the first
@@ -407,7 +407,7 @@ struct external_constructor<value_t::object>
         for (; first != last; ++first)
         {
             auto&& member = *first;
-            members.emplace(member.first, std::forward<decltype(member)>(member).second);
+            members.emplace(member.first, static_cast < decltype(member) && > (member).second);
         }
         const typename BasicJsonType::json_value value(std::move(members));
         j.replace_value(value_t::object, value);
