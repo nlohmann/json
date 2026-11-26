@@ -13171,39 +13171,144 @@ inline std::size_t validate_one_utf8(const unsigned char* data, std::size_t avai
     return 0; // invalid, incomplete, or must be diagnosed by the byte path
 }
 
+#if JSON_SCAN_VECTOR_UTF8
+// Back up @a block across any UTF-8 sequence that started before @a block
+// (at most 3 bytes), stopping at @a start. Used after vector_utf8_valid_blocks()
+// so the caller resumes on a character boundary.
+inline const unsigned char* utf8_block_boundary(const unsigned char* start, const unsigned char* block) noexcept
+{
+    for (int i = 1; i <= 3 && block - i >= start; ++i)
+    {
+        const unsigned char c = block[-i];
+        if (c < 0x80)
+        {
+            break;
+        }
+        if (c >= 0xC0)
+        {
+            block -= i;
+            break;
+        }
+    }
+    return block;
+}
+#endif
+
 // Return the length of the longest prefix of [data, data+n) that consists of
 // ASCII characters and complete well-formed UTF-8 sequences; n if all of it is
 // valid UTF-8. Unlike scalar_string_bulk_run(), quotes, escapes, and control
-// characters are ordinary characters here. ASCII is skipped 8 bytes at a time.
+// characters are ordinary characters here. ASCII runs skip 16/64 bytes at a
+// time with SSE2 or 8/32 bytes with SWAR, jumping directly to the first
+// non-ASCII byte; longer valid non-ASCII runs delegate to
+// vector_utf8_valid_blocks() where available, and remaining sequences use
+// validate_one_utf8().
 inline std::size_t valid_utf8_prefix(const unsigned char* data, std::size_t n) noexcept
 {
     constexpr std::uint64_t high = 0x8080808080808080ull;
     std::size_t pos = 0;
     while (pos < n)
     {
-        if (pos + 8 <= n)
+#if JSON_SCAN_SSE2
+        if (pos + 16 <= n)
         {
-            std::uint64_t word = 0;
-            std::memcpy(&word, data + pos, sizeof(word));
+            const __m128i v0 = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(data + pos))); // NOLINT(bugprone-casting-through-void)
+            const auto mask = static_cast<unsigned int>(_mm_movemask_epi8(v0));
+            if (mask == 0)
+            {
+                pos += 16;
+                while (pos + 64 <= n)
+                {
+                    const __m128i a0 = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(data + pos))); // NOLINT(bugprone-casting-through-void)
+                    const __m128i a1 = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(data + pos + 16))); // NOLINT(bugprone-casting-through-void)
+                    const __m128i a2 = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(data + pos + 32))); // NOLINT(bugprone-casting-through-void)
+                    const __m128i a3 = _mm_loadu_si128(static_cast<const __m128i*>(static_cast<const void*>(data + pos + 48))); // NOLINT(bugprone-casting-through-void)
+                    const __m128i or01 = _mm_or_si128(a0, a1);
+                    const __m128i or23 = _mm_or_si128(a2, a3);
+                    if (_mm_movemask_epi8(_mm_or_si128(or01, or23)) != 0)
+                    {
+                        break;
+                    }
+                    pos += 64;
+                }
+                continue;
+            }
+            pos += static_cast<std::size_t>(count_trailing_zeros(static_cast<std::uint64_t>(mask)));
+        }
+        else if (pos + 8 <= n)
+        {
+            const std::uint64_t word = read_eight_bytes(data + pos);
             if ((word & high) == 0)
             {
                 pos += 8;
                 continue;
             }
+            pos += static_cast<std::size_t>(count_trailing_zeros(word & high)) / 8u;
         }
-
-        if (data[pos] < 0x80u)
+        else if (data[pos] < 0x80u)
         {
             ++pos;
             continue;
         }
-
-        const std::size_t seq = validate_one_utf8(data + pos, n - pos);
-        if (seq == 0)
+#else
+        if (pos + 8 <= n)
         {
-            break; // ill-formed or truncated
+            const std::uint64_t word = read_eight_bytes(data + pos);
+            if ((word & high) == 0)
+            {
+                pos += 8;
+                while (pos + 32 <= n)
+                {
+                    const std::uint64_t a0 = read_eight_bytes(data + pos);
+                    const std::uint64_t a1 = read_eight_bytes(data + pos + 8);
+                    const std::uint64_t a2 = read_eight_bytes(data + pos + 16);
+                    const std::uint64_t a3 = read_eight_bytes(data + pos + 24);
+                    if (((a0 | a1 | a2 | a3) & high) != 0)
+                    {
+                        break;
+                    }
+                    pos += 32;
+                }
+                continue;
+            }
+            pos += static_cast<std::size_t>(count_trailing_zeros(word & high)) / 8u;
         }
-        pos += seq;
+        else if (data[pos] < 0x80u)
+        {
+            ++pos;
+            continue;
+        }
+#endif
+
+        // data[pos] >= 0x80u: validate consecutive non-ASCII sequences
+#if JSON_SCAN_VECTOR_UTF8
+        bool vector_tried = false;
+#endif
+        do
+        {
+            const std::size_t seq = validate_one_utf8(data + pos, n - pos);
+            if (seq == 0)
+            {
+                return pos; // ill-formed or truncated
+            }
+            pos += seq;
+#if JSON_SCAN_VECTOR_UTF8
+            if (!vector_tried && n - pos >= 32 && data[pos] >= 0x80u
+#if JSON_SCAN_SSSE3_DISPATCH
+                    && cpu_has_ssse3()
+#endif
+               )
+            {
+                vector_tried = true;
+                const unsigned char* const start = data + pos;
+                const unsigned char* const block = vector_utf8_valid_blocks(start, data + n);
+                if (block > start)
+                {
+                    pos = static_cast<std::size_t>(utf8_block_boundary(start, block) - data);
+                }
+            }
+#endif
+        }
+        while (pos < n && data[pos] >= 0x80u);
     }
     return pos;
 }
@@ -13244,23 +13349,26 @@ inline bool valid_utf8_string(const unsigned char* data, std::size_t n) noexcept
 #endif
             )
     {
-        const unsigned char* block = vector_utf8_valid_blocks(data, data + n);
-        // the rest from the start of a sequence that may be cut at block
-        for (int i = 1; i <= 3 && block - i >= data; ++i)
-        {
-            const unsigned char c = block[-i];
-            if (c < 0x80)
-            {
-                break;
-            }
-            if (c >= 0xC0)
-            {
-                block -= i;
-                break;
-            }
-        }
+        const unsigned char* const block = utf8_block_boundary(data, vector_utf8_valid_blocks(data, data + n));
         const auto checked = static_cast<std::size_t>(block - data);
-        return checked + valid_utf8_prefix(block, n - checked) == n;
+        // Validate the remaining tail (< 19 bytes, or stopping at an invalid
+        // sequence) inline without re-entering valid_utf8_prefix()'s bulk loop.
+        std::size_t pos = checked;
+        while (pos < n)
+        {
+            if (data[pos] < 0x80u)
+            {
+                ++pos;
+                continue;
+            }
+            const std::size_t seq = validate_one_utf8(data + pos, n - pos);
+            if (seq == 0)
+            {
+                return false;
+            }
+            pos += seq;
+        }
+        return true;
     }
 #endif
     return valid_utf8_prefix(data, n) == n;
