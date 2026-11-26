@@ -1680,3 +1680,139 @@ TEST_CASE("UTF-8 check of whole strings")
     CHECK(valid > 20000);
     CHECK(valid < 80000);
 }
+
+TEST_CASE("validate_one_utf8 and valid_utf8_prefix exhaustive RFC 3629 check")
+{
+    auto expected_utf8_len = [](const unsigned char* b, std::size_t avail) -> std::size_t
+    {
+        if (avail == 0)
+        {
+            return 0;
+        }
+        const unsigned char c0 = b[0];
+        if (c0 >= 0xC2 && c0 <= 0xDF)
+        {
+            return (avail >= 2 && b[1] >= 0x80 && b[1] <= 0xBF) ? 2u : 0u;
+        }
+        if (c0 == 0xE0)
+        {
+            return (avail >= 3 && b[1] >= 0xA0 && b[1] <= 0xBF && b[2] >= 0x80 && b[2] <= 0xBF) ? 3u : 0u;
+        }
+        if ((c0 >= 0xE1 && c0 <= 0xEC) || c0 == 0xEE || c0 == 0xEF)
+        {
+            return (avail >= 3 && b[1] >= 0x80 && b[1] <= 0xBF && b[2] >= 0x80 && b[2] <= 0xBF) ? 3u : 0u;
+        }
+        if (c0 == 0xED)
+        {
+            return (avail >= 3 && b[1] >= 0x80 && b[1] <= 0x9F && b[2] >= 0x80 && b[2] <= 0xBF) ? 3u : 0u;
+        }
+        if (c0 == 0xF0)
+        {
+            return (avail >= 4 && b[1] >= 0x90 && b[1] <= 0xBF && b[2] >= 0x80 && b[2] <= 0xBF && b[3] >= 0x80 && b[3] <= 0xBF) ? 4u : 0u;
+        }
+        if (c0 >= 0xF1 && c0 <= 0xF3)
+        {
+            return (avail >= 4 && b[1] >= 0x80 && b[1] <= 0xBF && b[2] >= 0x80 && b[2] <= 0xBF && b[3] >= 0x80 && b[3] <= 0xBF) ? 4u : 0u;
+        }
+        if (c0 == 0xF4)
+        {
+            return (avail >= 4 && b[1] >= 0x80 && b[1] <= 0x8F && b[2] >= 0x80 && b[2] <= 0xBF && b[3] >= 0x80 && b[3] <= 0xBF) ? 4u : 0u;
+        }
+        return 0;
+    };
+
+    auto expected_prefix = [&](const unsigned char* b, std::size_t n) -> std::size_t
+    {
+        std::size_t pos = 0;
+        while (pos < n)
+        {
+            if (b[pos] < 0x80u)
+            {
+                ++pos;
+                continue;
+            }
+            const std::size_t seq = expected_utf8_len(b + pos, n - pos);
+            if (seq == 0)
+            {
+                break;
+            }
+            pos += seq;
+        }
+        return pos;
+    };
+
+    // Exhaustive sweep over all non-ASCII lead bytes (0x80..0xFF), all second bytes
+    // (0x00..0xFF), boundary third/fourth bytes, and available lengths 1..4.
+    const std::array<unsigned char, 5> tail_bytes = {{0x00, 0x7F, 0x80, 0xBF, 0xC0}};
+    for (unsigned int c0 = 0x80; c0 <= 0xFF; ++c0)
+    {
+        for (unsigned int c1 = 0x00; c1 <= 0xFF; ++c1)
+        {
+            for (const unsigned char c2 : tail_bytes)
+            {
+                const std::array<unsigned char, 4> buf =
+                {
+                    {
+                        static_cast<unsigned char>(c0),
+                        static_cast<unsigned char>(c1),
+                        c2,
+                        0x80
+                    }
+                };
+                for (std::size_t avail = 1; avail <= 4; ++avail)
+                {
+                    CHECK(nlohmann::detail::validate_one_utf8(buf.data(), avail) == expected_utf8_len(buf.data(), avail));
+                    CHECK(nlohmann::detail::valid_utf8_prefix(buf.data(), avail) == expected_prefix(buf.data(), avail));
+                }
+                if (c0 >= 0xF0 && c0 <= 0xF4 && c2 == 0x80)
+                {
+                    for (const unsigned char c3 : tail_bytes)
+                    {
+                        const std::array<unsigned char, 4> buf4 =
+                        {
+                            {
+                                static_cast<unsigned char>(c0),
+                                static_cast<unsigned char>(c1),
+                                c2,
+                                c3
+                            }
+                        };
+                        CHECK(nlohmann::detail::validate_one_utf8(buf4.data(), 4) == expected_utf8_len(buf4.data(), 4));
+                        CHECK(nlohmann::detail::valid_utf8_prefix(buf4.data(), 4) == expected_prefix(buf4.data(), 4));
+                    }
+                }
+            }
+        }
+    }
+
+    // Exercise ASCII bulk skipping (SSE2 16/64B & SWAR 8/32B), vector UTF-8
+    // run handoff (>= 32B non-ASCII), and exact prefix stopping on invalid/0xFF bytes.
+    const std::string cjk_run = "\xE4\xB8\xAD\xE6\x96\x87\xE6\xB5\x8B\xE8\xAF\x95\xE5\xAD\x97\xE7\xAC\xA6\xE4\xB8\xB2\xF0\x9F\x98\x80\xC3\xA9\xE2\x82\xAC\xE6\x97\xA5\xE6\x9C\xAC\xE8\xAA\x9E\xED\x95\x9C\xEA\xB5\xAD\xEC\x96\xB4";
+    for (const std::size_t ascii_len :
+            {
+                std::size_t{0}, std::size_t{1}, std::size_t{7}, std::size_t{8}, std::size_t{15}, std::size_t{16}, std::size_t{31}, std::size_t{40}, std::size_t{64}, std::size_t{80}
+            })
+    {
+        const std::string prefix(ascii_len, 'a');
+        std::string valid = prefix;
+        valid += cjk_run;
+        valid += prefix;
+        const auto* vd = reinterpret_cast<const unsigned char*>(valid.data());
+        CHECK(nlohmann::detail::valid_utf8_prefix(vd, valid.size()) == valid.size());
+
+        // Invalid byte immediately after ASCII prefix (e.g. BON8 0xFF terminator)
+        std::string with_ff = prefix;
+        with_ff.push_back(static_cast<char>(0xFF));
+        with_ff += valid;
+        const auto* fd = reinterpret_cast<const unsigned char*>(with_ff.data());
+        CHECK(nlohmann::detail::valid_utf8_prefix(fd, with_ff.size()) == ascii_len);
+
+        // Invalid byte after a >= 32-byte non-ASCII run (surrogate U+D800)
+        std::string bad_after_utf8 = prefix;
+        bad_after_utf8 += cjk_run;
+        bad_after_utf8 += "\xED\xA0\x80";
+        bad_after_utf8 += prefix;
+        const auto* bd = reinterpret_cast<const unsigned char*>(bad_after_utf8.data());
+        CHECK(nlohmann::detail::valid_utf8_prefix(bd, bad_after_utf8.size()) == ascii_len + cjk_run.size());
+    }
+}
