@@ -384,10 +384,12 @@ struct external_constructor<value_t::object>
         positions(0, member_position_hash<object_t> {&members}, member_position_equal<object_t> {&members});
         positions.reserve(size);
         members.reserve(size);
+        // a named reference type keeps astyle from spacing the cast's angle brackets
+        using member_ref = decltype(*first) &&;
         for (; first != last; ++first)
         {
             auto&& member = *first;
-            members.emplace_new_key(member.first, static_cast < decltype(member) && > (member).second);
+            members.emplace_new_key(member.first, static_cast<member_ref>(member).second);
             if (!positions.insert(members.size() - 1).second)
             {
                 members.pop_back(); // a repeated key: keep the first
@@ -404,10 +406,12 @@ struct external_constructor<value_t::object>
     {
         typename BasicJsonType::object_t members;
         members.reserve(static_cast<std::size_t>(std::distance(first, last)));
+        // a named reference type keeps astyle from spacing the cast's angle brackets
+        using member_ref = decltype(*first) &&;
         for (; first != last; ++first)
         {
             auto&& member = *first;
-            members.emplace(member.first, static_cast < decltype(member) && > (member).second);
+            members.emplace(member.first, static_cast<member_ref>(member).second);
         }
         const typename BasicJsonType::json_value value(std::move(members));
         j.replace_value(value_t::object, value);
