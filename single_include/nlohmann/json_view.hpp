@@ -853,7 +853,10 @@ NLOHMANN_VIEW_ALWAYS_INLINE unsigned copy_plain_run16(const unsigned char* p, ch
 /// whether the CPU has SSSE3 (CPUID leaf 1, ECX bit 9)
 inline bool cpu_ssse3() noexcept
 {
-#if defined(_MSC_VER) && !defined(__clang__)
+#if defined(JSON_TEST_ASSUME_NO_SSSE3)
+    // Exercise SSE2 string scanning with scalar UTF-8 checks on newer CPUs.
+    return false;
+#elif defined(_MSC_VER) && !defined(__clang__)
     std::array<int, 4> regs {{}};
     __cpuid(regs.data(), 1);
     return (static_cast<unsigned>(regs[2]) & (1u << 9u)) != 0;

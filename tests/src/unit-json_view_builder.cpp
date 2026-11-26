@@ -293,6 +293,18 @@ TEST_CASE("json_view string_ref")
     CHECK(o.str() == "abc");
 }
 
+#if defined(JSON_TEST_ASSUME_NO_SSSE3)
+#if !defined(__SSE2__) || defined(__SSSE3__)
+    #error SSE2-only tests require SSE2 without compile-time SSSE3
+#endif
+TEST_CASE("json_view builder: SSE2 without SSSE3")
+{
+    CHECK_FALSE(nlohmann::detail::view::cpu_ssse3());
+    CHECK_FALSE(nlohmann::detail::view::cpu_has_ssse3());
+    CHECK_FALSE(nlohmann::detail::view::cpu_has_ssse3());
+}
+#endif
+
 TEST_CASE("json_view builder")
 {
     SECTION("scalars and containers")

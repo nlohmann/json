@@ -52,6 +52,18 @@ std::string get_error_message(const char* s, const bool ignore_comments)
     return lexer.get_error_message();
 }
 
+#if defined(JSON_TEST_ASSUME_NO_SSSE3)
+#if !defined(__SSE2__) || defined(__SSSE3__)
+    #error SSE2-only tests require SSE2 without compile-time SSSE3
+#endif
+TEST_CASE("lexer class: SSE2 without SSSE3")
+{
+    CHECK_FALSE(nlohmann::detail::cpu_ssse3());
+    CHECK_FALSE(nlohmann::detail::cpu_has_ssse3());
+    CHECK_FALSE(nlohmann::detail::cpu_has_ssse3());
+}
+#endif
+
 TEST_CASE("lexer class")
 {
     SECTION("scan")
