@@ -39101,7 +39101,19 @@ class serializer
         {
             flush();
         }
-        std::memcpy(write_buffer.data() + write_buffer_pos, s, length);
+#if defined(__GNUC__) && !defined(__clang__)
+        std::size_t copy_length = length;
+        // GCC knows from the test above that the length is below the size of
+        // the write buffer, and with that bound it may expand the memcpy into
+        // "rep movsq" (seen with -march=x86-64-v3 and -mtune=generic) instead
+        // of calling memcpy. For the short runs written here its start-up cost
+        // is far above that of the call (dump() with ensure_ascii 80 % slower
+        // on Sapphire Rapids), so hide the bound from the optimizer.
+        __asm__("" : "+r"(copy_length));
+#else
+        const std::size_t copy_length = length;
+#endif
+        std::memcpy(write_buffer.data() + write_buffer_pos, s, copy_length);
         write_buffer_pos += length;
     }
 
