@@ -421,6 +421,19 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|amd64)$" AND NOT MSVC)
         NAME test-class_lexer_ssse3
         MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
     )
+    # Older compilers already use scalar UTF-8 checks without CPU dispatch.
+    if((CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 4.9)
+       OR (CMAKE_CXX_COMPILER_ID MATCHES "^(AppleClang|Clang)$" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 4))
+        # Keep SSE2 enabled while exercising the scalar UTF-8 fallback on modern CPUs.
+        json_test_set_test_options(test-class_lexer_sse2_only
+            COMPILE_DEFINITIONS JSON_TEST_ASSUME_NO_SSSE3=1
+            COMPILE_OPTIONS -mno-ssse3
+        )
+        json_test_add_test_for(src/unit-class_lexer.cpp
+            NAME test-class_lexer_sse2_only
+            MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+        )
+    endif()
 endif()
 
 # test reading from a std::istream again without scanning the get area in bulk
@@ -494,6 +507,19 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64|amd64)$" AND NOT MSVC)
         NAME test-json_view_builder_ssse3
         MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
     )
+    # Older compilers already use scalar UTF-8 checks without CPU dispatch.
+    if((CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 4.9)
+       OR (CMAKE_CXX_COMPILER_ID MATCHES "^(AppleClang|Clang)$" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 4))
+        # Keep SSE2 enabled while exercising the scalar UTF-8 fallback on modern CPUs.
+        json_test_set_test_options(test-json_view_builder_sse2_only
+            COMPILE_DEFINITIONS JSON_TEST_ASSUME_NO_SSSE3=1
+            COMPILE_OPTIONS -mno-ssse3
+        )
+        json_test_add_test_for(src/unit-json_view_builder.cpp
+            NAME test-json_view_builder_sse2_only
+            MAIN test_main CXX_STANDARDS ${test_cxx_standards} ${test_force}
+        )
+    endif()
 endif()
 endif()
 
