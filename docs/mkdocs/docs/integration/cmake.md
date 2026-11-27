@@ -166,19 +166,18 @@ Enable [extended diagnostic messages](../home/exceptions.md#extended-diagnostic-
     exported target still carries a fixed `$<$<BOOL:OFF>:JSON_DIAGNOSTICS=1>`, regardless of any
     variable set in the consuming project).
 
-    To enable extended diagnostics for a pre-installed package, override the imported target's
-    property directly after `find_package()`:
+    If the installed package leaves `JSON_DIAGNOSTICS` undefined, append the definition to the
+    imported target after `find_package()` to preserve its other compile definitions:
 
     ```cmake
     find_package(nlohmann_json REQUIRED)
-    set_target_properties(nlohmann_json::nlohmann_json PROPERTIES
-        INTERFACE_COMPILE_DEFINITIONS "JSON_DIAGNOSTICS=1")
+    set_property(TARGET nlohmann_json::nlohmann_json APPEND PROPERTY
+        INTERFACE_COMPILE_DEFINITIONS JSON_DIAGNOSTICS=1)
     ```
 
-    This only works cleanly when your project is the sole consumer of that imported target. If
-    nlohmann_json is pulled in from more than one place in your dependency graph with different
-    `JSON_DIAGNOSTICS` values, you may see a `"JSON_DIAGNOSTICS" redefined` compiler error, since
-    conflicting `-D` flags can end up on the same compile command line.
+    This adds the definition for all consumers of that imported target. If dependencies pass
+    conflicting `JSON_DIAGNOSTICS` values to the same target, the compiler may report
+    `"JSON_DIAGNOSTICS" redefined`.
 
 ### `JSON_Diagnostic_Positions`
 
